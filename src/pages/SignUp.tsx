@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -29,17 +29,12 @@ import {
   Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import OTPVerification from "@/components/signup/OTPVerification";
-import ProfileCompletion from "@/components/signup/ProfileCompletion";
 
 export type UserRole = "teacher" | "school" | "recruiter" | "supplier";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<"signup" | "otp" | "profile">(
-    "signup"
-  );
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -122,68 +117,18 @@ const SignUp = () => {
     // Simulate API call for account creation
     setTimeout(() => {
       setIsLoading(false);
-      setCurrentStep("otp");
+      // Navigate to OTP verification with user data
+      navigate("/otp-verification", {
+        state: {
+          email: formData.email,
+          role: formData.role,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        },
+      });
     }, 2000);
   };
 
-  const handleOTPVerify = () => {
-    setCurrentStep("profile");
-  };
-
-  const handleProfileComplete = () => {
-    // Redirect to appropriate dashboard based on role
-    if (formData.role) {
-      navigate(`/dashboard/${formData.role}`);
-    }
-  };
-
-  const handleBackToSignup = () => {
-    setCurrentStep("signup");
-  };
-
-  const handleBackToOTP = () => {
-    setCurrentStep("otp");
-  };
-
-  // Render OTP Verification Step
-  if (currentStep === "otp") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <OTPVerification
-            onVerify={handleOTPVerify}
-            onBack={handleBackToSignup}
-            email={formData.email}
-          />
-        </main>
-
-        <Footer />
-      </div>
-    );
-  }
-
-  // Render Profile Completion Step
-  if (currentStep === "profile") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <ProfileCompletion
-            role={formData.role as UserRole}
-            onComplete={handleProfileComplete}
-            onBack={handleBackToOTP}
-          />
-        </main>
-
-        <Footer />
-      </div>
-    );
-  }
-
-  // Render Initial Sign Up Form
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -504,7 +449,7 @@ const SignUp = () => {
                 <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
                   <Link
-                    to="/signin"
+                    to="/login"
                     className="text-brand-primary hover:underline font-medium"
                   >
                     Sign in here

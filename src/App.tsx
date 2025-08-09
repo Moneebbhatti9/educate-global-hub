@@ -9,9 +9,9 @@ import JobDetail from "./pages/JobDetail";
 import Forum from "./pages/Forum";
 import Resources from "./pages/Resources";
 import SignUp from "./pages/SignUp";
-import SignUpFlow from "./pages/SignUpFlow";
-import SignInFlow from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
+import OTPVerificationPage from "./pages/OTPVerificationPage";
+import ProfileCompletionPage from "./pages/ProfileCompletionPage";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import SchoolDashboard from "./pages/dashboards/SchoolDashboard";
 import RecruiterDashboard from "./pages/dashboards/RecruiterDashboard";
@@ -37,6 +37,11 @@ const App = () => (
           {/* Authentication Routes */}
           <Route path="/login" element={<SignIn />} />
           <Route path="/register" element={<SignUp />} />
+          <Route path="/otp-verification" element={<OTPVerificationPage />} />
+          <Route
+            path="/profile-completion"
+            element={<ProfileCompletionPage />}
+          />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Dashboard Routes */}

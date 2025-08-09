@@ -3,17 +3,32 @@ import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Mail, Shield, KeyRound, CheckCircle } from "lucide-react";
-import OTPVerification from "@/components/signup/OTPVerification";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Mail,
+  Shield,
+  KeyRound,
+  CheckCircle,
+} from "lucide-react";
+import OTPVerification from "@/components/custom/OTPVerification";
 import { useToast } from "@/hooks/use-toast";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<'email' | 'otp' | 'reset'>('email');
+  const [currentStep, setCurrentStep] = useState<"email" | "otp" | "reset">(
+    "email"
+  );
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,11 +37,11 @@ const ForgotPassword = () => {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate sending OTP
     setTimeout(() => {
       setIsLoading(false);
-      setCurrentStep('otp');
+      setCurrentStep("otp");
       toast({
         title: "OTP Sent",
         description: "Check your email for the verification code.",
@@ -35,23 +50,23 @@ const ForgotPassword = () => {
   };
 
   const handleOTPVerify = () => {
-    setCurrentStep('reset');
+    setCurrentStep("reset");
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Passwords don't match",
         description: "Please ensure both password fields match.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    
+
     // Simulate password reset
     setTimeout(() => {
       setIsLoading(false);
@@ -59,10 +74,10 @@ const ForgotPassword = () => {
         title: "Password Updated",
         description: "Your password has been successfully updated.",
       });
-      
+
       // Redirect to sign in
       setTimeout(() => {
-        navigate('/signin');
+        navigate("/login");
       }, 1500);
     }, 2000);
   };
@@ -70,11 +85,11 @@ const ForgotPassword = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-md mx-auto">
           {/* Step 1: Email Input */}
-          {currentStep === 'email' && (
+          {currentStep === "email" && (
             <>
               {/* Header */}
               <div className="text-center mb-8">
@@ -87,14 +102,17 @@ const ForgotPassword = () => {
                   Reset Your Password
                 </h1>
                 <p className="text-muted-foreground">
-                  Enter your email address and we'll send you a verification code to reset your password.
+                  Enter your email address and we'll send you a verification
+                  code to reset your password.
                 </p>
               </div>
 
               {/* Email Form */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="font-heading text-xl text-center">Enter Your Email</CardTitle>
+                  <CardTitle className="font-heading text-xl text-center">
+                    Enter Your Email
+                  </CardTitle>
                   <CardDescription className="text-center">
                     We'll send you a verification code
                   </CardDescription>
@@ -140,7 +158,7 @@ const ForgotPassword = () => {
 
                   <div className="mt-6 text-center">
                     <Link
-                      to="/signin"
+                      to="/login"
                       className="inline-flex items-center text-sm text-brand-primary hover:underline"
                     >
                       <ArrowLeft className="w-4 h-4 mr-1" />
@@ -153,12 +171,12 @@ const ForgotPassword = () => {
           )}
 
           {/* Step 2: OTP Verification */}
-          {currentStep === 'otp' && (
+          {currentStep === "otp" && (
             <div>
               <OTPVerification onVerify={handleOTPVerify} />
               <div className="mt-6 text-center">
                 <button
-                  onClick={() => setCurrentStep('email')}
+                  onClick={() => setCurrentStep("email")}
                   className="inline-flex items-center text-sm text-brand-primary hover:underline"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
@@ -169,7 +187,7 @@ const ForgotPassword = () => {
           )}
 
           {/* Step 3: New Password */}
-          {currentStep === 'reset' && (
+          {currentStep === "reset" && (
             <>
               {/* Header */}
               <div className="text-center mb-8">
@@ -189,7 +207,9 @@ const ForgotPassword = () => {
               {/* Password Form */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="font-heading text-xl text-center">Set New Password</CardTitle>
+                  <CardTitle className="font-heading text-xl text-center">
+                    Set New Password
+                  </CardTitle>
                   <CardDescription className="text-center">
                     Make sure it's at least 8 characters long
                   </CardDescription>
@@ -227,11 +247,24 @@ const ForgotPassword = () => {
                       <p className="font-medium">Password requirements:</p>
                       <ul className="space-y-1">
                         <li className="flex items-center">
-                          <CheckCircle className={`w-3 h-3 mr-2 ${newPassword.length >= 8 ? 'text-brand-accent-green' : 'text-muted'}`} />
+                          <CheckCircle
+                            className={`w-3 h-3 mr-2 ${
+                              newPassword.length >= 8
+                                ? "text-brand-accent-green"
+                                : "text-muted"
+                            }`}
+                          />
                           At least 8 characters long
                         </li>
                         <li className="flex items-center">
-                          <CheckCircle className={`w-3 h-3 mr-2 ${newPassword === confirmPassword && newPassword.length > 0 ? 'text-brand-accent-green' : 'text-muted'}`} />
+                          <CheckCircle
+                            className={`w-3 h-3 mr-2 ${
+                              newPassword === confirmPassword &&
+                              newPassword.length > 0
+                                ? "text-brand-accent-green"
+                                : "text-muted"
+                            }`}
+                          />
                           Passwords match
                         </li>
                       </ul>
@@ -242,7 +275,11 @@ const ForgotPassword = () => {
                       variant="hero"
                       size="lg"
                       className="w-full"
-                      disabled={isLoading || newPassword.length < 8 || newPassword !== confirmPassword}
+                      disabled={
+                        isLoading ||
+                        newPassword.length < 8 ||
+                        newPassword !== confirmPassword
+                      }
                     >
                       {isLoading ? (
                         <>
