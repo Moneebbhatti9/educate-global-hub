@@ -1,15 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Shield, ArrowRight, RotateCcw } from "lucide-react";
+import { Shield, ArrowRight, RotateCcw, ArrowLeft } from "lucide-react";
 
 interface OTPVerificationProps {
   onVerify: () => void;
+  onBack?: () => void;
+  email?: string;
 }
 
-const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+const OTPVerification = ({ onVerify, onBack, email }: OTPVerificationProps) => {
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -19,7 +27,7 @@ const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
-        setTimer(prev => prev - 1);
+        setTimer((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(interval);
     } else {
@@ -41,16 +49,16 @@ const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handleSubmit = async () => {
-    const otpString = otp.join('');
+    const otpString = otp.join("");
     if (otpString.length === 6) {
       setIsLoading(true);
-      
+
       // Simulate verification (accept any 6-digit code)
       setTimeout(() => {
         setIsLoading(false);
@@ -62,12 +70,12 @@ const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
   const handleResend = () => {
     setTimer(60);
     setCanResend(false);
-    setOtp(['', '', '', '', '', '']);
+    setOtp(["", "", "", "", "", ""]);
     // Reset focus to first input
     inputRefs.current[0]?.focus();
   };
 
-  const isComplete = otp.every(digit => digit !== '');
+  const isComplete = otp.every((digit) => digit !== "");
 
   return (
     <div className="max-w-md mx-auto">
@@ -82,14 +90,18 @@ const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
           Verify Your Email
         </h1>
         <p className="text-muted-foreground">
-          We've sent a 6-digit verification code to your email address. Please enter it below to continue.
+          We've sent a 6-digit verification code to{" "}
+          {email ? <strong>{email}</strong> : "your email address"}. Please
+          enter it below to continue.
         </p>
       </div>
 
       {/* OTP Verification Form */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl text-center">Enter Verification Code</CardTitle>
+          <CardTitle className="font-heading text-xl text-center">
+            Enter Verification Code
+          </CardTitle>
           <CardDescription className="text-center">
             Check your email for the 6-digit code
           </CardDescription>
@@ -100,7 +112,7 @@ const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
             {otp.map((digit, index) => (
               <Input
                 key={index}
-                ref={el => inputRefs.current[index] = el}
+                ref={(el) => (inputRefs.current[index] = el)}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -152,9 +164,26 @@ const OTPVerification = ({ onVerify }: OTPVerificationProps) => {
             )}
           </Button>
 
+          {/* Back to Sign Up */}
+          {onBack && (
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                onClick={onBack}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Sign Up
+              </Button>
+            </div>
+          )}
+
           {/* Help Text */}
           <div className="text-center text-sm text-muted-foreground">
-            Having trouble? <span className="text-brand-primary hover:underline cursor-pointer">Contact support</span>
+            Having trouble?{" "}
+            <span className="text-brand-primary hover:underline cursor-pointer">
+              Contact support
+            </span>
           </div>
         </CardContent>
       </Card>

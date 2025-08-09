@@ -1,36 +1,52 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Globe, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
+import {
+  Globe,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
   User,
   ArrowRight,
   GraduationCap,
   School,
   UserCheck,
   Truck,
-  Check
+  Check,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import OTPVerification from "@/components/signup/OTPVerification";
+import ProfileCompletion from "@/components/signup/ProfileCompletion";
+
+export type UserRole = "teacher" | "school" | "recruiter" | "supplier";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState<"signup" | "otp" | "profile">(
+    "signup"
+  );
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: ""
+    role: "" as UserRole | "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,67 +56,138 @@ const SignUp = () => {
 
   const roles = [
     {
-      id: "teacher",
+      id: "teacher" as UserRole,
       name: "Teacher",
       description: "Find teaching opportunities worldwide",
       icon: GraduationCap,
-      color: "border-brand-primary bg-brand-primary/5 hover:bg-brand-primary/10"
+      color:
+        "border-brand-primary bg-brand-primary/5 hover:bg-brand-primary/10",
     },
     {
-      id: "school",
+      id: "school" as UserRole,
       name: "School",
       description: "Recruit qualified educators",
       icon: School,
-      color: "border-brand-accent-green bg-brand-accent-green/5 hover:bg-brand-accent-green/10"
+      color:
+        "border-brand-accent-green bg-brand-accent-green/5 hover:bg-brand-accent-green/10",
     },
     {
-      id: "recruiter",
+      id: "recruiter" as UserRole,
       name: "Recruiter",
       description: "Connect talent with institutions",
       icon: UserCheck,
-      color: "border-brand-secondary bg-brand-secondary/5 hover:bg-brand-secondary/10"
+      color:
+        "border-brand-secondary bg-brand-secondary/5 hover:bg-brand-secondary/10",
     },
     {
-      id: "supplier",
+      id: "supplier" as UserRole,
       name: "Supplier",
       description: "Provide educational resources",
       icon: Truck,
-      color: "border-brand-accent-orange bg-brand-accent-orange/5 hover:bg-brand-accent-orange/10"
-    }
+      color:
+        "border-brand-accent-orange bg-brand-accent-orange/5 hover:bg-brand-accent-orange/10",
+    },
   ];
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.role) {
-      alert("Please select your role");
+      toast({
+        title: "Please select your role",
+        variant: "destructive",
+      });
       return;
     }
     if (!acceptTerms) {
-      alert("Please accept the terms and conditions");
+      toast({
+        title: "Please accept the terms and conditions",
+        variant: "destructive",
+      });
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      toast({
+        title: "Passwords do not match",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsLoading(true);
-    
-    // Simulate API call
+
+    // Simulate API call for account creation
     setTimeout(() => {
       setIsLoading(false);
-      // Handle sign up logic here
+      setCurrentStep("otp");
     }, 2000);
   };
 
+  const handleOTPVerify = () => {
+    setCurrentStep("profile");
+  };
+
+  const handleProfileComplete = () => {
+    // Redirect to appropriate dashboard based on role
+    if (formData.role) {
+      navigate(`/dashboard/${formData.role}`);
+    }
+  };
+
+  const handleBackToSignup = () => {
+    setCurrentStep("signup");
+  };
+
+  const handleBackToOTP = () => {
+    setCurrentStep("otp");
+  };
+
+  // Render OTP Verification Step
+  if (currentStep === "otp") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <OTPVerification
+            onVerify={handleOTPVerify}
+            onBack={handleBackToSignup}
+            email={formData.email}
+          />
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  // Render Profile Completion Step
+  if (currentStep === "profile") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <ProfileCompletion
+            role={formData.role as UserRole}
+            onComplete={handleProfileComplete}
+            onBack={handleBackToOTP}
+          />
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  // Render Initial Sign Up Form
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
@@ -114,14 +201,17 @@ const SignUp = () => {
               Join Educate Link
             </h1>
             <p className="text-muted-foreground">
-              Create your account and become part of the global education community.
+              Create your account and become part of the global education
+              community.
             </p>
           </div>
 
           {/* Sign Up Form */}
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="font-heading text-xl text-center">Create Your Account</CardTitle>
+              <CardTitle className="font-heading text-xl text-center">
+                Create Your Account
+              </CardTitle>
               <CardDescription className="text-center">
                 Fill in your details to get started
               </CardDescription>
@@ -139,7 +229,9 @@ const SignUp = () => {
                         type="text"
                         placeholder="Enter your first name"
                         value={formData.firstName}
-                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("firstName", e.target.value)
+                        }
                         className="pl-10"
                         required
                       />
@@ -154,7 +246,9 @@ const SignUp = () => {
                         type="text"
                         placeholder="Enter your last name"
                         value={formData.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("lastName", e.target.value)
+                        }
                         className="pl-10"
                         required
                       />
@@ -172,7 +266,9 @@ const SignUp = () => {
                       type="email"
                       placeholder="Enter your email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
                       className="pl-10"
                       required
                     />
@@ -190,7 +286,9 @@ const SignUp = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
                         value={formData.password}
-                        onChange={(e) => handleInputChange("password", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("password", e.target.value)
+                        }
                         className="pl-10 pr-10"
                         required
                       />
@@ -216,13 +314,17 @@ const SignUp = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
                         value={formData.confirmPassword}
-                        onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("confirmPassword", e.target.value)
+                        }
                         className="pl-10 pr-10"
                         required
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                       >
                         {showConfirmPassword ? (
@@ -252,14 +354,22 @@ const SignUp = () => {
                           }`}
                         >
                           <div className="flex items-start space-x-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              formData.role === role.id ? "bg-current/10" : "bg-muted"
-                            }`}>
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                formData.role === role.id
+                                  ? "bg-current/10"
+                                  : "bg-muted"
+                              }`}
+                            >
                               <IconComponent className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-sm">{role.name}</div>
-                              <div className="text-xs text-muted-foreground">{role.description}</div>
+                              <div className="font-semibold text-sm">
+                                {role.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {role.description}
+                              </div>
                             </div>
                             {formData.role === role.id && (
                               <div className="absolute top-2 right-2">
@@ -281,16 +391,24 @@ const SignUp = () => {
                     <Checkbox
                       id="terms"
                       checked={acceptTerms}
-                      onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setAcceptTerms(checked as boolean)
+                      }
                       className="mt-1"
                     />
                     <Label htmlFor="terms" className="text-sm leading-relaxed">
                       I agree to the{" "}
-                      <Link to="/terms" className="text-brand-primary hover:underline">
+                      <Link
+                        to="/terms"
+                        className="text-brand-primary hover:underline"
+                      >
                         Terms of Service
                       </Link>{" "}
                       and{" "}
-                      <Link to="/privacy" className="text-brand-primary hover:underline">
+                      <Link
+                        to="/privacy"
+                        className="text-brand-primary hover:underline"
+                      >
                         Privacy Policy
                       </Link>
                     </Label>
@@ -299,11 +417,17 @@ const SignUp = () => {
                     <Checkbox
                       id="updates"
                       checked={receiveUpdates}
-                      onCheckedChange={(checked) => setReceiveUpdates(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setReceiveUpdates(checked as boolean)
+                      }
                       className="mt-1"
                     />
-                    <Label htmlFor="updates" className="text-sm leading-relaxed">
-                      I would like to receive updates about new features, job opportunities, and educational resources
+                    <Label
+                      htmlFor="updates"
+                      className="text-sm leading-relaxed"
+                    >
+                      I would like to receive updates about new features, job
+                      opportunities, and educational resources
                     </Label>
                   </div>
                 </div>
@@ -334,7 +458,9 @@ const SignUp = () => {
               <div className="my-6">
                 <Separator />
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or sign up with
+                  </span>
                 </div>
               </div>
 
@@ -362,8 +488,12 @@ const SignUp = () => {
                   Google
                 </Button>
                 <Button variant="outline" className="w-full">
-                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
                   Facebook
                 </Button>

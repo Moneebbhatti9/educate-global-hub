@@ -1,8 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, GraduationCap, School, UserCheck, Truck, Check } from "lucide-react";
-import { UserRole } from "@/pages/SignUpFlow";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Globe,
+  GraduationCap,
+  School,
+  UserCheck,
+  Truck,
+  Check,
+} from "lucide-react";
+import { UserRole } from "@/pages/SignUp";
 
 interface RoleSelectionProps {
   onRoleSelect: (role: UserRole) => void;
@@ -15,35 +28,58 @@ const RoleSelection = ({ onRoleSelect }: RoleSelectionProps) => {
     {
       id: "teacher" as UserRole,
       name: "Teacher",
-      description: "Find teaching opportunities worldwide and connect with schools",
+      description:
+        "Find teaching opportunities worldwide and connect with schools",
       icon: GraduationCap,
-      color: "border-brand-primary bg-brand-primary/5 hover:bg-brand-primary/10",
-      features: ["Access to global job postings", "Professional networking", "Resource sharing"]
+      color:
+        "border-brand-primary bg-brand-primary/5 hover:bg-brand-primary/10",
+      features: [
+        "Access to global job postings",
+        "Professional networking",
+        "Resource sharing",
+      ],
     },
     {
       id: "school" as UserRole,
       name: "School",
-      description: "Recruit qualified educators and manage your institutional needs",
+      description:
+        "Recruit qualified educators and manage your institutional needs",
       icon: School,
-      color: "border-brand-accent-green bg-brand-accent-green/5 hover:bg-brand-accent-green/10",
-      features: ["Post job opportunities", "Browse teacher profiles", "Connect with suppliers"]
+      color:
+        "border-brand-accent-green bg-brand-accent-green/5 hover:bg-brand-accent-green/10",
+      features: [
+        "Post job opportunities",
+        "Browse teacher profiles",
+        "Connect with suppliers",
+      ],
     },
     {
       id: "recruiter" as UserRole,
       name: "Recruiter",
       description: "Connect talented educators with the right institutions",
       icon: UserCheck,
-      color: "border-brand-secondary bg-brand-secondary/5 hover:bg-brand-secondary/10",
-      features: ["Advanced matching tools", "Candidate management", "Commission tracking"]
+      color:
+        "border-brand-secondary bg-brand-secondary/5 hover:bg-brand-secondary/10",
+      features: [
+        "Advanced matching tools",
+        "Candidate management",
+        "Commission tracking",
+      ],
     },
     {
       id: "supplier" as UserRole,
       name: "Supplier",
-      description: "Provide educational resources, infrastructure, and services",
+      description:
+        "Provide educational resources, infrastructure, and services",
       icon: Truck,
-      color: "border-brand-accent-orange bg-brand-accent-orange/5 hover:bg-brand-accent-orange/10",
-      features: ["Showcase your products", "Connect with schools", "Manage orders"]
-    }
+      color:
+        "border-brand-accent-orange bg-brand-accent-orange/5 hover:bg-brand-accent-orange/10",
+      features: [
+        "Showcase your products",
+        "Connect with schools",
+        "Manage orders",
+      ],
+    },
   ];
 
   const handleSubmit = () => {
@@ -65,16 +101,20 @@ const RoleSelection = ({ onRoleSelect }: RoleSelectionProps) => {
           Welcome to Educate Link
         </h1>
         <p className="text-muted-foreground text-lg">
-          Choose your role to customize your experience and connect with the right community.
+          Choose your role to customize your experience and connect with the
+          right community.
         </p>
       </div>
 
       {/* Role Selection */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl text-center">Select Your Role</CardTitle>
+          <CardTitle className="font-heading text-xl text-center">
+            Select Your Role
+          </CardTitle>
           <CardDescription className="text-center">
-            Choose the option that best describes your role in the education sector
+            Choose the option that best describes your role in the education
+            sector
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -82,7 +122,7 @@ const RoleSelection = ({ onRoleSelect }: RoleSelectionProps) => {
             {roles.map((role) => {
               const IconComponent = role.icon;
               const isSelected = selectedRole === role.id;
-              
+
               return (
                 <div
                   key={role.id}
@@ -94,19 +134,28 @@ const RoleSelection = ({ onRoleSelect }: RoleSelectionProps) => {
                   }`}
                 >
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-                      isSelected ? "bg-current/10" : "bg-muted"
-                    }`}>
+                    <div
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                        isSelected ? "bg-current/10" : "bg-muted"
+                      }`}
+                    >
                       <IconComponent className="w-8 h-8" />
                     </div>
-                    
+
                     <div>
-                      <h3 className="font-heading text-xl font-semibold mb-2">{role.name}</h3>
-                      <p className="text-muted-foreground text-sm mb-4">{role.description}</p>
-                      
+                      <h3 className="font-heading text-xl font-semibold mb-2">
+                        {role.name}
+                      </h3>
+                      <p className="text-muted-foreground text-sm mb-4">
+                        {role.description}
+                      </p>
+
                       <ul className="text-xs text-muted-foreground space-y-1">
                         {role.features.map((feature, index) => (
-                          <li key={index} className="flex items-center justify-center">
+                          <li
+                            key={index}
+                            className="flex items-center justify-center"
+                          >
                             <Check className="w-3 h-3 mr-2 text-brand-accent-green" />
                             {feature}
                           </li>

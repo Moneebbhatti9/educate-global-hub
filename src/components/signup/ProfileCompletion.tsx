@@ -1,21 +1,45 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, User, MapPin, FileText, CheckCircle } from "lucide-react";
-import { UserRole } from "@/pages/SignUpFlow";
+import {
+  ArrowLeft,
+  ArrowRight,
+  User,
+  MapPin,
+  FileText,
+  CheckCircle,
+} from "lucide-react";
+import { UserRole } from "@/pages/SignUp";
 
 interface ProfileCompletionProps {
   role: UserRole;
   onComplete: () => void;
+  onBack?: () => void;
 }
 
-const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
+const ProfileCompletion = ({
+  role,
+  onComplete,
+  onBack,
+}: ProfileCompletionProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,11 +49,11 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
     city: "",
     address: "",
     phoneNumber: "",
-    
+
     // About (Step 2)
     bio: "",
     experience: "",
-    
+
     // Role-specific (Step 3)
     specialization: "",
     institution: "",
@@ -38,16 +62,25 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
     subjects: "",
     companyName: "",
     companySize: "",
-    services: ""
+    services: "",
   });
 
   const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const countries = [
-    "United States", "United Kingdom", "Canada", "Australia", "Germany", 
-    "France", "Japan", "South Korea", "Singapore", "UAE", "Other"
+    "United States",
+    "United Kingdom",
+    "Canada",
+    "Australia",
+    "Germany",
+    "France",
+    "Japan",
+    "South Korea",
+    "Singapore",
+    "UAE",
+    "Other",
   ];
 
   const handleNext = () => {
@@ -61,12 +94,14 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    } else if (onBack) {
+      onBack();
     }
   };
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    
+
     // Simulate profile creation
     setTimeout(() => {
       setIsLoading(false);
@@ -85,12 +120,20 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                 id="specialization"
                 placeholder="e.g., Mathematics, English, Science"
                 value={formData.specialization}
-                onChange={(e) => updateFormData("specialization", e.target.value)}
+                onChange={(e) =>
+                  updateFormData("specialization", e.target.value)
+                }
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="yearsExperience">Years of Teaching Experience</Label>
-              <Select onValueChange={(value) => updateFormData("yearsExperience", value)}>
+              <Label htmlFor="yearsExperience">
+                Years of Teaching Experience
+              </Label>
+              <Select
+                onValueChange={(value) =>
+                  updateFormData("yearsExperience", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select experience level" />
                 </SelectTrigger>
@@ -104,12 +147,16 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="certifications">Certifications & Qualifications</Label>
+              <Label htmlFor="certifications">
+                Certifications & Qualifications
+              </Label>
               <Textarea
                 id="certifications"
                 placeholder="List your teaching certifications, degrees, etc."
                 value={formData.certifications}
-                onChange={(e) => updateFormData("certifications", e.target.value)}
+                onChange={(e) =>
+                  updateFormData("certifications", e.target.value)
+                }
                 rows={3}
               />
             </div>
@@ -130,15 +177,23 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="companySize">School Size</Label>
-              <Select onValueChange={(value) => updateFormData("companySize", value)}>
+              <Select
+                onValueChange={(value) => updateFormData("companySize", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select school size" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="small">Small (1-200 students)</SelectItem>
-                  <SelectItem value="medium">Medium (201-500 students)</SelectItem>
-                  <SelectItem value="large">Large (501-1000 students)</SelectItem>
-                  <SelectItem value="xlarge">Very Large (1000+ students)</SelectItem>
+                  <SelectItem value="medium">
+                    Medium (201-500 students)
+                  </SelectItem>
+                  <SelectItem value="large">
+                    Large (501-1000 students)
+                  </SelectItem>
+                  <SelectItem value="xlarge">
+                    Very Large (1000+ students)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -169,7 +224,11 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="yearsExperience">Years in Recruitment</Label>
-              <Select onValueChange={(value) => updateFormData("yearsExperience", value)}>
+              <Select
+                onValueChange={(value) =>
+                  updateFormData("yearsExperience", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select experience level" />
                 </SelectTrigger>
@@ -187,7 +246,9 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                 id="specialization"
                 placeholder="e.g., International teaching placements, Higher education, K-12 education"
                 value={formData.specialization}
-                onChange={(e) => updateFormData("specialization", e.target.value)}
+                onChange={(e) =>
+                  updateFormData("specialization", e.target.value)
+                }
                 rows={3}
               />
             </div>
@@ -218,7 +279,11 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="yearsExperience">Years in Education Sector</Label>
-              <Select onValueChange={(value) => updateFormData("yearsExperience", value)}>
+              <Select
+                onValueChange={(value) =>
+                  updateFormData("yearsExperience", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select experience level" />
                 </SelectTrigger>
@@ -239,11 +304,14 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
   };
 
   const getStepIcon = (step: number) => {
-    if (step < currentStep) return <CheckCircle className="w-5 h-5 text-brand-accent-green" />;
+    if (step < currentStep)
+      return <CheckCircle className="w-5 h-5 text-brand-accent-green" />;
     if (step === 1) return <User className="w-5 h-5" />;
     if (step === 2) return <FileText className="w-5 h-5" />;
     if (step === 3) return <MapPin className="w-5 h-5" />;
-    return <div className="w-5 h-5 rounded-full border-2 border-muted-foreground" />;
+    return (
+      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground" />
+    );
   };
 
   const progress = (currentStep / 3) * 100;
@@ -259,7 +327,9 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
           Tell us more about yourself to personalize your experience
         </p>
         <div className="flex items-center justify-center mt-6 space-x-4">
-          <Badge variant="secondary" className="capitalize">{role}</Badge>
+          <Badge variant="secondary" className="capitalize">
+            {role}
+          </Badge>
         </div>
       </div>
 
@@ -269,11 +339,13 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
           <div className="flex items-center space-x-8">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step <= currentStep 
-                    ? 'bg-brand-primary border-brand-primary text-white' 
-                    : 'border-muted-foreground text-muted-foreground'
-                }`}>
+                <div
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                    step <= currentStep
+                      ? "bg-brand-primary border-brand-primary text-white"
+                      : "border-muted-foreground text-muted-foreground"
+                  }`}
+                >
                   {step < currentStep ? (
                     <CheckCircle className="w-5 h-5" />
                   ) : (
@@ -281,9 +353,11 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                   )}
                 </div>
                 {step < 3 && (
-                  <div className={`w-20 h-0.5 ml-4 ${
-                    step < currentStep ? 'bg-brand-primary' : 'bg-muted'
-                  }`} />
+                  <div
+                    className={`w-20 h-0.5 ml-4 ${
+                      step < currentStep ? "bg-brand-primary" : "bg-muted"
+                    }`}
+                  />
                 )}
               </div>
             ))}
@@ -305,7 +379,8 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
           </CardTitle>
           <CardDescription>
             {currentStep === 1 && "Let's start with your basic information"}
-            {currentStep === 2 && "Tell us about your background and experience"}
+            {currentStep === 2 &&
+              "Tell us about your background and experience"}
             {currentStep === 3 && "A few more details to complete your profile"}
           </CardDescription>
         </CardHeader>
@@ -323,11 +398,13 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                   required
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="country">Country *</Label>
-                  <Select onValueChange={(value) => updateFormData("country", value)}>
+                  <Select
+                    onValueChange={(value) => updateFormData("country", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
@@ -340,7 +417,7 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="city">City *</Label>
                   <Input
@@ -352,7 +429,7 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
                 <Input
@@ -362,14 +439,16 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                   onChange={(e) => updateFormData("address", e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber">Phone Number</Label>
                 <Input
                   id="phoneNumber"
                   placeholder="Enter your phone number"
                   value={formData.phoneNumber}
-                  onChange={(e) => updateFormData("phoneNumber", e.target.value)}
+                  onChange={(e) =>
+                    updateFormData("phoneNumber", e.target.value)
+                  }
                 />
               </div>
             </>
@@ -389,12 +468,15 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                   required
                 />
                 <p className="text-sm text-muted-foreground">
-                  This will be visible on your profile to help others understand your background.
+                  This will be visible on your profile to help others understand
+                  your background.
                 </p>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="experience">Key Experience & Achievements</Label>
+                <Label htmlFor="experience">
+                  Key Experience & Achievements
+                </Label>
                 <Textarea
                   id="experience"
                   placeholder="Highlight your most relevant experience and any notable achievements"
@@ -413,9 +495,7 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
                 <h3 className="font-heading text-lg font-semibold mb-4 capitalize">
                   {role}-Specific Information
                 </h3>
-                <div className="space-y-4">
-                  {getRoleSpecificFields()}
-                </div>
+                <div className="space-y-4">{getRoleSpecificFields()}</div>
               </div>
             </div>
           )}
@@ -425,17 +505,13 @@ const ProfileCompletion = ({ role, onComplete }: ProfileCompletionProps) => {
             <Button
               variant="outline"
               onClick={handleBack}
-              disabled={currentStep === 1}
+              disabled={currentStep === 1 && !onBack}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
             </Button>
 
-            <Button
-              onClick={handleNext}
-              variant="hero"
-              disabled={isLoading}
-            >
+            <Button onClick={handleNext} variant="hero" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

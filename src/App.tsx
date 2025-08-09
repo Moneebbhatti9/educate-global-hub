@@ -10,13 +10,14 @@ import Forum from "./pages/Forum";
 import Resources from "./pages/Resources";
 import SignUp from "./pages/SignUp";
 import SignUpFlow from "./pages/SignUpFlow";
-import SignInFlow from "./pages/SignInFlow";
+import SignInFlow from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
 import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
 import SchoolDashboard from "./pages/dashboards/SchoolDashboard";
 import RecruiterDashboard from "./pages/dashboards/RecruiterDashboard";
 import SupplierDashboard from "./pages/dashboards/SupplierDashboard";
 import NotFound from "./pages/NotFound";
+import SignIn from "./pages/SignIn";
 
 const queryClient = new QueryClient();
 
@@ -32,23 +33,18 @@ const App = () => (
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/resources" element={<Resources />} />
-          
+
           {/* Authentication Routes */}
-          <Route path="/signin" element={<SignInFlow />} />
-          <Route path="/signup" element={<SignUpFlow />} />
-          <Route path="/login" element={<SignInFlow />} />
-          <Route path="/register" element={<SignUpFlow />} />
+          <Route path="/login" element={<SignIn />} />
+          <Route path="/register" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          
+
           {/* Dashboard Routes */}
           <Route path="/dashboard/teacher" element={<TeacherDashboard />} />
           <Route path="/dashboard/school" element={<SchoolDashboard />} />
           <Route path="/dashboard/recruiter" element={<RecruiterDashboard />} />
           <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
-          
-          {/* Legacy Routes */}
-          <Route path="/signup-old" element={<SignUp />} />
-          
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

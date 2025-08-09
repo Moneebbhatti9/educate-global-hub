@@ -1,37 +1,76 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Globe, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Test credentials for different roles
+  const testCredentials = {
+    "teacher@gmail.com": { password: "teacher123", role: "teacher" },
+    "school@gmail.com": { password: "school123", role: "school" },
+    "recruiter@gmail.com": { password: "recruiter123", role: "recruiter" },
+    "supplier@gmail.com": { password: "supplier123", role: "supplier" },
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      // Handle sign in logic here
+
+      // Check test credentials
+      const userCredentials =
+        testCredentials[email as keyof typeof testCredentials];
+
+      if (userCredentials && userCredentials.password === password) {
+        toast({
+          title: "Welcome back!",
+          description: `Signing you in as ${userCredentials.role}...`,
+        });
+
+        // Redirect to role-specific dashboard
+        setTimeout(() => {
+          navigate(`/dashboard/${userCredentials.role}`);
+        }, 1000);
+      } else {
+        toast({
+          title: "Invalid credentials",
+          description:
+            "Please check your email and password, or try one of the test accounts: teacher@gmail.com, school@gmail.com, recruiter@gmail.com, or supplier@gmail.com",
+          variant: "destructive",
+        });
+      }
     }, 2000);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-md mx-auto">
           {/* Header */}
@@ -45,14 +84,17 @@ const SignIn = () => {
               Welcome Back
             </h1>
             <p className="text-muted-foreground">
-              Sign in to your Educate Link account and continue connecting with the global education community.
+              Sign in to your Educate Link account and continue connecting with
+              the global education community.
             </p>
           </div>
 
           {/* Sign In Form */}
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="font-heading text-xl text-center">Sign In</CardTitle>
+              <CardTitle className="font-heading text-xl text-center">
+                Sign In
+              </CardTitle>
               <CardDescription className="text-center">
                 Enter your credentials to access your account
               </CardDescription>
@@ -110,7 +152,9 @@ const SignIn = () => {
                     <Checkbox
                       id="remember"
                       checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setRememberMe(checked as boolean)
+                      }
                     />
                     <Label htmlFor="remember" className="text-sm">
                       Remember me
@@ -146,11 +190,24 @@ const SignIn = () => {
                 </Button>
               </form>
 
+              {/* Test Accounts */}
+              <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+                <h4 className="text-sm font-semibold mb-2">Test Accounts:</h4>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>Teacher: teacher@gmail.com / teacher123</div>
+                  <div>School: school@gmail.com / school123</div>
+                  <div>Recruiter: recruiter@gmail.com / recruiter123</div>
+                  <div>Supplier: supplier@gmail.com / supplier123</div>
+                </div>
+              </div>
+
               {/* Divider */}
               <div className="my-6">
                 <Separator />
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -178,8 +235,12 @@ const SignIn = () => {
                   Google
                 </Button>
                 <Button variant="outline" className="w-full">
-                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
                   Facebook
                 </Button>
@@ -208,7 +269,10 @@ const SignIn = () => {
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link to="/privacy" className="text-brand-primary hover:underline">
+              <Link
+                to="/privacy"
+                className="text-brand-primary hover:underline"
+              >
                 Privacy Policy
               </Link>
             </div>
