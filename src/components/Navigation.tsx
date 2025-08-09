@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe } from "lucide-react";
+import { Menu, X, Globe, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      toggleMenu();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -49,12 +60,28 @@ const Navigation = () => {
               Suppliers
             </Link>
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" asChild>
-                <Link to="/login">Sign In</Link>
-              </Button>
-              <Button variant="hero" asChild>
-                <Link to="/register">Get Started</Link>
-              </Button>
+              {isAuthenticated && user ? (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to={`/dashboard/${user.role}`}>
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                  <Button variant="hero" asChild>
+                    <Link to="/register">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -104,16 +131,39 @@ const Navigation = () => {
               </Link>
               <div className="pt-4 pb-3 border-t border-border">
                 <div className="flex flex-col space-y-3 px-3">
-                  <Button variant="ghost" asChild className="justify-start">
-                    <Link to="/login" onClick={toggleMenu}>
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button variant="hero" asChild>
-                    <Link to="/register" onClick={toggleMenu}>
-                      Get Started
-                    </Link>
-                  </Button>
+                  {isAuthenticated && user ? (
+                    <>
+                      <Button variant="ghost" asChild className="justify-start">
+                        <Link
+                          to={`/dashboard/${user.role}`}
+                          onClick={toggleMenu}
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="justify-start"
+                        onClick={handleSignOut}
+                      >
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="ghost" asChild className="justify-start">
+                        <Link to="/login" onClick={toggleMenu}>
+                          Sign In
+                        </Link>
+                      </Button>
+                      <Button variant="hero" asChild>
+                        <Link to="/register" onClick={toggleMenu}>
+                          Get Started
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

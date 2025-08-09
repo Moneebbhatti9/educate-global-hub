@@ -293,6 +293,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { CountryDropdown } from "@/components/ui/country-dropdown";
 import {
   Search,
   MapPin,
@@ -503,22 +504,11 @@ const Jobs = () => {
               </SelectContent>
             </Select>
 
-            <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Countries</SelectItem>
-                <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                <SelectItem value="United Arab Emirates">
-                  United Arab Emirates
-                </SelectItem>
-                <SelectItem value="Kenya">Kenya</SelectItem>
-                <SelectItem value="Brazil">Brazil</SelectItem>
-                <SelectItem value="Singapore">Singapore</SelectItem>
-                <SelectItem value="Canada">Canada</SelectItem>
-              </SelectContent>
-            </Select>
+            <CountryDropdown
+              onChange={(country) => setSelectedCountry(country.name)}
+              defaultValue={selectedCountry === "all" ? undefined : selectedCountry}
+              placeholder="Select Country"
+            />
 
             <Select value={selectedJobType} onValueChange={setSelectedJobType}>
               <SelectTrigger>

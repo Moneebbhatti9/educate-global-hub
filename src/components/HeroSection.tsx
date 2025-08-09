@@ -1,9 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, BookOpen, MessageSquare, Package } from "lucide-react";
+import {
+  ArrowRight,
+  Users,
+  BookOpen,
+  MessageSquare,
+  Package,
+  LayoutDashboard,
+} from "lucide-react";
 import heroImage from "@/assets/hero-education.jpg";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HeroSection = () => {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-background to-muted py-16 sm:py-24 lg:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,24 +28,44 @@ const HeroSection = () => {
                 </span>
               </h1>
               <p className="text-xl sm:text-2xl text-muted-foreground font-medium">
-                Where teachers, schools, recruiters, and suppliers unite to build the future of education worldwide.
+                Where teachers, schools, recruiters, and suppliers unite to
+                build the future of education worldwide.
               </p>
               <p className="text-lg text-muted-foreground max-w-2xl">
-                Find teaching opportunities across continents, discover educational resources, connect with professionals, and access everything you need for educational excellence.
+                Find teaching opportunities across continents, discover
+                educational resources, connect with professionals, and access
+                everything you need for educational excellence.
               </p>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="xl" asChild>
-                <Link to="/register" className="group">
-                  Get Started Today
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button variant="hero-outline" size="xl" asChild>
-                <Link to="/jobs">Browse Jobs</Link>
-              </Button>
+              {isAuthenticated && user ? (
+                <>
+                  <Button variant="hero" size="xl" asChild>
+                    <Link to={`/dashboard/${user.role}`} className="group">
+                      <LayoutDashboard className="mr-2 h-5 w-5" />
+                      Go to Dashboard
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </Button>
+                  <Button variant="hero-outline" size="xl" asChild>
+                    <Link to="/jobs">Browse Jobs</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="hero" size="xl" asChild>
+                    <Link to="/register" className="group">
+                      Get Started Today
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </Button>
+                  <Button variant="hero-outline" size="xl" asChild>
+                    <Link to="/jobs">Browse Jobs</Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Quick Stats */}
