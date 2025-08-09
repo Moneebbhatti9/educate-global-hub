@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, 
   MessageCircle, 
@@ -19,11 +23,28 @@ import {
   BookOpen,
   HelpCircle,
   Lightbulb,
-  Plus
+  Plus,
+  Tag,
+  Send
 } from "lucide-react";
 
 const Forum = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [newDiscussion, setNewDiscussion] = useState({
+    title: "",
+    content: "",
+    category: "",
+    tags: ""
+  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleCreateDiscussion = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle discussion creation logic here
+    console.log("New discussion:", newDiscussion);
+    setIsDialogOpen(false);
+    setNewDiscussion({ title: "", content: "", category: "", tags: "" });
+  };
 
   const categories = [
     {
@@ -182,10 +203,89 @@ const Forum = () => {
                 as a global education community.
               </p>
             </div>
-            <Button variant="hero" className="ml-4">
-              <Plus className="w-4 h-4 mr-2" />
-              New Discussion
-            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="hero" className="ml-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Discussion
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="font-heading text-xl">Start a New Discussion</DialogTitle>
+                  <DialogDescription>
+                    Share your thoughts, ask questions, or start a conversation with the community.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <form onSubmit={handleCreateDiscussion} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Discussion Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter a clear, descriptive title for your discussion"
+                      value={newDiscussion.title}
+                      onChange={(e) => setNewDiscussion({...newDiscussion, title: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select value={newDiscussion.category} onValueChange={(value) => setNewDiscussion({...newDiscussion, category: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="teaching-tips">Teaching Tips & Strategies</SelectItem>
+                        <SelectItem value="curriculum">Curriculum & Resources</SelectItem>
+                        <SelectItem value="career-advice">Career Advice</SelectItem>
+                        <SelectItem value="help-support">Help & Support</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="content">Content *</Label>
+                    <Textarea
+                      id="content"
+                      placeholder="Share your thoughts, ask your question, or describe your topic in detail..."
+                      value={newDiscussion.content}
+                      onChange={(e) => setNewDiscussion({...newDiscussion, content: e.target.value})}
+                      rows={6}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Tags</Label>
+                    <div className="relative">
+                      <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="tags"
+                        placeholder="e.g., mathematics, classroom-management, new-teacher (separate with commas)"
+                        value={newDiscussion.tags}
+                        onChange={(e) => setNewDiscussion({...newDiscussion, tags: e.target.value})}
+                        className="pl-10"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Add relevant tags to help others find your discussion
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" variant="hero">
+                      <Send className="w-4 h-4 mr-2" />
+                      Start Discussion
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
