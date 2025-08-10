@@ -29,13 +29,6 @@ import SupplierDashboard from "./pages/dashboards/SupplierDashboard";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import Unauthorized from "./pages/Unauthorized";
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import TermsOfService from "./pages/legal/TermsOfService";
-import CookiePolicy from "./pages/legal/CookiePolicy";
-import GDPRCompliance from "./pages/legal/GDPRCompliance";
-import SubscriptionPlans from "./pages/subscription/SubscriptionPlans";
-import SupplierLanding from "./pages/supplier/SupplierLanding";
-import ProfileManagement from "./pages/ProfileManagement";
 
 const queryClient = new QueryClient();
 
@@ -69,21 +62,6 @@ const AppRoutes = () => {
           </PublicRoute>
         }
       />
-
-      {/* Legal Pages */}
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/cookies" element={<CookiePolicy />} />
-      <Route path="/gdpr" element={<GDPRCompliance />} />
-
-      {/* Subscription Pages */}
-      <Route path="/pricing/:role" element={<SubscriptionPlans />} />
-
-      {/* Supplier Landing */}
-      <Route path="/suppliers" element={<SupplierLanding />} />
-      
-      {/* Profile Management */}
-      <Route path="/dashboard/:role/profile-management" element={<ProfileManagement />} />
       <Route path="/otp-verification" element={<OTPVerificationPage />} />
       <Route
         path="/profile-completion"

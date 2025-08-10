@@ -26,7 +26,7 @@ export const authDebug = {
       console.log("  Token expired:", jwtHelpers.isTokenExpired(token));
 
       try {
-        const decoded = jwtHelpers.parseToken(token);
+        const decoded = jwtHelpers.decodeToken(token);
         console.log("  Token payload:", decoded);
       } catch (error) {
         console.log("  Token decode error:", error);
