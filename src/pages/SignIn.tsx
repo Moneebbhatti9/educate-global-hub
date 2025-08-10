@@ -16,55 +16,59 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Globe, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { loginSchema } from "@/helpers/validation";
+import { useFormValidation } from "@/hooks/useFormValidation";
+
+interface LoginFormData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
 
 const SignIn = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { handleError, showSuccess } = useErrorHandler();
+  const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Test credentials for different roles
-  const testCredentials = {
-    "teacher@gmail.com": { password: "teacher123", role: "teacher" },
-    "school@gmail.com": { password: "school123", role: "school" },
-    "recruiter@gmail.com": { password: "recruiter123", role: "recruiter" },
-    "supplier@gmail.com": { password: "supplier123", role: "supplier" },
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    getFieldError,
+  } = useFormValidation({
+    schema: loginSchema,
+    mode: "onTouched",
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const formData = watch();
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+  const handleFormSubmit = async (data: {
+    email: string;
+    password: string;
+    rememberMe?: boolean;
+  }) => {
+    try {
+      await login({
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe,
+      });
 
-      // Check test credentials
-      const userCredentials =
-        testCredentials[email as keyof typeof testCredentials];
-
-      if (userCredentials && userCredentials.password === password) {
-        toast({
-          title: "Welcome back!",
-          description: `Signing you in as ${userCredentials.role}...`,
-        });
-
-        // Redirect to role-specific dashboard
-        setTimeout(() => {
-          navigate(`/dashboard/${userCredentials.role}`);
-        }, 1000);
-      } else {
-        toast({
-          title: "Invalid credentials",
-          description:
-            "Please check your email and password, or try one of the test accounts: teacher@gmail.com, school@gmail.com, recruiter@gmail.com, or supplier@gmail.com",
-          variant: "destructive",
-        });
-      }
-    }, 2000);
+      showSuccess("Welcome back!", "Successfully signed in to your account.");
+    } catch (error) {
+      handleError(error, "Login failed");
+    }
   };
 
   return (
@@ -100,7 +104,10 @@ const SignIn = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={handleSubmit(handleFormSubmit)}
+                className="space-y-4"
+              >
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
@@ -110,12 +117,17 @@ const SignIn = () => {
                       id="email"
                       type="email"
                       placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
+                      className={`pl-10 ${
+                        errors.email ? "border-destructive" : ""
+                      }`}
+                      {...register("email")}
                     />
                   </div>
+                  {getFieldError("email") && (
+                    <p className="text-sm text-destructive">
+                      {getFieldError("email")}
+                    </p>
+                  )}
                 </div>
 
                 {/* Password Field */}
@@ -127,10 +139,10 @@ const SignIn = () => {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10"
-                      required
+                      className={`pl-10 pr-10 ${
+                        errors.password ? "border-destructive" : ""
+                      }`}
+                      {...register("password")}
                     />
                     <button
                       type="button"
@@ -144,19 +156,24 @@ const SignIn = () => {
                       )}
                     </button>
                   </div>
+                  {getFieldError("password") && (
+                    <p className="text-sm text-destructive">
+                      {getFieldError("password")}
+                    </p>
+                  )}
                 </div>
 
                 {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="remember"
-                      checked={rememberMe}
+                      id="rememberMe"
+                      checked={formData.rememberMe}
                       onCheckedChange={(checked) =>
-                        setRememberMe(checked as boolean)
+                        setValue("rememberMe", checked as boolean)
                       }
                     />
-                    <Label htmlFor="remember" className="text-sm">
+                    <Label htmlFor="rememberMe" className="text-sm">
                       Remember me
                     </Label>
                   </div>
@@ -189,17 +206,6 @@ const SignIn = () => {
                   )}
                 </Button>
               </form>
-
-              {/* Test Accounts */}
-              <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                <h4 className="text-sm font-semibold mb-2">Test Accounts:</h4>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>Teacher: teacher@gmail.com / teacher123</div>
-                  <div>School: school@gmail.com / school123</div>
-                  <div>Recruiter: recruiter@gmail.com / recruiter123</div>
-                  <div>Supplier: supplier@gmail.com / supplier123</div>
-                </div>
-              </div>
 
               {/* Divider */}
               <div className="my-6">
@@ -251,7 +257,7 @@ const SignIn = () => {
                 <p className="text-sm text-muted-foreground">
                   Don't have an account?{" "}
                   <Link
-                    to="/signup"
+                    to="/register"
                     className="text-brand-primary hover:underline font-medium"
                   >
                     Sign up for free

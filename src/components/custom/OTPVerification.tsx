@@ -11,12 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Shield, ArrowRight, RotateCcw, ArrowLeft } from "lucide-react";
 
 interface OTPVerificationProps {
-  onVerify: () => void;
+  onVerify: (otp: string) => void;
+  onResend?: () => void;
   onBack?: () => void;
   email?: string;
 }
 
-const OTPVerification = ({ onVerify, onBack, email }: OTPVerificationProps) => {
+const OTPVerification = ({
+  onVerify,
+  onResend,
+  onBack,
+  email,
+}: OTPVerificationProps) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
@@ -59,20 +65,30 @@ const OTPVerification = ({ onVerify, onBack, email }: OTPVerificationProps) => {
     if (otpString.length === 6) {
       setIsLoading(true);
 
-      // Simulate verification (accept any 6-digit code)
-      setTimeout(() => {
+      try {
+        await onVerify(otpString);
+      } catch (error) {
+        console.error("OTP verification error:", error);
+      } finally {
         setIsLoading(false);
-        onVerify();
-      }, 2000);
+      }
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setTimer(60);
     setCanResend(false);
     setOtp(["", "", "", "", "", ""]);
     // Reset focus to first input
     inputRefs.current[0]?.focus();
+
+    if (onResend) {
+      try {
+        await onResend();
+      } catch (error) {
+        console.error("Resend OTP error:", error);
+      }
+    }
   };
 
   const isComplete = otp.every((digit) => digit !== "");

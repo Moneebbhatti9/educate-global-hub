@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Globe,
   Mail,
@@ -29,30 +30,55 @@ import {
   Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import OTPVerification from "@/components/signup/OTPVerification";
-import ProfileCompletion from "@/components/signup/ProfileCompletion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { signupSchema } from "@/helpers/validation";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 export type UserRole = "teacher" | "school" | "recruiter" | "supplier";
+
+interface SignupFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: UserRole;
+  agreeToTerms: boolean;
+  receiveUpdates: boolean;
+}
 
 const SignUp = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<"signup" | "otp" | "profile">(
-    "signup"
-  );
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "" as UserRole | "",
-  });
+  const { handleError, showSuccess } = useErrorHandler();
+  const { signup, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [receiveUpdates, setReceiveUpdates] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    getFieldError,
+  } = useFormValidation({
+    schema: signupSchema,
+    mode: "onTouched",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "teacher" as UserRole,
+      agreeToTerms: false,
+      receiveUpdates: false,
+    },
+  });
+
+  const formData = watch();
 
   const roles = [
     {
@@ -62,6 +88,7 @@ const SignUp = () => {
       icon: GraduationCap,
       color:
         "border-brand-primary bg-brand-primary/5 hover:bg-brand-primary/10",
+      available: true,
     },
     {
       id: "school" as UserRole,
@@ -70,120 +97,75 @@ const SignUp = () => {
       icon: School,
       color:
         "border-brand-accent-green bg-brand-accent-green/5 hover:bg-brand-accent-green/10",
+      available: true,
     },
     {
       id: "recruiter" as UserRole,
       name: "Recruiter",
-      description: "Connect talent with institutions",
+      description: "Coming Soon",
       icon: UserCheck,
       color:
-        "border-brand-secondary bg-brand-secondary/5 hover:bg-brand-secondary/10",
+        "border-muted bg-muted/5 hover:bg-muted/10",
+      available: false,
     },
     {
       id: "supplier" as UserRole,
       name: "Supplier",
-      description: "Provide educational resources",
+      description: "Coming Soon",
       icon: Truck,
       color:
-        "border-brand-accent-orange bg-brand-accent-orange/5 hover:bg-brand-accent-orange/10",
+        "border-muted bg-muted/5 hover:bg-muted/10",
+      available: false,
     },
   ];
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.role) {
-      toast({
-        title: "Please select your role",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!acceptTerms) {
-      toast({
-        title: "Please accept the terms and conditions",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Passwords do not match",
-        variant: "destructive",
-      });
+  const handleFormSubmit = async (data: {
+    role: "teacher" | "school" | "recruiter" | "supplier" | "admin";
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    agreeToTerms: boolean;
+    receiveUpdates?: boolean;
+  }) => {
+    // Check if selected role is available
+    const selectedRole = roles.find(r => r.id === data.role);
+    if (!selectedRole?.available) {
+      handleError(new Error("Selected role is not available"), "Invalid role selection");
       return;
     }
 
-    setIsLoading(true);
+    try {
+      await signup({
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        agreeToTerms: data.agreeToTerms,
+      });
 
-    // Simulate API call for account creation
-    setTimeout(() => {
-      setIsLoading(false);
-      setCurrentStep("otp");
-    }, 2000);
-  };
+      showSuccess(
+        "Account created successfully!",
+        "Please check your email for verification."
+      );
 
-  const handleOTPVerify = () => {
-    setCurrentStep("profile");
-  };
-
-  const handleProfileComplete = () => {
-    // Redirect to appropriate dashboard based on role
-    if (formData.role) {
-      navigate(`/dashboard/${formData.role}`);
+      // Navigate to OTP verification with user data
+      navigate("/otp-verification", {
+        state: {
+          email: data.email,
+          role: data.role,
+          firstName: data.firstName,
+          lastName: data.lastName,
+        },
+      });
+    } catch (error) {
+      handleError(error, "Signup failed");
     }
   };
 
-  const handleBackToSignup = () => {
-    setCurrentStep("signup");
-  };
-
-  const handleBackToOTP = () => {
-    setCurrentStep("otp");
-  };
-
-  // Render OTP Verification Step
-  if (currentStep === "otp") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <OTPVerification
-            onVerify={handleOTPVerify}
-            onBack={handleBackToSignup}
-            email={formData.email}
-          />
-        </main>
-
-        <Footer />
-      </div>
-    );
-  }
-
-  // Render Profile Completion Step
-  if (currentStep === "profile") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <ProfileCompletion
-            role={formData.role as UserRole}
-            onComplete={handleProfileComplete}
-            onBack={handleBackToOTP}
-          />
-        </main>
-
-        <Footer />
-      </div>
-    );
-  }
-
-  // Render Initial Sign Up Form
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -217,7 +199,10 @@ const SignUp = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={handleSubmit(handleFormSubmit)}
+                className="space-y-6"
+              >
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -228,14 +213,17 @@ const SignUp = () => {
                         id="firstName"
                         type="text"
                         placeholder="Enter your first name"
-                        value={formData.firstName}
-                        onChange={(e) =>
-                          handleInputChange("firstName", e.target.value)
-                        }
-                        className="pl-10"
-                        required
+                        className={`pl-10 ${
+                          errors.firstName ? "border-destructive" : ""
+                        }`}
+                        {...register("firstName")}
                       />
                     </div>
+                    {getFieldError("firstName") && (
+                      <p className="text-sm text-destructive">
+                        {getFieldError("firstName")}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
@@ -245,14 +233,17 @@ const SignUp = () => {
                         id="lastName"
                         type="text"
                         placeholder="Enter your last name"
-                        value={formData.lastName}
-                        onChange={(e) =>
-                          handleInputChange("lastName", e.target.value)
-                        }
-                        className="pl-10"
-                        required
+                        className={`pl-10 ${
+                          errors.lastName ? "border-destructive" : ""
+                        }`}
+                        {...register("lastName")}
                       />
                     </div>
+                    {getFieldError("lastName") && (
+                      <p className="text-sm text-destructive">
+                        {getFieldError("lastName")}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -265,14 +256,17 @@ const SignUp = () => {
                       id="email"
                       type="email"
                       placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        handleInputChange("email", e.target.value)
-                      }
-                      className="pl-10"
-                      required
+                      className={`pl-10 ${
+                        errors.email ? "border-destructive" : ""
+                      }`}
+                      {...register("email")}
                     />
                   </div>
+                  {getFieldError("email") && (
+                    <p className="text-sm text-destructive">
+                      {getFieldError("email")}
+                    </p>
+                  )}
                 </div>
 
                 {/* Password Fields */}
@@ -285,12 +279,10 @@ const SignUp = () => {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
-                        value={formData.password}
-                        onChange={(e) =>
-                          handleInputChange("password", e.target.value)
-                        }
-                        className="pl-10 pr-10"
-                        required
+                        className={`pl-10 pr-10 ${
+                          errors.password ? "border-destructive" : ""
+                        }`}
+                        {...register("password")}
                       />
                       <button
                         type="button"
@@ -304,6 +296,11 @@ const SignUp = () => {
                         )}
                       </button>
                     </div>
+                    {getFieldError("password") && (
+                      <p className="text-sm text-destructive">
+                        {getFieldError("password")}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -313,12 +310,10 @@ const SignUp = () => {
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
-                        value={formData.confirmPassword}
-                        onChange={(e) =>
-                          handleInputChange("confirmPassword", e.target.value)
-                        }
-                        className="pl-10 pr-10"
-                        required
+                        className={`pl-10 pr-10 ${
+                          errors.confirmPassword ? "border-destructive" : ""
+                        }`}
+                        {...register("confirmPassword")}
                       />
                       <button
                         type="button"
@@ -334,23 +329,30 @@ const SignUp = () => {
                         )}
                       </button>
                     </div>
+                    {getFieldError("confirmPassword") && (
+                      <p className="text-sm text-destructive">
+                        {getFieldError("confirmPassword")}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 {/* Role Selection */}
                 <div className="space-y-3">
-                  <Label>Choose Your Role</Label>
+                  <Label htmlFor="role">Choose Your Role</Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {roles.map((role) => {
                       const IconComponent = role.icon;
                       return (
                         <div
                           key={role.id}
-                          onClick={() => handleInputChange("role", role.id)}
-                          className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                            formData.role === role.id
-                              ? `${role.color} border-current`
-                              : "border-border hover:border-muted-foreground"
+                          onClick={() => role.available && setValue("role", role.id)}
+                          className={`relative p-4 border-2 rounded-lg transition-all duration-200 ${
+                            !role.available
+                              ? "border-muted bg-muted/20 cursor-not-allowed opacity-60"
+                              : formData.role === role.id
+                              ? `${role.color} border-current cursor-pointer`
+                              : "border-border hover:border-muted-foreground cursor-pointer"
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -371,11 +373,18 @@ const SignUp = () => {
                                 {role.description}
                               </div>
                             </div>
-                            {formData.role === role.id && (
+                            {formData.role === role.id && role.available && (
                               <div className="absolute top-2 right-2">
                                 <div className="w-5 h-5 rounded-full bg-current flex items-center justify-center">
                                   <Check className="w-3 h-3 text-white" />
                                 </div>
+                              </div>
+                            )}
+                            {!role.available && (
+                              <div className="absolute top-2 right-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  Coming Soon
+                                </Badge>
                               </div>
                             )}
                           </div>
@@ -383,6 +392,11 @@ const SignUp = () => {
                       );
                     })}
                   </div>
+                  {getFieldError("role") && (
+                    <p className="text-sm text-destructive">
+                      {getFieldError("role")}
+                    </p>
+                  )}
                 </div>
 
                 {/* Checkboxes */}
@@ -390,9 +404,9 @@ const SignUp = () => {
                   <div className="flex items-start space-x-2">
                     <Checkbox
                       id="terms"
-                      checked={acceptTerms}
+                      checked={formData.agreeToTerms}
                       onCheckedChange={(checked) =>
-                        setAcceptTerms(checked as boolean)
+                        setValue("agreeToTerms", checked as boolean)
                       }
                       className="mt-1"
                     />
@@ -413,12 +427,17 @@ const SignUp = () => {
                       </Link>
                     </Label>
                   </div>
+                  {getFieldError("agreeToTerms") && (
+                    <p className="text-sm text-destructive ml-6">
+                      {getFieldError("agreeToTerms")}
+                    </p>
+                  )}
                   <div className="flex items-start space-x-2">
                     <Checkbox
                       id="updates"
-                      checked={receiveUpdates}
+                      checked={formData.receiveUpdates}
                       onCheckedChange={(checked) =>
-                        setReceiveUpdates(checked as boolean)
+                        setValue("receiveUpdates", checked as boolean)
                       }
                       className="mt-1"
                     />
@@ -504,7 +523,7 @@ const SignUp = () => {
                 <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
                   <Link
-                    to="/signin"
+                    to="/login"
                     className="text-brand-primary hover:underline font-medium"
                   >
                     Sign in here

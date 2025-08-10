@@ -5,6 +5,7 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
+    "strict": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
@@ -14,6 +15,7 @@
     "skipLibCheck": true,
     "allowJs": true,
     "noUnusedLocals": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "forceConsistentCasingInFileNames": true
   }
 }

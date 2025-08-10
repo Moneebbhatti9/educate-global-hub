@@ -1,22 +1,28 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import DashboardLayout from "@/layout/DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Briefcase, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  BookOpen, 
-  TrendingUp, 
+import {
+  Briefcase,
+  MapPin,
+  Calendar,
+  Users,
+  BookOpen,
+  TrendingUp,
   MessageCircle,
   Star,
   Clock,
   DollarSign,
   Eye,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
 
 const TeacherDashboard = () => {
@@ -26,29 +32,29 @@ const TeacherDashboard = () => {
       value: "47",
       change: "+12%",
       icon: Eye,
-      color: "text-brand-primary"
+      color: "text-brand-primary",
     },
     {
       title: "Applications Sent",
       value: "8",
       change: "+3",
       icon: Briefcase,
-      color: "text-brand-accent-green"
+      color: "text-brand-accent-green",
     },
     {
       title: "Interview Requests",
       value: "3",
       change: "+1",
       icon: Users,
-      color: "text-brand-secondary"
+      color: "text-brand-secondary",
     },
     {
       title: "Messages",
       value: "12",
       change: "+5",
       icon: MessageCircle,
-      color: "text-brand-accent-orange"
-    }
+      color: "text-brand-accent-orange",
+    },
   ];
 
   const recentJobs = [
@@ -60,7 +66,7 @@ const TeacherDashboard = () => {
       salary: "$45,000 - $65,000",
       type: "Full-time",
       posted: "2 days ago",
-      applicants: 23
+      applicants: 23,
     },
     {
       id: 2,
@@ -70,7 +76,7 @@ const TeacherDashboard = () => {
       salary: "$55,000 - $75,000",
       type: "Full-time",
       posted: "5 days ago",
-      applicants: 18
+      applicants: 18,
     },
     {
       id: 3,
@@ -80,8 +86,8 @@ const TeacherDashboard = () => {
       salary: "$35,000 - $50,000",
       type: "Full-time",
       posted: "1 week ago",
-      applicants: 31
-    }
+      applicants: 31,
+    },
   ];
 
   const applications = [
@@ -91,7 +97,7 @@ const TeacherDashboard = () => {
       school: "International School of London",
       status: "Interview Scheduled",
       appliedDate: "March 15, 2024",
-      statusColor: "bg-brand-accent-green text-white"
+      statusColor: "bg-brand-accent-green text-white",
     },
     {
       id: 2,
@@ -99,7 +105,7 @@ const TeacherDashboard = () => {
       school: "Dubai International Academy",
       status: "Under Review",
       appliedDate: "March 12, 2024",
-      statusColor: "bg-brand-secondary text-white"
+      statusColor: "bg-brand-secondary text-white",
     },
     {
       id: 3,
@@ -107,12 +113,16 @@ const TeacherDashboard = () => {
       school: "Singapore American School",
       status: "Rejected",
       appliedDate: "March 8, 2024",
-      statusColor: "bg-red-500 text-white"
-    }
+      statusColor: "bg-red-500 text-white",
+    },
   ];
 
   return (
-    <DashboardLayout role="teacher" userName="Sarah Johnson" userEmail="sarah.johnson@email.com">
+    <DashboardLayout
+      role="teacher"
+      userName="Sarah Johnson"
+      userEmail="sarah.johnson@email.com"
+    >
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>
@@ -129,15 +139,23 @@ const TeacherDashboard = () => {
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="hover:shadow-card-hover transition-shadow">
+              <Card
+                key={index}
+                className="hover:shadow-card-hover transition-shadow"
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
                   <Icon className={`h-4 w-4 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
                   <p className="text-xs text-muted-foreground">
-                    <span className="text-brand-accent-green">{stat.change}</span> from last month
+                    <span className="text-brand-accent-green">
+                      {stat.change}
+                    </span>{" "}
+                    from last month
                   </p>
                 </CardContent>
               </Card>
@@ -151,7 +169,9 @@ const TeacherDashboard = () => {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="font-heading text-xl">Recommended Jobs</CardTitle>
+                  <CardTitle className="font-heading text-xl">
+                    Recommended Jobs
+                  </CardTitle>
                   <Button variant="outline" size="sm">
                     View All
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -163,7 +183,10 @@ const TeacherDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {recentJobs.map((job) => (
-                  <div key={job.id} className="p-4 border border-border rounded-lg hover:border-brand-primary/30 hover:shadow-sm transition-all cursor-pointer">
+                  <div
+                    key={job.id}
+                    className="p-4 border border-border rounded-lg hover:border-brand-primary/30 hover:shadow-sm transition-all cursor-pointer"
+                  >
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="font-semibold text-lg">{job.title}</h3>
@@ -171,7 +194,7 @@ const TeacherDashboard = () => {
                       </div>
                       <Badge variant="outline">{job.type}</Badge>
                     </div>
-                    
+
                     <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 mr-1" />
@@ -182,7 +205,7 @@ const TeacherDashboard = () => {
                         {job.salary}
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="w-4 h-4 mr-1" />
@@ -203,7 +226,9 @@ const TeacherDashboard = () => {
             {/* Profile Completion */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg">Profile Completion</CardTitle>
+                <CardTitle className="font-heading text-lg">
+                  Profile Completion
+                </CardTitle>
                 <CardDescription>
                   Complete your profile to get more job matches
                 </CardDescription>
@@ -216,7 +241,7 @@ const TeacherDashboard = () => {
                   </div>
                   <Progress value={85} className="h-2" />
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>Add Profile Photo</span>
@@ -235,7 +260,7 @@ const TeacherDashboard = () => {
                     <span className="text-brand-accent-green">✓</span>
                   </div>
                 </div>
-                
+
                 <Button variant="outline" size="sm" className="w-full">
                   Complete Profile
                 </Button>
@@ -245,22 +270,33 @@ const TeacherDashboard = () => {
             {/* Application Status */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg">Recent Applications</CardTitle>
+                <CardTitle className="font-heading text-lg">
+                  Recent Applications
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {applications.map((app) => (
-                  <div key={app.id} className="p-3 border border-border rounded-lg">
-                    <div className="font-semibold text-sm mb-1">{app.position}</div>
-                    <div className="text-sm text-muted-foreground mb-2">{app.school}</div>
+                  <div
+                    key={app.id}
+                    className="p-3 border border-border rounded-lg"
+                  >
+                    <div className="font-semibold text-sm mb-1">
+                      {app.position}
+                    </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {app.school}
+                    </div>
                     <div className="flex items-center justify-between">
                       <Badge className={`text-xs ${app.statusColor}`}>
                         {app.status}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{app.appliedDate}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {app.appliedDate}
+                      </span>
                     </div>
                   </div>
                 ))}
-                
+
                 <Button variant="outline" size="sm" className="w-full mt-3">
                   View All Applications
                 </Button>
@@ -270,22 +306,40 @@ const TeacherDashboard = () => {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg">Quick Actions</CardTitle>
+                <CardTitle className="font-heading text-lg">
+                  Quick Actions
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                >
                   <Briefcase className="w-4 h-4 mr-2" />
                   Search Jobs
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                >
                   <Users className="w-4 h-4 mr-2" />
                   Browse Schools
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                >
                   <BookOpen className="w-4 h-4 mr-2" />
                   Teaching Resources
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Forum Discussions
                 </Button>

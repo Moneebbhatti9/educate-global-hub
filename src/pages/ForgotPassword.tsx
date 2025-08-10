@@ -3,78 +3,137 @@ import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Mail, Shield, KeyRound, CheckCircle } from "lucide-react";
-import OTPVerification from "@/components/signup/OTPVerification";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Mail,
+  Shield,
+  KeyRound,
+  CheckCircle,
+} from "lucide-react";
+import OTPVerification from "@/components/custom/OTPVerification";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import {
+  passwordResetSchema,
+  passwordResetConfirmSchema,
+} from "@/helpers/validation";
+import { useFormValidation } from "@/hooks/useFormValidation";
+
+interface EmailFormData {
+  email: string;
+}
+
+interface PasswordResetFormData {
+  email: string;
+  otp: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<'email' | 'otp' | 'reset'>('email');
-  const [email, setEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { handleError, showSuccess } = useErrorHandler();
+  const { passwordReset, passwordResetConfirm, isLoading } = useAuth();
+  const [currentStep, setCurrentStep] = useState<"email" | "otp" | "reset">(
+    "email"
+  );
+  const [emailForOTP, setEmailForOTP] = useState("");
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate sending OTP
-    setTimeout(() => {
-      setIsLoading(false);
-      setCurrentStep('otp');
-      toast({
-        title: "OTP Sent",
-        description: "Check your email for the verification code.",
-      });
-    }, 2000);
-  };
+  const emailForm = useFormValidation<{ email?: string }>({
+    schema: passwordResetSchema,
+    mode: "onTouched",
+    defaultValues: {
+      email: "",
+    },
+  });
 
-  const handleOTPVerify = () => {
-    setCurrentStep('reset');
-  };
+  const passwordForm = useFormValidation<{
+    email?: string;
+    otp?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+  }>({
+    schema: passwordResetConfirmSchema,
+    mode: "onTouched",
+    defaultValues: {
+      email: "",
+      otp: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please ensure both password fields match.",
-        variant: "destructive"
-      });
-      return;
+  const handleEmailSubmit = async (data: EmailFormData) => {
+    try {
+      await passwordReset({ email: data.email });
+      setEmailForOTP(data.email);
+      setCurrentStep("otp");
+      showSuccess("OTP Sent", "Check your email for the verification code.");
+    } catch (error) {
+      handleError(error, "Failed to send OTP");
     }
+  };
 
-    setIsLoading(true);
-    
-    // Simulate password reset
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Password Updated",
-        description: "Your password has been successfully updated.",
+  const handleOTPVerify = async (otp: string) => {
+    try {
+      await passwordResetConfirm({
+        email: emailForOTP,
+        otp,
+        newPassword: passwordForm.getValues("newPassword") ?? "",
+        confirmPassword: passwordForm.getValues("confirmPassword") ?? "",
       });
-      
+      setCurrentStep("reset");
+    } catch (error) {
+      handleError(error, "OTP verification failed");
+      throw error;
+    }
+  };
+
+  const handlePasswordReset = async (data: PasswordResetFormData) => {
+    try {
+      await passwordResetConfirm({
+        email: emailForOTP,
+        otp: "", // This should be handled by OTP step
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      });
+
+      showSuccess(
+        "Password Updated",
+        "Your password has been successfully updated."
+      );
+
       // Redirect to sign in
       setTimeout(() => {
-        navigate('/signin');
+        navigate("/login");
       }, 1500);
-    }, 2000);
+    } catch (error) {
+      handleError(error, "Password update failed");
+    }
   };
+
+  const passwordFormData = passwordForm.watch();
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-md mx-auto">
           {/* Step 1: Email Input */}
-          {currentStep === 'email' && (
+          {currentStep === "email" && (
             <>
               {/* Header */}
               <div className="text-center mb-8">
@@ -87,20 +146,30 @@ const ForgotPassword = () => {
                   Reset Your Password
                 </h1>
                 <p className="text-muted-foreground">
-                  Enter your email address and we'll send you a verification code to reset your password.
+                  Enter your email address and we'll send you a verification
+                  code to reset your password.
                 </p>
               </div>
 
               {/* Email Form */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="font-heading text-xl text-center">Enter Your Email</CardTitle>
+                  <CardTitle className="font-heading text-xl text-center">
+                    Enter Your Email
+                  </CardTitle>
                   <CardDescription className="text-center">
                     We'll send you a verification code
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleEmailSubmit} className="space-y-4">
+                  <form
+                    onSubmit={emailForm.handleSubmit((data) =>
+                      handleEmailSubmit({
+                        email: data.email ?? "",
+                      })
+                    )}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
                       <div className="relative">
@@ -109,12 +178,19 @@ const ForgotPassword = () => {
                           id="email"
                           type="email"
                           placeholder="Enter your email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
+                          className={`pl-10 ${
+                            emailForm.formState.errors.email
+                              ? "border-destructive"
+                              : ""
+                          }`}
+                          {...emailForm.register("email")}
                         />
                       </div>
+                      {emailForm.getFieldError("email") && (
+                        <p className="text-sm text-destructive">
+                          {emailForm.getFieldError("email")}
+                        </p>
+                      )}
                     </div>
 
                     <Button
@@ -140,7 +216,7 @@ const ForgotPassword = () => {
 
                   <div className="mt-6 text-center">
                     <Link
-                      to="/signin"
+                      to="/login"
                       className="inline-flex items-center text-sm text-brand-primary hover:underline"
                     >
                       <ArrowLeft className="w-4 h-4 mr-1" />
@@ -153,12 +229,12 @@ const ForgotPassword = () => {
           )}
 
           {/* Step 2: OTP Verification */}
-          {currentStep === 'otp' && (
+          {currentStep === "otp" && (
             <div>
               <OTPVerification onVerify={handleOTPVerify} />
               <div className="mt-6 text-center">
                 <button
-                  onClick={() => setCurrentStep('email')}
+                  onClick={() => setCurrentStep("email")}
                   className="inline-flex items-center text-sm text-brand-primary hover:underline"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
@@ -169,7 +245,7 @@ const ForgotPassword = () => {
           )}
 
           {/* Step 3: New Password */}
-          {currentStep === 'reset' && (
+          {currentStep === "reset" && (
             <>
               {/* Header */}
               <div className="text-center mb-8">
@@ -189,24 +265,39 @@ const ForgotPassword = () => {
               {/* Password Form */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="font-heading text-xl text-center">Set New Password</CardTitle>
+                  <CardTitle className="font-heading text-xl text-center">
+                    Set New Password
+                  </CardTitle>
                   <CardDescription className="text-center">
                     Make sure it's at least 8 characters long
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <form
+                    onSubmit={passwordForm.handleSubmit((data) =>
+                      handlePasswordReset(data as PasswordResetFormData)
+                    )}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="newPassword">New Password</Label>
                       <Input
                         id="newPassword"
                         type="password"
                         placeholder="Enter new password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        className={`${
+                          passwordForm.formState.errors.newPassword
+                            ? "border-destructive"
+                            : ""
+                        }`}
+                        {...passwordForm.register("newPassword")}
                         minLength={8}
-                        required
                       />
+                      {passwordForm.getFieldError("newPassword") && (
+                        <p className="text-sm text-destructive">
+                          {passwordForm.getFieldError("newPassword")}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -215,11 +306,19 @@ const ForgotPassword = () => {
                         id="confirmPassword"
                         type="password"
                         placeholder="Confirm new password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`${
+                          passwordForm.formState.errors.confirmPassword
+                            ? "border-destructive"
+                            : ""
+                        }`}
+                        {...passwordForm.register("confirmPassword")}
                         minLength={8}
-                        required
                       />
+                      {passwordForm.getFieldError("confirmPassword") && (
+                        <p className="text-sm text-destructive">
+                          {passwordForm.getFieldError("confirmPassword")}
+                        </p>
+                      )}
                     </div>
 
                     {/* Password Requirements */}
@@ -227,11 +326,26 @@ const ForgotPassword = () => {
                       <p className="font-medium">Password requirements:</p>
                       <ul className="space-y-1">
                         <li className="flex items-center">
-                          <CheckCircle className={`w-3 h-3 mr-2 ${newPassword.length >= 8 ? 'text-brand-accent-green' : 'text-muted'}`} />
+                          <CheckCircle
+                            className={`w-3 h-3 mr-2 ${
+                              passwordFormData.newPassword &&
+                              passwordFormData.newPassword.length >= 8
+                                ? "text-brand-accent-green"
+                                : "text-muted"
+                            }`}
+                          />
                           At least 8 characters long
                         </li>
                         <li className="flex items-center">
-                          <CheckCircle className={`w-3 h-3 mr-2 ${newPassword === confirmPassword && newPassword.length > 0 ? 'text-brand-accent-green' : 'text-muted'}`} />
+                          <CheckCircle
+                            className={`w-3 h-3 mr-2 ${
+                              passwordFormData.newPassword ===
+                                passwordFormData.confirmPassword &&
+                              (passwordFormData.newPassword?.length ?? 0) > 0
+                                ? "text-brand-accent-green"
+                                : "text-muted"
+                            }`}
+                          />
                           Passwords match
                         </li>
                       </ul>
@@ -242,7 +356,13 @@ const ForgotPassword = () => {
                       variant="hero"
                       size="lg"
                       className="w-full"
-                      disabled={isLoading || newPassword.length < 8 || newPassword !== confirmPassword}
+                      disabled={
+                        isLoading ||
+                        !passwordFormData.newPassword ||
+                        passwordFormData.newPassword.length < 8 ||
+                        passwordFormData.newPassword !==
+                          passwordFormData.confirmPassword
+                      }
                     >
                       {isLoading ? (
                         <>
