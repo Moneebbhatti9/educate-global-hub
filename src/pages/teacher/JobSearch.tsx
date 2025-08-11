@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import GlobalDashboardLayout from "@/layout/GlobalDashboardLayout";
+import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -41,9 +41,9 @@ import {
 const JobSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
-    location: "",
-    educationLevel: "",
-    subject: "",
+    location: "any",
+    educationLevel: "any",
+    subject: "any",
     salaryRange: [0, 10000],
     jobType: "",
     visaSponsorship: false,
@@ -67,8 +67,13 @@ const JobSearch = () => {
       quickApply: true,
       visaSponsorship: true,
       benefits: ["Health Insurance", "Housing Allowance", "Annual Flight"],
-      description: "We are seeking an experienced Mathematics teacher to join our Secondary department. The ideal candidate will have strong classroom management skills and experience with international curricula.",
-      requirements: ["Bachelor's degree in Mathematics or related field", "3+ years teaching experience", "International curriculum experience preferred"],
+      description:
+        "We are seeking an experienced Mathematics teacher to join our Secondary department. The ideal candidate will have strong classroom management skills and experience with international curricula.",
+      requirements: [
+        "Bachelor's degree in Mathematics or related field",
+        "3+ years teaching experience",
+        "International curriculum experience preferred",
+      ],
       rating: 4.8,
       reviews: 156,
       views: 1234,
@@ -88,9 +93,18 @@ const JobSearch = () => {
       deadline: "2024-04-12",
       quickApply: true,
       visaSponsorship: true,
-      benefits: ["Health Insurance", "Housing Allowance", "Professional Development"],
-      description: "Join our vibrant primary team as an English Language teacher. We're looking for a passionate educator who can inspire young learners and implement innovative teaching strategies.",
-      requirements: ["Bachelor's degree in English or Education", "Teaching certification", "2+ years primary teaching experience"],
+      benefits: [
+        "Health Insurance",
+        "Housing Allowance",
+        "Professional Development",
+      ],
+      description:
+        "Join our vibrant primary team as an English Language teacher. We're looking for a passionate educator who can inspire young learners and implement innovative teaching strategies.",
+      requirements: [
+        "Bachelor's degree in English or Education",
+        "Teaching certification",
+        "2+ years primary teaching experience",
+      ],
       rating: 4.6,
       reviews: 89,
       views: 987,
@@ -111,8 +125,13 @@ const JobSearch = () => {
       quickApply: false,
       visaSponsorship: true,
       benefits: ["Health Insurance", "End of Service Gratuity"],
-      description: "We are seeking a qualified Science Lab Coordinator to manage our state-of-the-art laboratory facilities and support our science teachers in delivering exceptional education.",
-      requirements: ["Bachelor's degree in Science", "Lab management experience", "Safety certification preferred"],
+      description:
+        "We are seeking a qualified Science Lab Coordinator to manage our state-of-the-art laboratory facilities and support our science teachers in delivering exceptional education.",
+      requirements: [
+        "Bachelor's degree in Science",
+        "Lab management experience",
+        "Safety certification preferred",
+      ],
       rating: 4.7,
       reviews: 67,
       views: 743,
@@ -132,9 +151,19 @@ const JobSearch = () => {
       deadline: "2024-04-08",
       quickApply: true,
       visaSponsorship: true,
-      benefits: ["Health Insurance", "Housing Allowance", "Annual Flight", "Performance Bonus"],
-      description: "Seeking an experienced IB Mathematics teacher to join our high-performing team. Must have IB experience and be committed to student-centered learning.",
-      requirements: ["IB Mathematics teaching experience", "IB workshop attendance", "Master's degree preferred"],
+      benefits: [
+        "Health Insurance",
+        "Housing Allowance",
+        "Annual Flight",
+        "Performance Bonus",
+      ],
+      description:
+        "Seeking an experienced IB Mathematics teacher to join our high-performing team. Must have IB experience and be committed to student-centered learning.",
+      requirements: [
+        "IB Mathematics teaching experience",
+        "IB workshop attendance",
+        "Master's degree preferred",
+      ],
       rating: 4.9,
       reviews: 234,
       views: 1876,
@@ -154,9 +183,18 @@ const JobSearch = () => {
       deadline: "2024-04-25",
       quickApply: true,
       visaSponsorship: false,
-      benefits: ["Health Insurance", "Professional Development", "Art Supplies Budget"],
-      description: "Join our creative arts team and inspire students through innovative art and design education. We're looking for a teacher who can work across age groups.",
-      requirements: ["Art/Design qualification", "Portfolio of student work", "Technology integration experience"],
+      benefits: [
+        "Health Insurance",
+        "Professional Development",
+        "Art Supplies Budget",
+      ],
+      description:
+        "Join our creative arts team and inspire students through innovative art and design education. We're looking for a teacher who can work across age groups.",
+      requirements: [
+        "Art/Design qualification",
+        "Portfolio of student work",
+        "Technology integration experience",
+      ],
       rating: 4.5,
       reviews: 123,
       views: 654,
@@ -198,29 +236,52 @@ const JobSearch = () => {
   ];
 
   const filteredJobs = jobs.filter((job) => {
-    const matchesSearch = 
+    const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.subjects.some(subject => subject.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesLocation = !filters.location || job.location === filters.location;
-    const matchesEducationLevel = !filters.educationLevel || job.educationLevel.includes(filters.educationLevel);
-    const matchesSubject = !filters.subject || job.subjects.includes(filters.subject);
-    const matchesVisaSponsorship = !filters.visaSponsorship || job.visaSponsorship;
+      job.subjects.some((subject) =>
+        subject.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+    const matchesLocation =
+      !filters.location ||
+      filters.location === "any" ||
+      job.location === filters.location;
+    const matchesEducationLevel =
+      !filters.educationLevel ||
+      filters.educationLevel === "any" ||
+      job.educationLevel.includes(filters.educationLevel);
+    const matchesSubject =
+      !filters.subject ||
+      filters.subject === "any" ||
+      job.subjects.includes(filters.subject);
+    const matchesVisaSponsorship =
+      !filters.visaSponsorship || job.visaSponsorship;
     const matchesQuickApply = !filters.quickApply || job.quickApply;
-    
+
     // Simple salary filtering (extracting min from range)
-    const jobMinSalary = parseInt(job.salaryRange.split(' - ')[0].replace('$', '').replace(',', ''));
-    const matchesSalary = jobMinSalary >= filters.salaryRange[0] && jobMinSalary <= filters.salaryRange[1];
-    
-    return matchesSearch && matchesLocation && matchesEducationLevel && 
-           matchesSubject && matchesVisaSponsorship && matchesQuickApply && matchesSalary;
+    const jobMinSalary = parseInt(
+      job.salaryRange.split(" - ")[0].replace("$", "").replace(",", "")
+    );
+    const matchesSalary =
+      jobMinSalary >= filters.salaryRange[0] &&
+      jobMinSalary <= filters.salaryRange[1];
+
+    return (
+      matchesSearch &&
+      matchesLocation &&
+      matchesEducationLevel &&
+      matchesSubject &&
+      matchesVisaSponsorship &&
+      matchesQuickApply &&
+      matchesSalary
+    );
   });
 
   const toggleSaveJob = (jobId: number) => {
-    setSavedJobs(prev => 
-      prev.includes(jobId) 
-        ? prev.filter(id => id !== jobId)
+    setSavedJobs((prev) =>
+      prev.includes(jobId)
+        ? prev.filter((id) => id !== jobId)
         : [...prev, jobId]
     );
   };
@@ -234,7 +295,7 @@ const JobSearch = () => {
   };
 
   return (
-    <GlobalDashboardLayout
+    <DashboardLayout
       role="teacher"
       userName="Sarah Johnson"
       userEmail="sarah.johnson@email.com"
@@ -253,14 +314,21 @@ const JobSearch = () => {
               {/* Location Filter */}
               <div className="space-y-2">
                 <Label>Location</Label>
-                <Select value={filters.location} onValueChange={(value) => setFilters({...filters, location: value})}>
+                <Select
+                  value={filters.location}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, location: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Any location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any location</SelectItem>
+                    <SelectItem value="any">Any location</SelectItem>
                     {locations.map((location) => (
-                      <SelectItem key={location} value={location}>{location}</SelectItem>
+                      <SelectItem key={location} value={location}>
+                        {location}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -269,14 +337,21 @@ const JobSearch = () => {
               {/* Education Level Filter */}
               <div className="space-y-2">
                 <Label>Education Level</Label>
-                <Select value={filters.educationLevel} onValueChange={(value) => setFilters({...filters, educationLevel: value})}>
+                <Select
+                  value={filters.educationLevel}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, educationLevel: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Any level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any level</SelectItem>
+                    <SelectItem value="any">Any level</SelectItem>
                     {educationLevels.map((level) => (
-                      <SelectItem key={level} value={level}>{level}</SelectItem>
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -285,14 +360,21 @@ const JobSearch = () => {
               {/* Subject Filter */}
               <div className="space-y-2">
                 <Label>Subject</Label>
-                <Select value={filters.subject} onValueChange={(value) => setFilters({...filters, subject: value})}>
+                <Select
+                  value={filters.subject}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, subject: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Any subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any subject</SelectItem>
+                    <SelectItem value="any">Any subject</SelectItem>
                     {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                      <SelectItem key={subject} value={subject}>
+                        {subject}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -304,7 +386,9 @@ const JobSearch = () => {
                 <div className="px-2">
                   <Slider
                     value={filters.salaryRange}
-                    onValueChange={(value) => setFilters({...filters, salaryRange: value})}
+                    onValueChange={(value) =>
+                      setFilters({ ...filters, salaryRange: value })
+                    }
                     max={10000}
                     min={0}
                     step={500}
@@ -323,33 +407,43 @@ const JobSearch = () => {
                   <Checkbox
                     id="visaSponsorship"
                     checked={filters.visaSponsorship}
-                    onCheckedChange={(checked) => setFilters({...filters, visaSponsorship: !!checked})}
+                    onCheckedChange={(checked) =>
+                      setFilters({ ...filters, visaSponsorship: !!checked })
+                    }
                   />
-                  <Label htmlFor="visaSponsorship" className="text-sm">Visa Sponsorship</Label>
+                  <Label htmlFor="visaSponsorship" className="text-sm">
+                    Visa Sponsorship
+                  </Label>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="quickApply"
                     checked={filters.quickApply}
-                    onCheckedChange={(checked) => setFilters({...filters, quickApply: !!checked})}
+                    onCheckedChange={(checked) =>
+                      setFilters({ ...filters, quickApply: !!checked })
+                    }
                   />
-                  <Label htmlFor="quickApply" className="text-sm">Quick Apply Only</Label>
+                  <Label htmlFor="quickApply" className="text-sm">
+                    Quick Apply Only
+                  </Label>
                 </div>
               </div>
 
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full"
-                onClick={() => setFilters({
-                  location: "",
-                  educationLevel: "",
-                  subject: "",
-                  salaryRange: [0, 10000],
-                  jobType: "",
-                  visaSponsorship: false,
-                  quickApply: false,
-                })}
+                onClick={() =>
+                  setFilters({
+                    location: "",
+                    educationLevel: "",
+                    subject: "",
+                    salaryRange: [0, 10000],
+                    jobType: "",
+                    visaSponsorship: false,
+                    quickApply: false,
+                  })
+                }
               >
                 Clear Filters
               </Button>
@@ -366,10 +460,11 @@ const JobSearch = () => {
                 Find Your Dream Teaching Job
               </h1>
               <p className="text-muted-foreground">
-                Discover exciting opportunities at top international schools worldwide
+                Discover exciting opportunities at top international schools
+                worldwide
               </p>
             </div>
-            
+
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -411,7 +506,10 @@ const JobSearch = () => {
               </Card>
             ) : (
               filteredJobs.map((job) => (
-                <Card key={job.id} className="group hover:shadow-card-hover transition-all duration-300">
+                <Card
+                  key={job.id}
+                  className="group hover:shadow-card-hover transition-all duration-300"
+                >
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -420,15 +518,20 @@ const JobSearch = () => {
                             {job.title}
                           </h3>
                           {job.quickApply && (
-                            <Badge className="bg-brand-accent-green text-white">Quick Apply</Badge>
+                            <Badge className="bg-brand-accent-green text-white">
+                              Quick Apply
+                            </Badge>
                           )}
                           {job.visaSponsorship && (
-                            <Badge variant="outline" className="border-brand-secondary text-brand-secondary">
+                            <Badge
+                              variant="outline"
+                              className="border-brand-secondary text-brand-secondary"
+                            >
                               Visa Sponsorship
                             </Badge>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-4 text-muted-foreground mb-3">
                           <div className="flex items-center space-x-1">
                             <Building2 className="w-4 h-4" />
@@ -441,18 +544,26 @@ const JobSearch = () => {
                           <div className="flex items-center space-x-1">
                             <Star className="w-4 h-4 text-yellow-500 fill-current" />
                             <span>{job.rating}</span>
-                            <span className="text-xs">({job.reviews} reviews)</span>
+                            <span className="text-xs">
+                              ({job.reviews} reviews)
+                            </span>
                           </div>
                         </div>
                       </div>
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleSaveJob(job.id)}
-                        className={savedJobs.includes(job.id) ? "text-brand-primary" : ""}
+                        className={
+                          savedJobs.includes(job.id) ? "text-brand-primary" : ""
+                        }
                       >
-                        <Heart className={`w-4 h-4 ${savedJobs.includes(job.id) ? "fill-current" : ""}`} />
+                        <Heart
+                          className={`w-4 h-4 ${
+                            savedJobs.includes(job.id) ? "fill-current" : ""
+                          }`}
+                        />
                       </Button>
                     </div>
 
@@ -463,7 +574,9 @@ const JobSearch = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{job.salaryRange} {job.currency}</span>
+                        <span className="text-sm font-medium">
+                          {job.salaryRange} {job.currency}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="w-4 h-4 text-muted-foreground" />
@@ -473,7 +586,11 @@ const JobSearch = () => {
 
                     <div className="flex flex-wrap gap-2 mb-4">
                       {job.subjects.map((subject, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {subject}
                         </Badge>
                       ))}
@@ -485,7 +602,11 @@ const JobSearch = () => {
 
                     <div className="flex flex-wrap gap-2 mb-4">
                       {job.benefits.slice(0, 3).map((benefit, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs"
+                        >
                           {benefit}
                         </Badge>
                       ))}
@@ -509,10 +630,13 @@ const JobSearch = () => {
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />
-                          <span>Deadline: {new Date(job.deadline).toLocaleDateString()}</span>
+                          <span>
+                            Deadline:{" "}
+                            {new Date(job.deadline).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
-                      
+
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm">
                           View Details
@@ -540,7 +664,7 @@ const JobSearch = () => {
           )}
         </div>
       </div>
-    </GlobalDashboardLayout>
+    </DashboardLayout>
   );
 };
 

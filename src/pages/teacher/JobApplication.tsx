@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import GlobalDashboardLayout from "@/layout/GlobalDashboardLayout";
+import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -22,6 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CountryDropdown } from "@/components/ui/country-dropdown";
+import { CurrencySelect } from "@/components/ui/currency-select";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   ArrowLeft,
   Upload,
@@ -38,21 +42,40 @@ import {
   Mail,
   Globe,
 } from "lucide-react";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { jobApplicationFormSchema } from "@/helpers/validation";
+import { Country } from "@/components/ui/country-dropdown";
 
 const JobApplication = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    coverLetter: "",
-    expectedSalary: "",
-    availableFrom: "",
-    reasonForApplying: "",
-    additionalComments: "",
-    agreeToTerms: false,
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    getFieldError,
+    isFieldInvalid,
+  } = useFormValidation({
+    schema: jobApplicationFormSchema,
+    mode: "onTouched",
+    defaultValues: {
+      coverLetter: "",
+      expectedSalary: "",
+      availableFrom: undefined,
+      reasonForApplying: "",
+      additionalComments: "",
+      agreeToTerms: false,
+      screeningAnswers: {},
+    },
   });
 
-  const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({});
+  const formData = watch();
+  const [screeningAnswers, setScreeningAnswers] = useState<
+    Record<string, string>
+  >({});
 
   // Mock job data - in real app this would be fetched based on jobId
   const job = {
@@ -65,15 +88,21 @@ const JobApplication = () => {
     salaryRange: "$4,000 - $6,000",
     currency: "USD",
     type: "Full-time",
-    description: "We are seeking an experienced Mathematics teacher to join our Secondary department. The ideal candidate will have strong classroom management skills and experience with international curricula.",
+    description:
+      "We are seeking an experienced Mathematics teacher to join our Secondary department. The ideal candidate will have strong classroom management skills and experience with international curricula.",
     requirements: [
       "Bachelor's degree in Mathematics or related field",
-      "3+ years teaching experience", 
+      "3+ years teaching experience",
       "International curriculum experience preferred",
       "PGCE or equivalent teaching qualification",
-      "Strong communication skills in English"
+      "Strong communication skills in English",
     ],
-    benefits: ["Health Insurance", "Housing Allowance", "Annual Flight", "Professional Development"],
+    benefits: [
+      "Health Insurance",
+      "Housing Allowance",
+      "Annual Flight",
+      "Professional Development",
+    ],
     rating: 4.8,
     reviews: 156,
     quickApply: true,
@@ -82,100 +111,113 @@ const JobApplication = () => {
       "Do you have experience teaching the IB Mathematics curriculum?",
       "Are you comfortable using educational technology in your teaching?",
       "How would you handle a classroom with diverse learning abilities?",
-      "What is your preferred teaching methodology for mathematics?"
-    ]
+      "What is your preferred teaching methodology for mathematics?",
+    ],
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Application submitted:", { formData, screeningAnswers, jobId });
-    navigate("/dashboard/teacher/apply/success");
+    console.log("Application submitted:", {
+      formData,
+      screeningAnswers,
+    });
+    // Handle form submission logic here
+    navigate("/dashboard/teacher/applications");
   };
 
   const handleScreeningAnswer = (question: string, answer: string) => {
-    setScreeningAnswers(prev => ({
+    setScreeningAnswers((prev) => ({
       ...prev,
-      [question]: answer
+      [question]: answer,
     }));
+    setValue("screeningAnswers", {
+      ...screeningAnswers,
+      [question]: answer,
+    });
   };
 
   return (
-    <GlobalDashboardLayout
+    <DashboardLayout
       role="teacher"
       userName="Sarah Johnson"
       userEmail="sarah.johnson@email.com"
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            size="sm"
             onClick={() => navigate("/dashboard/teacher/jobs")}
+            className="flex items-center space-x-2"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Job Search
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Job Search</span>
           </Button>
           <div>
             <h1 className="font-heading font-bold text-3xl text-foreground">
-              Apply for Position
+              Job Application
             </h1>
             <p className="text-muted-foreground">
-              Complete your application for this teaching position
+              Submit your application for {job.title}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Job Summary Sidebar */}
+          {/* Job Details Sidebar */}
           <div className="lg:col-span-1">
             <Card className="sticky top-6">
               <CardHeader>
-                <CardTitle className="text-lg">Position Details</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <Building2 className="w-5 h-5" />
+                  <span>{job.title}</span>
+                </CardTitle>
+                <CardDescription>{job.school}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">{job.title}</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="w-4 h-4 text-muted-foreground" />
-                      <span>{job.school}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{job.location}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span>{job.salaryRange} {job.currency}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>{job.type}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span>{job.rating} ({job.reviews} reviews)</span>
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{job.location}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {job.salaryRange} {job.currency}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{job.type}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                    <span className="text-sm">{job.rating}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({job.reviews} reviews)
+                    </span>
                   </div>
                 </div>
 
                 <Separator />
 
-                <div>
-                  <h4 className="font-semibold mb-2">Subjects</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {job.subjects.map((subject, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {subject}
-                      </Badge>
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Requirements</h4>
+                  <div className="space-y-2">
+                    {job.requirements.map((requirement, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-primary"></div>
+                        <span className="text-sm">{requirement}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold mb-2">Benefits</h4>
-                  <div className="space-y-1">
+                <Separator />
+
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Benefits</h4>
+                  <div className="space-y-2">
                     {job.benefits.map((benefit, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-brand-primary"></div>
@@ -201,7 +243,7 @@ const JobApplication = () => {
 
           {/* Application Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form className="space-y-6">
               {/* Personal Information */}
               <Card>
                 <CardHeader>
@@ -225,18 +267,26 @@ const JobApplication = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Phone</Label>
-                      <Input value="+44 20 1234 5678" disabled />
+                      <PhoneInput value="+44 20 1234 5678" disabled />
                     </div>
                     <div className="space-y-2">
                       <Label>Current Location</Label>
-                      <Input value="London, UK" disabled />
+                      <CountryDropdown
+                        onChange={() => {}}
+                        defaultValue="United Kingdom"
+                        disabled
+                      />
                     </div>
                   </div>
-                  
+
                   <div className="p-4 bg-muted/30 rounded-lg">
                     <p className="text-sm text-muted-foreground">
                       To update your personal information, visit your{" "}
-                      <Button variant="link" className="p-0 h-auto font-normal" onClick={() => navigate("/profile")}>
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto font-normal"
+                        onClick={() => navigate("/profile")}
+                      >
                         profile settings
                       </Button>
                     </p>
@@ -265,11 +315,17 @@ const JobApplication = () => {
 I am writing to express my interest in the Mathematics Teacher position at Dubai International School. With over 8 years of experience teaching secondary mathematics and a proven track record of improving student outcomes, I am excited about the opportunity to contribute to your academic team.
 
 Throughout my career, I have..."
-                      value={formData.coverLetter}
-                      onChange={(e) => setFormData({...formData, coverLetter: e.target.value})}
+                      {...register("coverLetter")}
                       rows={8}
-                      required
+                      className={
+                        isFieldInvalid("coverLetter") ? "border-red-500" : ""
+                      }
                     />
+                    {isFieldInvalid("coverLetter") && (
+                      <p className="text-sm text-red-500">
+                        {getFieldError("coverLetter")}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground">
                       Minimum 200 characters recommended
                     </p>
@@ -285,33 +341,90 @@ Throughout my career, I have..."
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="expectedSalary">Expected Salary (USD)</Label>
-                      <Input
-                        id="expectedSalary"
-                        placeholder="e.g., 4500"
-                        value={formData.expectedSalary}
-                        onChange={(e) => setFormData({...formData, expectedSalary: e.target.value})}
-                      />
+                      <Label htmlFor="expectedSalary">Expected Salary *</Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="expectedSalary"
+                          placeholder="e.g., 4500"
+                          {...register("expectedSalary")}
+                          className={
+                            isFieldInvalid("expectedSalary")
+                              ? "border-red-500"
+                              : ""
+                          }
+                        />
+                        <CurrencySelect
+                          name="currency"
+                          value="USD"
+                          onValueChange={() => {}}
+                          placeholder="USD"
+                          currencies="custom"
+                          variant="small"
+                        />
+                      </div>
+                      {isFieldInvalid("expectedSalary") && (
+                        <p className="text-sm text-red-500">
+                          {getFieldError("expectedSalary")}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="availableFrom">Available From</Label>
-                      <Input
+                      <Label htmlFor="availableFrom">Available From *</Label>
+                      <DatePicker
                         id="availableFrom"
-                        type="date"
-                        value={formData.availableFrom}
-                        onChange={(e) => setFormData({...formData, availableFrom: e.target.value})}
+                        value={formData.availableFrom || undefined}
+                        onValueChange={(date) => {
+                          if (date) {
+                            setValue("availableFrom", date);
+                          }
+                        }}
+                        placeholder="Select available date"
+                        min={new Date()}
+                        className={
+                          isFieldInvalid("availableFrom")
+                            ? "border-red-500"
+                            : ""
+                        }
                       />
+                      {isFieldInvalid("availableFrom") && (
+                        <p className="text-sm text-red-500">
+                          {getFieldError("availableFrom")}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="reasonForApplying">Why are you interested in this position?</Label>
+                    <Label htmlFor="reasonForApplying">
+                      Why are you interested in this position? *
+                    </Label>
                     <Textarea
                       id="reasonForApplying"
                       placeholder="Explain what attracts you to this role and school..."
-                      value={formData.reasonForApplying}
-                      onChange={(e) => setFormData({...formData, reasonForApplying: e.target.value})}
+                      {...register("reasonForApplying")}
                       rows={4}
+                      className={
+                        isFieldInvalid("reasonForApplying")
+                          ? "border-red-500"
+                          : ""
+                      }
+                    />
+                    {isFieldInvalid("reasonForApplying") && (
+                      <p className="text-sm text-red-500">
+                        {getFieldError("reasonForApplying")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="additionalComments">
+                      Additional Comments (Optional)
+                    </Label>
+                    <Textarea
+                      id="additionalComments"
+                      placeholder="Any additional information you'd like to share..."
+                      {...register("additionalComments")}
+                      rows={3}
                     />
                   </div>
                 </CardContent>
@@ -323,22 +436,33 @@ Throughout my career, I have..."
                   <CardHeader>
                     <CardTitle>Screening Questions</CardTitle>
                     <CardDescription>
-                      Please answer these questions to help us understand your background
+                      Please answer these questions to help us understand your
+                      background
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {job.screeningQuestions.map((question, index) => (
                       <div key={index} className="space-y-2">
                         <Label htmlFor={`question-${index}`}>
-                          {index + 1}. {question}
+                          {index + 1}. {question} *
                         </Label>
                         <Textarea
                           id={`question-${index}`}
                           placeholder="Your answer..."
                           value={screeningAnswers[question] || ""}
-                          onChange={(e) => handleScreeningAnswer(question, e.target.value)}
+                          onChange={(e) =>
+                            handleScreeningAnswer(question, e.target.value)
+                          }
                           rows={3}
+                          className={
+                            screeningAnswers[question] ? "" : "border-red-500"
+                          }
                         />
+                        {!screeningAnswers[question] && (
+                          <p className="text-sm text-red-500">
+                            Answer is required
+                          </p>
+                        )}
                       </div>
                     ))}
                   </CardContent>
@@ -350,103 +474,71 @@ Throughout my career, I have..."
                 <CardHeader>
                   <CardTitle>Documents</CardTitle>
                   <CardDescription>
-                    Your resume and other documents from your profile will be included
+                    Upload your CV and any additional documents
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border border-border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="w-8 h-8 text-brand-primary" />
-                        <div>
-                          <p className="font-medium">Resume.pdf</p>
-                          <p className="text-sm text-muted-foreground">Updated March 2024</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 border border-border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="w-8 h-8 text-brand-primary" />
-                        <div>
-                          <p className="font-medium">Certificates.pdf</p>
-                          <p className="text-sm text-muted-foreground">PGCE & Teaching License</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      Want to update your documents? Visit your{" "}
-                      <Button variant="link" className="p-0 h-auto font-normal" onClick={() => navigate("/profile")}>
-                        profile settings
-                      </Button>
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Additional Comments */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Additional Comments</CardTitle>
-                </CardHeader>
-                <CardContent>
                   <div className="space-y-2">
-                    <Label htmlFor="additionalComments">Anything else you'd like to add? (Optional)</Label>
-                    <Textarea
-                      id="additionalComments"
-                      placeholder="Any additional information you'd like to share..."
-                      value={formData.additionalComments}
-                      onChange={(e) => setFormData({...formData, additionalComments: e.target.value})}
-                      rows={4}
-                    />
+                    <Label>CV/Resume</Label>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload CV
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        PDF, DOC, DOCX (Max 5MB)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Additional Documents (Optional)</Label>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Documents
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Certificates, references, etc.
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Terms and Submit */}
               <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="agreeToTerms"
-                        checked={formData.agreeToTerms}
-                        onCheckedChange={(checked) => setFormData({...formData, agreeToTerms: !!checked})}
-                        required
-                      />
-                      <Label htmlFor="agreeToTerms" className="text-sm leading-relaxed">
-                        I agree to the terms and conditions and privacy policy. I confirm that the information provided is accurate and complete.
-                      </Label>
-                    </div>
-
-                    <div className="flex justify-end space-x-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate("/dashboard/teacher/jobs")}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        variant="hero"
-                        disabled={!formData.agreeToTerms}
-                      >
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit Application
-                      </Button>
-                    </div>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="agreeToTerms"
+                      checked={formData.agreeToTerms}
+                      onCheckedChange={(checked) =>
+                        setValue("agreeToTerms", !!checked)
+                      }
+                    />
+                    <Label htmlFor="agreeToTerms" className="text-sm">
+                      I agree to the terms and conditions and confirm that all
+                      information provided is accurate *
+                    </Label>
                   </div>
+                  {isFieldInvalid("agreeToTerms") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("agreeToTerms")}
+                    </p>
+                  )}
+
+                  <Button type="submit" className="w-full" size="lg">
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Application
+                  </Button>
                 </CardContent>
               </Card>
             </form>
           </div>
         </div>
       </div>
-    </GlobalDashboardLayout>
+    </DashboardLayout>
   );
 };
 

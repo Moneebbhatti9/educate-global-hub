@@ -29,7 +29,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { PhoneInput } from "./phone-input";
+import { PhoneInput } from "../ui/phone-input";
 import {
   SchoolProfileRequest,
   CURRICULUM_OPTIONS,

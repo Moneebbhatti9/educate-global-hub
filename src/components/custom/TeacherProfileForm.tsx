@@ -30,7 +30,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { PhoneInput } from "./phone-input";
+import { PhoneInput } from "../ui/phone-input";
 import { TeacherProfileRequest, QUALIFICATION_OPTIONS } from "@/types/profiles";
 import { teacherProfileApi } from "@/apis/profiles";
 import { CountryDropdown } from "@/components/ui/country-dropdown";

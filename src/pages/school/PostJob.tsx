@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import GlobalDashboardLayout from "@/layout/GlobalDashboardLayout";
+import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -22,6 +22,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { CountryDropdown } from "@/components/ui/country-dropdown";
+import { CurrencySelect } from "@/components/ui/currency-select";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   ArrowLeft,
   Save,
@@ -35,37 +39,54 @@ import {
   GraduationCap,
   MapPin,
 } from "lucide-react";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { postJobFormSchema } from "@/helpers/validation";
+import { Country } from "@/components/ui/country-dropdown";
 
 const PostJob = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    title: "",
-    organization: "Dubai International School",
-    country: "",
-    city: "",
-    educationLevel: "",
-    subjects: [] as string[],
-    position: {
-      category: "",
-      subcategory: "",
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    getFieldError,
+    isFieldInvalid,
+  } = useFormValidation({
+    schema: postJobFormSchema,
+    mode: "onTouched",
+    defaultValues: {
+      title: "",
+      organization: "Dubai International School",
+      country: "",
+      city: "",
+      educationLevel: "",
+      subjects: [],
+      position: {
+        category: "",
+        subcategory: "",
+      },
+      organizationType: [],
+      description: "",
+      salaryMin: "",
+      salaryMax: "",
+      currency: "USD",
+      benefits: [],
+      salaryDisclose: true,
+      visaSponsorship: false,
+      quickApply: true,
+      externalLink: "",
+      minExperience: "",
+      qualification: "",
+      applicationDeadline: undefined,
+      applicantEmail: "",
+      screeningQuestions: [],
     },
-    organizationType: [] as string[],
-    description: "",
-    salaryMin: "",
-    salaryMax: "",
-    currency: "USD",
-    benefits: [] as string[],
-    salaryDisclose: true,
-    visaSponsorship: false,
-    quickApply: true,
-    externalLink: "",
-    minExperience: "",
-    qualification: "",
-    applicationDeadline: "",
-    applicantEmail: "",
-    screeningQuestions: [] as string[],
   });
 
+  const formData = watch();
   const [newSubject, setNewSubject] = useState("");
   const [newBenefit, setNewBenefit] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
@@ -81,79 +102,68 @@ const PostJob = () => {
   ];
 
   const positionCategories = {
-    "Teaching": [
+    Teaching: [
       "Subject Teacher",
       "Head of Department",
       "Assistant Teacher",
       "Supply Teacher",
       "Learning Support",
     ],
-    "Leadership": [
+    Leadership: [
       "Principal",
       "Vice Principal",
       "Academic Director",
       "Curriculum Coordinator",
       "Department Head",
     ],
-    "Support": [
+    Support: [
       "Teaching Assistant",
       "Lab Technician",
       "Librarian",
-      "Counselor",
       "IT Support",
+      "Administrative Staff",
     ],
-    "Administrative": [
-      "Admissions Officer",
-      "HR Manager",
-      "Finance Officer",
-      "Operations Manager",
-      "Marketing Coordinator",
+    Specialist: [
+      "Special Education",
+      "Counselor",
+      "Nurse",
+      "Athletic Coach",
+      "Arts Specialist",
     ],
   };
 
-  const organizationTypes = [
-    "International School",
-    "Public School",
-    "Private School",
-    "Charter School",
-    "Online School",
-    "Homeschool Co-op",
-    "Education Center",
-    "University",
+  const qualifications = [
+    "Bachelor's Degree",
+    "Master's Degree",
+    "PhD",
+    "Teaching Certificate",
+    "PGCE",
+    "QTS",
+    "Other",
   ];
 
   const commonBenefits = [
     "Health Insurance",
-    "Housing Allowance",
-    "Annual Flight Tickets",
+    "Dental Insurance",
+    "Vision Insurance",
+    "Life Insurance",
+    "Retirement Plan",
+    "Paid Time Off",
     "Professional Development",
-    "Visa Sponsorship",
-    "End of Service Gratuity",
-    "Transportation",
-    "Tuition Fee Discount",
+    "Housing Allowance",
+    "Transportation Allowance",
+    "Meal Allowance",
+    "Annual Flight",
+    "Relocation Assistance",
     "Performance Bonus",
-    "Paid Vacation",
+    "End of Service Gratuity",
   ];
 
-  const qualifications = [
-    "High School Diploma",
-    "Bachelor's Degree",
-    "Master's Degree",
-    "PhD",
-    "Teaching Certificate/License",
-    "PGCE",
-    "Subject-specific Certification",
-  ];
-
-  const handleSubmit = (e: React.FormEvent, action: "draft" | "publish") => {
+  const onSubmit = (e: React.FormEvent, action: "draft" | "publish") => {
     e.preventDefault();
-    console.log("Submitting job posting:", { ...formData, status: action });
-    
-    if (action === "publish") {
-      navigate("/dashboard/school/post-job/success");
-    } else {
-      navigate("/dashboard/school/postings");
-    }
+    console.log("Form submitted:", { action, formData });
+    // Handle form submission logic here
+    navigate("/dashboard/school/job-post-success");
   };
 
   const addItem = (
@@ -161,11 +171,9 @@ const PostJob = () => {
     field: "subjects" | "benefits" | "screeningQuestions",
     setter: (value: string) => void
   ) => {
-    if (item.trim() && !formData[field].includes(item.trim())) {
-      setFormData({
-        ...formData,
-        [field]: [...formData[field], item.trim()],
-      });
+    if (item.trim()) {
+      const currentItems = formData[field] || [];
+      setValue(field, [...currentItems, item.trim()]);
       setter("");
     }
   };
@@ -174,28 +182,33 @@ const PostJob = () => {
     index: number,
     field: "subjects" | "benefits" | "organizationType" | "screeningQuestions"
   ) => {
-    setFormData({
-      ...formData,
-      [field]: formData[field].filter((_, i) => i !== index),
-    });
+    const currentItems = formData[field] || [];
+    setValue(
+      field,
+      currentItems.filter((_, i) => i !== index)
+    );
+  };
+
+  const handleCountryChange = (country: Country) => {
+    setValue("country", country.name);
   };
 
   return (
-    <GlobalDashboardLayout
+    <DashboardLayout
       role="school"
       userName="Dubai International School"
-      userEmail="admin@isdubai.edu"
+      userEmail="admin@dubaiinternational.edu.ae"
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            size="sm"
             onClick={() => navigate("/dashboard/school/postings")}
+            className="flex items-center space-x-2"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Job Postings
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Job Postings</span>
           </Button>
           <div>
             <h1 className="font-heading font-bold text-3xl text-foreground">
@@ -226,46 +239,44 @@ const PostJob = () => {
                   <Input
                     id="title"
                     placeholder="e.g., Mathematics Teacher - Secondary"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    required
+                    {...register("title")}
+                    className={isFieldInvalid("title") ? "border-red-500" : ""}
                   />
+                  {isFieldInvalid("title") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("title")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="organization">Organization *</Label>
                   <Input
                     id="organization"
-                    value={formData.organization}
-                    onChange={(e) =>
-                      setFormData({ ...formData, organization: e.target.value })
+                    {...register("organization")}
+                    className={
+                      isFieldInvalid("organization") ? "border-red-500" : ""
                     }
-                    required
                   />
+                  {isFieldInvalid("organization") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("organization")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="country">Country *</Label>
-                  <Select
-                    value={formData.country}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, country: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ae">United Arab Emirates</SelectItem>
-                      <SelectItem value="sa">Saudi Arabia</SelectItem>
-                      <SelectItem value="qa">Qatar</SelectItem>
-                      <SelectItem value="kw">Kuwait</SelectItem>
-                      <SelectItem value="bh">Bahrain</SelectItem>
-                      <SelectItem value="om">Oman</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <CountryDropdown
+                    onChange={handleCountryChange}
+                    defaultValue={formData.country}
+                    placeholder="Select country"
+                  />
+                  {isFieldInvalid("country") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("country")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -273,23 +284,27 @@ const PostJob = () => {
                   <Input
                     id="city"
                     placeholder="e.g., Dubai"
-                    value={formData.city}
-                    onChange={(e) =>
-                      setFormData({ ...formData, city: e.target.value })
-                    }
-                    required
+                    {...register("city")}
+                    className={isFieldInvalid("city") ? "border-red-500" : ""}
                   />
+                  {isFieldInvalid("city") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("city")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="educationLevel">Education Level *</Label>
                   <Select
                     value={formData.educationLevel}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, educationLevel: value })
-                    }
+                    onValueChange={(value) => setValue("educationLevel", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={
+                        isFieldInvalid("educationLevel") ? "border-red-500" : ""
+                      }
+                    >
                       <SelectValue placeholder="Select education level" />
                     </SelectTrigger>
                     <SelectContent>
@@ -300,17 +315,26 @@ const PostJob = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {isFieldInvalid("educationLevel") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("educationLevel")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="qualification">Required Qualification *</Label>
+                  <Label htmlFor="qualification">
+                    Required Qualification *
+                  </Label>
                   <Select
                     value={formData.qualification}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, qualification: value })
-                    }
+                    onValueChange={(value) => setValue("qualification", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={
+                        isFieldInvalid("qualification") ? "border-red-500" : ""
+                      }
+                    >
                       <SelectValue placeholder="Select qualification" />
                     </SelectTrigger>
                     <SelectContent>
@@ -321,6 +345,11 @@ const PostJob = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {isFieldInvalid("qualification") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("qualification")}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -342,7 +371,9 @@ const PostJob = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => addItem(newSubject, "subjects", setNewSubject)}
+                    onClick={() =>
+                      addItem(newSubject, "subjects", setNewSubject)
+                    }
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -362,6 +393,11 @@ const PostJob = () => {
                     </Badge>
                   ))}
                 </div>
+                {isFieldInvalid("subjects") && (
+                  <p className="text-sm text-red-500">
+                    {getFieldError("subjects")}
+                  </p>
+                )}
               </div>
 
               {/* Position Category */}
@@ -371,13 +407,16 @@ const PostJob = () => {
                   <Select
                     value={formData.position.category}
                     onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        position: { ...formData.position, category: value, subcategory: "" },
-                      })
+                      setValue("position.category", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={
+                        isFieldInvalid("position.category")
+                          ? "border-red-500"
+                          : ""
+                      }
+                    >
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -388,6 +427,11 @@ const PostJob = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {isFieldInvalid("position.category") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("position.category")}
+                    </p>
+                  )}
                 </div>
 
                 {formData.position.category && (
@@ -396,25 +440,34 @@ const PostJob = () => {
                     <Select
                       value={formData.position.subcategory}
                       onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          position: { ...formData.position, subcategory: value },
-                        })
+                        setValue("position.subcategory", value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        className={
+                          isFieldInvalid("position.subcategory")
+                            ? "border-red-500"
+                            : ""
+                        }
+                      >
                         <SelectValue placeholder="Select position type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {positionCategories[formData.position.category as keyof typeof positionCategories]?.map(
-                          (position) => (
-                            <SelectItem key={position} value={position}>
-                              {position}
-                            </SelectItem>
-                          )
-                        )}
+                        {positionCategories[
+                          formData.position
+                            .category as keyof typeof positionCategories
+                        ]?.map((position) => (
+                          <SelectItem key={position} value={position}>
+                            {position}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {isFieldInvalid("position.subcategory") && (
+                      <p className="text-sm text-red-500">
+                        {getFieldError("position.subcategory")}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -435,25 +488,28 @@ const PostJob = () => {
                 <Textarea
                   id="description"
                   placeholder="Describe the role, responsibilities, and what you're looking for in a candidate..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  {...register("description")}
                   rows={8}
-                  required
+                  className={
+                    isFieldInvalid("description") ? "border-red-500" : ""
+                  }
                 />
+                {isFieldInvalid("description") && (
+                  <p className="text-sm text-red-500">
+                    {getFieldError("description")}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="minExperience">Minimum Experience (years)</Label>
+                <Label htmlFor="minExperience">
+                  Minimum Experience (years)
+                </Label>
                 <Input
                   id="minExperience"
                   type="number"
                   placeholder="e.g., 2"
-                  value={formData.minExperience}
-                  onChange={(e) =>
-                    setFormData({ ...formData, minExperience: e.target.value })
-                  }
+                  {...register("minExperience")}
                 />
               </div>
             </CardContent>
@@ -470,48 +526,53 @@ const PostJob = () => {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="salaryMin">Minimum Salary</Label>
+                  <Label htmlFor="salaryMin">Minimum Salary *</Label>
                   <Input
                     id="salaryMin"
                     type="number"
                     placeholder="3000"
-                    value={formData.salaryMin}
-                    onChange={(e) =>
-                      setFormData({ ...formData, salaryMin: e.target.value })
+                    {...register("salaryMin")}
+                    className={
+                      isFieldInvalid("salaryMin") ? "border-red-500" : ""
                     }
                   />
+                  {isFieldInvalid("salaryMin") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("salaryMin")}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="salaryMax">Maximum Salary</Label>
+                  <Label htmlFor="salaryMax">Maximum Salary *</Label>
                   <Input
                     id="salaryMax"
                     type="number"
                     placeholder="5000"
-                    value={formData.salaryMax}
-                    onChange={(e) =>
-                      setFormData({ ...formData, salaryMax: e.target.value })
+                    {...register("salaryMax")}
+                    className={
+                      isFieldInvalid("salaryMax") ? "border-red-500" : ""
                     }
                   />
+                  {isFieldInvalid("salaryMax") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("salaryMax")}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select
+                  <Label htmlFor="currency">Currency *</Label>
+                  <CurrencySelect
+                    name="currency"
                     value={formData.currency}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, currency: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="AED">AED</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="SAR">SAR</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onValueChange={(value) => setValue("currency", value)}
+                    placeholder="Select currency"
+                    currencies="custom"
+                  />
+                  {isFieldInvalid("currency") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("currency")}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -520,10 +581,12 @@ const PostJob = () => {
                   id="salaryDisclose"
                   checked={formData.salaryDisclose}
                   onCheckedChange={(checked) =>
-                    setFormData({ ...formData, salaryDisclose: !!checked })
+                    setValue("salaryDisclose", !!checked)
                   }
                 />
-                <Label htmlFor="salaryDisclose">Disclose salary range to applicants</Label>
+                <Label htmlFor="salaryDisclose">
+                  Disclose salary range to applicants
+                </Label>
               </div>
 
               {/* Benefits */}
@@ -534,18 +597,20 @@ const PostJob = () => {
                     <div key={benefit} className="flex items-center space-x-2">
                       <Checkbox
                         id={benefit}
-                        checked={formData.benefits.includes(benefit)}
+                        checked={(formData.benefits || []).includes(benefit)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setFormData({
-                              ...formData,
-                              benefits: [...formData.benefits, benefit],
-                            });
+                            setValue("benefits", [
+                              ...(formData.benefits || []),
+                              benefit,
+                            ]);
                           } else {
-                            setFormData({
-                              ...formData,
-                              benefits: formData.benefits.filter((b) => b !== benefit),
-                            });
+                            setValue(
+                              "benefits",
+                              (formData.benefits || []).filter(
+                                (b) => b !== benefit
+                              )
+                            );
                           }
                         }}
                       />
@@ -555,7 +620,7 @@ const PostJob = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="flex space-x-2">
                   <Input
                     placeholder="Add custom benefit"
@@ -571,7 +636,9 @@ const PostJob = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => addItem(newBenefit, "benefits", setNewBenefit)}
+                    onClick={() =>
+                      addItem(newBenefit, "benefits", setNewBenefit)
+                    }
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -588,28 +655,50 @@ const PostJob = () => {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="applicationDeadline">Application Deadline</Label>
-                  <Input
+                  <Label htmlFor="applicationDeadline">
+                    Application Deadline *
+                  </Label>
+                  <DatePicker
                     id="applicationDeadline"
-                    type="date"
-                    value={formData.applicationDeadline}
-                    onChange={(e) =>
-                      setFormData({ ...formData, applicationDeadline: e.target.value })
+                    value={formData.applicationDeadline || undefined}
+                    onValueChange={(date) => {
+                      if (date) {
+                        setValue("applicationDeadline", date);
+                      }
+                    }}
+                    placeholder="Select application deadline"
+                    min={new Date()}
+                    className={
+                      isFieldInvalid("applicationDeadline")
+                        ? "border-red-500"
+                        : ""
                     }
                   />
+                  {isFieldInvalid("applicationDeadline") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("applicationDeadline")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="applicantEmail">Applicant Collection Email</Label>
+                  <Label htmlFor="applicantEmail">
+                    Applicant Collection Email *
+                  </Label>
                   <Input
                     id="applicantEmail"
                     type="email"
                     placeholder="hr@school.com"
-                    value={formData.applicantEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, applicantEmail: e.target.value })
+                    {...register("applicantEmail")}
+                    className={
+                      isFieldInvalid("applicantEmail") ? "border-red-500" : ""
                     }
                   />
+                  {isFieldInvalid("applicantEmail") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("applicantEmail")}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -619,22 +708,23 @@ const PostJob = () => {
                     id="quickApply"
                     checked={formData.quickApply}
                     onCheckedChange={(checked) =>
-                      setFormData({ ...formData, quickApply: !!checked })
+                      setValue("quickApply", !!checked)
                     }
                   />
-                  <Label htmlFor="quickApply">Enable Quick Apply (Applications on our platform)</Label>
+                  <Label htmlFor="quickApply">
+                    Enable Quick Apply (Applications on our platform)
+                  </Label>
                 </div>
 
                 {!formData.quickApply && (
                   <div className="space-y-2">
-                    <Label htmlFor="externalLink">External Application Link</Label>
+                    <Label htmlFor="externalLink">
+                      External Application Link
+                    </Label>
                     <Input
                       id="externalLink"
                       placeholder="https://your-website.com/apply"
-                      value={formData.externalLink}
-                      onChange={(e) =>
-                        setFormData({ ...formData, externalLink: e.target.value })
-                      }
+                      {...register("externalLink")}
                     />
                   </div>
                 )}
@@ -644,10 +734,12 @@ const PostJob = () => {
                     id="visaSponsorship"
                     checked={formData.visaSponsorship}
                     onCheckedChange={(checked) =>
-                      setFormData({ ...formData, visaSponsorship: !!checked })
+                      setValue("visaSponsorship", !!checked)
                     }
                   />
-                  <Label htmlFor="visaSponsorship">Visa sponsorship available</Label>
+                  <Label htmlFor="visaSponsorship">
+                    Visa sponsorship available
+                  </Label>
                 </div>
               </div>
 
@@ -665,35 +757,45 @@ const PostJob = () => {
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addItem(newQuestion, "screeningQuestions", setNewQuestion);
+                        addItem(
+                          newQuestion,
+                          "screeningQuestions",
+                          setNewQuestion
+                        );
                       }
                     }}
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => addItem(newQuestion, "screeningQuestions", setNewQuestion)}
+                    onClick={() =>
+                      addItem(newQuestion, "screeningQuestions", setNewQuestion)
+                    }
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  {formData.screeningQuestions.map((question, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 border border-border rounded-lg"
-                    >
-                      <span className="text-sm">{question}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(index, "screeningQuestions")}
+                  {(formData.screeningQuestions || []).map(
+                    (question, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border border-border rounded-lg"
                       >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        <span className="text-sm">{question}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            removeItem(index, "screeningQuestions")
+                          }
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -704,15 +806,15 @@ const PostJob = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={(e) => handleSubmit(e, "draft")}
+              onClick={(e) => onSubmit(e, "draft")}
             >
               <Save className="w-4 h-4 mr-2" />
               Save as Draft
             </Button>
             <Button
               type="submit"
-              variant="hero"
-              onClick={(e) => handleSubmit(e, "publish")}
+              variant="default"
+              onClick={(e) => onSubmit(e, "publish")}
             >
               <Send className="w-4 h-4 mr-2" />
               Publish Job
@@ -720,7 +822,7 @@ const PostJob = () => {
           </div>
         </form>
       </div>
-    </GlobalDashboardLayout>
+    </DashboardLayout>
   );
 };
 

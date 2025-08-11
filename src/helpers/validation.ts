@@ -250,6 +250,80 @@ export const profileCompletionSchema = z
     }
   );
 
+// PostJob Form Schema
+export const postJobFormSchema = z
+  .object({
+    title: z
+      .string()
+      .min(1, "Job title is required")
+      .min(3, "Job title must be at least 3 characters"),
+    organization: z.string().min(1, "Organization name is required"),
+    country: z.string().min(1, "Country is required"),
+    city: z.string().min(1, "City is required"),
+    educationLevel: z.string().min(1, "Education level is required"),
+    subjects: z.array(z.string()).min(1, "At least one subject is required"),
+    position: z.object({
+      category: z.string().min(1, "Position category is required"),
+      subcategory: z.string().min(1, "Position type is required"),
+    }),
+    organizationType: z.array(z.string()).optional(),
+    description: z
+      .string()
+      .min(1, "Job description is required")
+      .min(50, "Job description must be at least 50 characters"),
+    salaryMin: z.string().min(1, "Minimum salary is required"),
+    salaryMax: z.string().min(1, "Maximum salary is required"),
+    currency: z.string().min(1, "Currency is required"),
+    benefits: z.array(z.string()).optional(),
+    salaryDisclose: z.boolean(),
+    visaSponsorship: z.boolean(),
+    quickApply: z.boolean(),
+    externalLink: z.string().url().optional().or(z.literal("")),
+    minExperience: z.string().optional(),
+    qualification: z.string().min(1, "Qualification is required"),
+    applicationDeadline: z.date({
+      required_error: "Application deadline is required",
+      invalid_type_error: "Please select a valid date",
+    }),
+    applicantEmail: z.string().email("Please enter a valid email address"),
+    screeningQuestions: z.array(z.string()).optional(),
+  })
+  .refine(
+    (data) => {
+      const minSalary = parseFloat(data.salaryMin);
+      const maxSalary = parseFloat(data.salaryMax);
+      return minSalary <= maxSalary;
+    },
+    {
+      message: "Maximum salary must be greater than minimum salary",
+      path: ["salaryMax"],
+    }
+  );
+
+// JobApplication Form Schema
+export const jobApplicationFormSchema = z.object({
+  coverLetter: z
+    .string()
+    .min(1, "Cover letter is required")
+    .min(200, "Cover letter must be at least 200 characters"),
+  expectedSalary: z.string().min(1, "Expected salary is required"),
+  availableFrom: z.date({
+    required_error: "Available from date is required",
+    invalid_type_error: "Please select a valid date",
+  }),
+  reasonForApplying: z
+    .string()
+    .min(1, "Reason for applying is required")
+    .min(50, "Reason must be at least 50 characters"),
+  additionalComments: z.string().optional(),
+  agreeToTerms: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms and conditions",
+  }),
+  screeningAnswers: z
+    .record(z.string(), z.string().min(1, "Answer is required"))
+    .optional(),
+});
+
 // Form validation helper functions
 export const validationHelpers = {
   // Get field error message

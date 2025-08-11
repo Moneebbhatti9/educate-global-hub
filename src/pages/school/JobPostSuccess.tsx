@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import GlobalDashboardLayout from "@/layout/GlobalDashboardLayout";
+import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -35,7 +35,9 @@ const JobPostSuccess = () => {
     educationLevel: "Secondary (Grades 9-12)",
     subjects: ["Mathematics", "Statistics"],
     postedDate: new Date().toLocaleDateString(),
-    expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    expiryDate: new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toLocaleDateString(),
   };
 
   const nextSteps = [
@@ -76,24 +78,28 @@ const JobPostSuccess = () => {
   const tips = [
     {
       title: "Respond Quickly",
-      description: "Top candidates often receive multiple offers. Quick responses improve your chances.",
+      description:
+        "Top candidates often receive multiple offers. Quick responses improve your chances.",
     },
     {
       title: "Complete School Profile",
-      description: "A detailed school profile attracts 3x more quality applications.",
+      description:
+        "A detailed school profile attracts 3x more quality applications.",
     },
     {
       title: "Use Screening Questions",
-      description: "Pre-screening helps you identify the most suitable candidates efficiently.",
+      description:
+        "Pre-screening helps you identify the most suitable candidates efficiently.",
     },
     {
       title: "Promote Your Culture",
-      description: "Highlight your school's unique culture and values to attract aligned candidates.",
+      description:
+        "Highlight your school's unique culture and values to attract aligned candidates.",
     },
   ];
 
   return (
-    <GlobalDashboardLayout
+    <DashboardLayout
       role="school"
       userName="Dubai International School"
       userEmail="admin@isdubai.edu"
@@ -111,7 +117,8 @@ const JobPostSuccess = () => {
               Job Posted Successfully! 🎉
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Your job posting is now live and visible to qualified educators worldwide.
+              Your job posting is now live and visible to qualified educators
+              worldwide.
             </p>
           </div>
         </div>
@@ -160,7 +167,7 @@ const JobPostSuccess = () => {
                   ))}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="p-3 bg-white rounded-lg border">
@@ -168,17 +175,21 @@ const JobPostSuccess = () => {
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-medium">Posted</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">{jobData.postedDate}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {jobData.postedDate}
+                    </div>
                   </div>
                   <div className="p-3 bg-white rounded-lg border">
                     <div className="flex items-center justify-center space-x-1 mb-1">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-medium">Expires</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">{jobData.expiryDate}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {jobData.expiryDate}
+                    </div>
                   </div>
                 </div>
-                
+
                 <Button variant="outline" className="w-full">
                   <Eye className="w-4 h-4 mr-2" />
                   Preview Job Posting
@@ -197,7 +208,10 @@ const JobPostSuccess = () => {
             {nextSteps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <Card key={index} className="group hover:shadow-card-hover transition-all duration-300">
+                <Card
+                  key={index}
+                  className="group hover:shadow-card-hover transition-all duration-300"
+                >
                   <CardHeader>
                     <div className="flex items-start space-x-4">
                       <div className="w-12 h-12 rounded-lg bg-muted/30 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -213,7 +227,10 @@ const JobPostSuccess = () => {
                   </CardHeader>
                   <CardContent>
                     <Link to={step.href}>
-                      <Button variant="outline" className="w-full group-hover:bg-muted/50 transition-colors">
+                      <Button
+                        variant="outline"
+                        className="w-full group-hover:bg-muted/50 transition-colors"
+                      >
                         {step.action}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -270,7 +287,7 @@ const JobPostSuccess = () => {
           </Link>
         </div>
       </div>
-    </GlobalDashboardLayout>
+    </DashboardLayout>
   );
 };
 

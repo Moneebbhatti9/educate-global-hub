@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import GlobalDashboardLayout from "@/layout/GlobalDashboardLayout";
+import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -137,21 +137,23 @@ const JobPostings = () => {
   };
 
   const filteredJobs = jobPostings.filter((job) => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || job.status.toLowerCase() === statusFilter;
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || job.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
     total: jobPostings.length,
-    active: jobPostings.filter(j => j.status === "Active").length,
-    draft: jobPostings.filter(j => j.status === "Draft").length,
+    active: jobPostings.filter((j) => j.status === "Active").length,
+    draft: jobPostings.filter((j) => j.status === "Draft").length,
     totalApplicants: jobPostings.reduce((sum, job) => sum + job.applicants, 0),
   };
 
   return (
-    <GlobalDashboardLayout
+    <DashboardLayout
       role="school"
       userName="Dubai International School"
       userEmail="admin@isdubai.edu"
@@ -195,7 +197,9 @@ const JobPostings = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.active}</div>
-              <p className="text-xs text-muted-foreground">Currently accepting applications</p>
+              <p className="text-xs text-muted-foreground">
+                Currently accepting applications
+              </p>
             </CardContent>
           </Card>
 
@@ -206,13 +210,17 @@ const JobPostings = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.draft}</div>
-              <p className="text-xs text-muted-foreground">Awaiting publication</p>
+              <p className="text-xs text-muted-foreground">
+                Awaiting publication
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Applicants</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Applicants
+              </CardTitle>
               <Users className="h-4 w-4 text-brand-secondary" />
             </CardHeader>
             <CardContent>
@@ -263,12 +271,17 @@ const JobPostings = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-heading font-semibold text-xl">{job.title}</h3>
+                        <h3 className="font-heading font-semibold text-xl">
+                          {job.title}
+                        </h3>
                         <Badge className={getStatusColor(job.status)}>
                           {job.status}
                         </Badge>
                         {job.quickApply && (
-                          <Badge variant="outline" className="text-brand-primary border-brand-primary">
+                          <Badge
+                            variant="outline"
+                            className="text-brand-primary border-brand-primary"
+                          >
                             Quick Apply
                           </Badge>
                         )}
@@ -292,14 +305,20 @@ const JobPostings = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{job.salaryRange} {job.currency}</span>
+                      <span className="text-sm">
+                        {job.salaryRange} {job.currency}
+                      </span>
                     </div>
                   </div>
 
                   {/* Subjects */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     {job.subjects.map((subject, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs"
+                      >
                         {subject}
                       </Badge>
                     ))}
@@ -312,28 +331,40 @@ const JobPostings = () => {
                         <Users className="w-4 h-4 text-muted-foreground" />
                         <span className="font-semibold">{job.applicants}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">Applicants</span>
+                      <span className="text-xs text-muted-foreground">
+                        Applicants
+                      </span>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1">
                         <Eye className="w-4 h-4 text-muted-foreground" />
                         <span className="font-semibold">{job.views}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">Views</span>
+                      <span className="text-xs text-muted-foreground">
+                        Views
+                      </span>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-xs">{job.postedDate}</span>
+                        <span className="font-semibold text-xs">
+                          {job.postedDate}
+                        </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">Posted</span>
+                      <span className="text-xs text-muted-foreground">
+                        Posted
+                      </span>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1">
                         <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-xs">{job.expiryDate}</span>
+                        <span className="font-semibold text-xs">
+                          {job.expiryDate}
+                        </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">Expires</span>
+                      <span className="text-xs text-muted-foreground">
+                        Expires
+                      </span>
                     </div>
                   </div>
 
@@ -366,7 +397,7 @@ const JobPostings = () => {
           </CardContent>
         </Card>
       </div>
-    </GlobalDashboardLayout>
+    </DashboardLayout>
   );
 };
 
