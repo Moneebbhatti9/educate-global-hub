@@ -189,11 +189,7 @@ const RecruiterDashboard = () => {
   };
 
   return (
-    <DashboardLayout
-      role="recruiter"
-      userName="Alexandra Smith"
-      userEmail="alex.smith@recruitment.com"
-    >
+    <DashboardLayout role="recruiter">
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>

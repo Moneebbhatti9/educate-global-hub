@@ -137,11 +137,7 @@ const JobApplication = () => {
   };
 
   return (
-    <DashboardLayout
-      role="teacher"
-      userName="Sarah Johnson"
-      userEmail="sarah.johnson@email.com"
-    >
+    <DashboardLayout role="teacher">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

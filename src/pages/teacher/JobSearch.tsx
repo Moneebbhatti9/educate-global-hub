@@ -295,11 +295,7 @@ const JobSearch = () => {
   };
 
   return (
-    <DashboardLayout
-      role="teacher"
-      userName="Sarah Johnson"
-      userEmail="sarah.johnson@email.com"
-    >
+    <DashboardLayout role="teacher">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">

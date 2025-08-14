@@ -65,7 +65,7 @@ export const jwtHelpers = {
   // Extract user ID from token
   getUserId: (token: string): string | null => {
     const payload = jwtHelpers.parseToken(token);
-    return payload?.sub || null;
+    return payload?.userId || null;
   },
 
   // Extract user email from token
@@ -83,7 +83,7 @@ export const jwtHelpers = {
 
     try {
       const payload = jwtHelpers.parseToken(token);
-      return !!payload && !!payload.sub && !!payload.email && !!payload.role;
+      return !!payload && !!payload.userId && !!payload.email && !!payload.role;
     } catch {
       return false;
     }

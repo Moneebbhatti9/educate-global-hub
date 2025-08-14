@@ -189,11 +189,7 @@ const SupplierDashboard = () => {
   };
 
   return (
-    <DashboardLayout
-      role="supplier"
-      userName="EduTech Solutions Ltd"
-      userEmail="sales@edutech.com"
-    >
+    <DashboardLayout role="supplier">
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>

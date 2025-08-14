@@ -28,6 +28,7 @@ import RecruiterDashboard from "./pages/dashboards/RecruiterDashboard";
 import SupplierDashboard from "./pages/dashboards/SupplierDashboard";
 import JobPostings from "./pages/school/JobPostings";
 import PostJob from "./pages/school/PostJob";
+import EditJob from "./pages/school/EditJob";
 import JobPostSuccess from "./pages/school/JobPostSuccess";
 import Candidates from "./pages/school/Candidates";
 import JobSearch from "./pages/teacher/JobSearch";
@@ -164,6 +165,14 @@ const AppRoutes = () => {
         element={
           <SchoolRoute>
             <PostJob />
+          </SchoolRoute>
+        }
+      />
+      <Route
+        path="/dashboard/school/edit-job/:jobId"
+        element={
+          <SchoolRoute>
+            <EditJob />
           </SchoolRoute>
         }
       />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
@@ -40,22 +40,29 @@ import {
   MapPin,
   Loader2,
   HelpCircle,
+  AlertCircle,
 } from "lucide-react";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { postJobFormSchema } from "@/helpers/validation";
 import { Country } from "@/components/ui/country-dropdown";
-import { useCreateJob } from "@/hooks/useJobs";
+import { useJob, useUpdateJob } from "@/hooks/useJobs";
 import { toast } from "sonner";
 import type { CreateJobRequest, JobType, EducationLevel } from "@/types/job";
 import { useAuth } from "@/contexts/AuthContext";
-import { STORAGE_KEYS } from "@/types/auth";
-import { secureStorage } from "@/helpers/storage";
-import { JobPostingFormSkeleton } from "@/components/skeletons/form-skeleton";
+import { EditJobFormSkeleton } from "@/components/skeletons/form-skeleton";
 
-const PostJob = () => {
+const EditJob = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
-  const createJobMutation = useCreateJob();
+  const { jobId } = useParams<{ jobId: string }>();
+  const { user } = useAuth();
+  const updateJobMutation = useUpdateJob();
+
+  // Fetch existing job data
+  const {
+    data: jobData,
+    isLoading: jobLoading,
+    error: jobError,
+  } = useJob(jobId || "");
 
   const {
     register,
@@ -65,6 +72,7 @@ const PostJob = () => {
     watch,
     getFieldError,
     isFieldInvalid,
+    reset,
   } = useFormValidation({
     schema: postJobFormSchema,
     mode: "onTouched",
@@ -109,33 +117,57 @@ const PostJob = () => {
   const [newRequirement, setNewRequirement] = useState("");
   const [newTag, setNewTag] = useState("");
 
+  // Populate form when job data is loaded
+  useEffect(() => {
+    if (jobData?.data?.job) {
+      const job = jobData?.data?.job;
+      reset({
+        title: job.title || "",
+        organization: "",
+        country: job.country || "",
+        city: job.city || "",
+        educationLevel: job.educationLevel || "",
+        jobType: job.jobType || "full_time",
+        subjects: job.subjects || [],
+        position: {
+          category: job.positionCategory || "",
+          subcategory: job.positionSubcategory || "",
+        },
+        organizationType: [],
+        description: job.description || "",
+        requirements: job.requirements || [],
+        salaryMin: job.salaryMin?.toString() || "",
+        salaryMax: job.salaryMax?.toString() || "",
+        currency: job.currency || "USD",
+        benefits: job.benefits || [],
+        salaryDisclose: job.salaryDisclose !== false,
+        visaSponsorship: job.visaSponsorship || false,
+        quickApply: job.quickApply !== false,
+        externalLink: job.externalLink || "",
+        minExperience: job.minExperience?.toString() || "",
+        qualification: job.qualification || "",
+        applicationDeadline: job.applicationDeadline
+          ? new Date(job.applicationDeadline)
+          : undefined,
+        applicantEmail: job.applicantEmail || "",
+        screeningQuestions: job.screeningQuestions || [],
+        tags: job.tags || [],
+        isUrgent: job.isUrgent || false,
+        isFeatured: job.isFeatured || false,
+      });
+    }
+  }, [jobData, reset]);
+
   // Handle authentication redirects
   useEffect(() => {
-    if (isAuthenticated === false) {
-      navigate("/signin");
-      return;
-    }
-
-    if (isAuthenticated && user && user.role !== "school") {
+    if (!user || user.role !== "school") {
       navigate("/unauthorized");
       return;
     }
-  }, [isAuthenticated, user, navigate]);
-
-  // Debug authentication state in development
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log("🔐 PostJob Auth State:", {
-        isAuthenticated,
-        userRole: user?.role,
-        userId: user?.id,
-        userEmail: user?.email,
-      });
-    }
-  }, [isAuthenticated, user]);
+  }, [user, navigate]);
 
   // Don't render if not authenticated or not a school
-  if (!isAuthenticated || !user || user.role !== "school") {
+  if (!user || user.role !== "school") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex items-center space-x-2">
@@ -143,6 +175,34 @@ const PostJob = () => {
           <span>Checking authentication...</span>
         </div>
       </div>
+    );
+  }
+
+  if (jobLoading) {
+    return (
+      <DashboardLayout role="school">
+        <EditJobFormSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  if (jobError || !jobData?.data?.job) {
+    return (
+      <DashboardLayout role="school">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Job Not Found</h2>
+            <p className="text-muted-foreground mb-4">
+              The job you're looking for doesn't exist or you don't have
+              permission to edit it.
+            </p>
+            <Button onClick={() => navigate("/dashboard/school/postings")}>
+              Back to Job Postings
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
     );
   }
 
@@ -223,43 +283,9 @@ const PostJob = () => {
   const onSubmit = async (e: React.FormEvent, action: "draft" | "publish") => {
     e.preventDefault();
 
-    // Double-check authentication before submission
-    if (!isAuthenticated || !user) {
-      toast.error("Authentication required. Please sign in again.");
-      navigate("/signin");
+    if (!jobId) {
+      toast.error("Job ID is required");
       return;
-    }
-
-    // Check if we have a valid token
-    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
-    if (!token) {
-      toast.error("Authentication token not found. Please sign in again.");
-      navigate("/signin");
-      return;
-    }
-
-    // Debug token in development
-    if (import.meta.env.DEV) {
-      console.log("🔐 PostJob - Token check:", {
-        hasToken: !!token,
-        tokenLength: token?.length,
-        tokenStart: token?.substring(0, 20) + "...",
-      });
-
-      // Check token expiration
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-      const isExpired = payload.exp < currentTime;
-      console.log("🔐 PostJob - Token details:", {
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        issuedAt: new Date(payload.iat * 1000).toISOString(),
-        expiresAt: new Date(payload.exp * 1000).toISOString(),
-        currentTime: new Date(currentTime * 1000).toISOString(),
-        isExpired,
-        timeUntilExpiry: payload.exp - currentTime,
-      });
     }
 
     try {
@@ -303,49 +329,21 @@ const PostJob = () => {
         action: action === "draft" ? "save_draft" : "publish",
       };
 
-      // Always use the same API call - backend will handle draft vs publish
-      await createJobMutation.mutateAsync(jobData);
+      await updateJobMutation.mutateAsync({
+        jobId,
+        data: jobData,
+      });
 
       if (action === "draft") {
-        toast.success("Job saved as draft successfully!");
+        toast.success("Job updated and saved as draft successfully!");
       } else {
-        toast.success("Job posted successfully!");
+        toast.success("Job updated and published successfully!");
       }
 
-      navigate("/dashboard/school/job-post-success");
+      navigate("/dashboard/school/postings");
     } catch (error: unknown) {
-      console.error("Error submitting job:", error);
-
-      // Handle specific authentication errors
-      if (error && typeof error === "object" && "response" in error) {
-        const apiError = error as { response?: { status?: number } };
-        if (apiError.response?.status === 401) {
-          toast.error("Authentication failed. Please sign in again.");
-          navigate("/signin");
-          return;
-        }
-
-        if (apiError.response?.status === 403) {
-          toast.error("You don't have permission to post jobs.");
-          return;
-        }
-      }
-
-      // Handle network errors
-      if (error && typeof error === "object" && "message" in error) {
-        const networkError = error as { message?: string };
-        if (
-          networkError.message?.includes("Network Error") ||
-          networkError.message?.includes("timeout")
-        ) {
-          toast.error(
-            "Network error. Please check your connection and try again."
-          );
-          return;
-        }
-      }
-
-      toast.error("Failed to submit job. Please try again.");
+      console.error("Error updating job:", error);
+      toast.error("Failed to update job. Please try again.");
     }
   };
 
@@ -437,17 +435,17 @@ const PostJob = () => {
           </Button>
           <div>
             <h1 className="font-heading font-bold text-3xl text-foreground">
-              Post New Job
+              Edit Job
             </h1>
             <p className="text-muted-foreground">
-              Create a comprehensive job posting to attract qualified candidates
+              Update your job posting to attract qualified candidates
             </p>
           </div>
         </div>
 
         {/* Show skeleton when submitting */}
-        {createJobMutation.isPending ? (
-          <JobPostingFormSkeleton />
+        {updateJobMutation.isPending ? (
+          <EditJobFormSkeleton />
         ) : (
           <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
             {/* Basic Information */}
@@ -494,111 +492,6 @@ const PostJob = () => {
                         {getFieldError("organization")}
                       </p>
                     )}
-                  </div>
-                </div>
-
-                {/* Job Features */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label>Job Features</Label>
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="isUrgent"
-                          checked={formData.isUrgent}
-                          onCheckedChange={(checked) =>
-                            setValue("isUrgent", !!checked)
-                          }
-                        />
-                        <Label htmlFor="isUrgent" className="text-sm">
-                          Mark as Urgent
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="isFeatured"
-                          checked={formData.isFeatured}
-                          onCheckedChange={(checked) =>
-                            setValue("isFeatured", !!checked)
-                          }
-                        />
-                        <Label htmlFor="isFeatured" className="text-sm">
-                          Feature this Job
-                        </Label>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Urgent jobs get priority placement. Featured jobs appear
-                      prominently in search results.
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="tags">Job Tags</Label>
-                    <div className="space-y-3">
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="Type a tag and press Enter or click Add"
-                          value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              addItem(newTag, "tags", setNewTag);
-                            }
-                          }}
-                          className="flex-1"
-                          disabled={(formData.tags || []).length >= 10}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => addItem(newTag, "tags", setNewTag)}
-                          disabled={
-                            !newTag.trim() || (formData.tags || []).length >= 10
-                          }
-                          className="min-w-[80px]"
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Add
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        💡 Add tags to help candidates find your job (e.g.,
-                        "Remote", "Entry Level", "STEM")
-                        {(formData.tags || []).length >= 10 && (
-                          <span className="text-red-500">
-                            {" "}
-                            • Maximum 10 tags reached
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/30">
-                      {(formData.tags || []).map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="flex items-center space-x-1 px-3 py-1"
-                        >
-                          <span>{tag}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-0 ml-1 hover:bg-transparent hover:text-destructive"
-                            onClick={() => removeItem(index, "tags")}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                      {(formData.tags || []).length === 0 && (
-                        <span className="text-sm text-muted-foreground">
-                          No tags added yet
-                        </span>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -1359,7 +1252,7 @@ const PostJob = () => {
                           }
                           className="hover:text-destructive"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-3 h-3" />
                         </Button>
                       </div>
                     )
@@ -1389,9 +1282,9 @@ const PostJob = () => {
                   type="button"
                   variant="outline"
                   onClick={(e) => onSubmit(e, "draft")}
-                  disabled={createJobMutation.isPending}
+                  disabled={updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending ? (
+                  {updateJobMutation.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
@@ -1401,14 +1294,14 @@ const PostJob = () => {
                 <Button
                   type="button"
                   onClick={(e) => onSubmit(e, "publish")}
-                  disabled={createJobMutation.isPending}
+                  disabled={updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending ? (
+                  {updateJobMutation.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Send className="w-4 h-4 mr-2" />
                   )}
-                  Publish Job
+                  Update & Publish
                 </Button>
               </div>
             </div>
@@ -1419,4 +1312,4 @@ const PostJob = () => {
   );
 };
 
-export default PostJob;
+export default EditJob;

@@ -54,12 +54,33 @@ apiClient.interceptors.request.use(
         // Debug: Log when Authorization header is added
         if (import.meta.env.DEV) {
           console.log("🔐 Authorization header added to request:", config.url);
+          console.log("🔐 Token validation passed:", {
+            url: config.url,
+            hasToken: !!token,
+            tokenLength: token.length,
+            isExpired: jwtHelpers.isTokenExpired(token),
+            userId: jwtHelpers.getUserId(token),
+            userRole: jwtHelpers.getUserRole(token),
+            userEmail: jwtHelpers.getUserEmail(token),
+          });
+          console.log("🔐 Request headers:", {
+            "Content-Type": config.headers["Content-Type"],
+            Authorization: `Bearer ${token.substring(0, 20)}...`,
+            "User-Agent": config.headers["User-Agent"],
+          });
         }
       } else if (token) {
         // Token exists but is invalid - log for debugging but don't clear auth immediately
         console.warn("Invalid token structure detected in request interceptor");
         if (import.meta.env.DEV) {
           console.log("Token:", token);
+          console.log("Token validation failed:", {
+            url: config.url,
+            hasToken: !!token,
+            tokenLength: token.length,
+            isValidStructure: jwtHelpers.isValidTokenStructure(token),
+            parseResult: jwtHelpers.parseToken(token),
+          });
         }
       } else {
         // No token available
@@ -89,6 +110,19 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+
+    // Enhanced error logging
+    if (import.meta.env.DEV) {
+      console.error("🚨 API Error Response:", {
+        url: originalRequest?.url,
+        method: originalRequest?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        requestHeaders: originalRequest?.headers,
+      });
+    }
 
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401 && !originalRequest._retry) {

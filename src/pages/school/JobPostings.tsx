@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
+import DeleteConfirmationModal from "@/components/Modals/delete-confirmation-modal";
+import BulkDeleteConfirmationModal from "@/components/Modals/bulk-delete-confirmation-modal";
 import {
   Card,
   CardContent,
@@ -20,6 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   Users,
   Eye,
   Clock,
@@ -32,132 +41,322 @@ import {
   MapPin,
   GraduationCap,
   DollarSign,
+  Trash2,
+  Pause,
+  Play,
+  Archive,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  useSchoolJobs,
+  useSchoolDashboardStats,
+  useUpdateJobStatus,
+  useDeleteJob,
+} from "@/hooks/useJobs";
+import { toast } from "sonner";
+import type { JobStatus, Job, PaginatedResponse } from "@/types/job";
+import { JobPostingsSkeleton } from "@/components/skeletons/job-postings-skeleton";
+
+// Custom type for your API response structure
+interface SchoolJobsResponse {
+  data: {
+    jobs: Job[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+}
 
 const JobPostings = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<JobStatus | "all">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
-  const jobPostings = [
-    {
-      id: 1,
-      title: "Mathematics Teacher - Secondary",
-      department: "Mathematics Department",
-      location: "Dubai, UAE",
-      educationLevel: "Secondary (Grades 9-12)",
-      subjects: ["Mathematics", "Statistics"],
-      salaryRange: "$4,000 - $6,000",
-      currency: "USD",
-      status: "Active",
-      applicants: 23,
-      views: 156,
-      postedDate: "March 15, 2024",
-      expiryDate: "April 15, 2024",
-      quickApply: true,
-      visaSponsorship: true,
-      benefits: ["Health Insurance", "Housing Allowance", "Annual Flight"],
-      minExperience: 3,
-      qualification: "Bachelor's Degree",
-    },
-    {
-      id: 2,
-      title: "English Language Teacher - Primary",
-      department: "English Department",
-      location: "Dubai, UAE",
-      educationLevel: "Primary (Grades 1-6)",
-      subjects: ["English Language", "Literature"],
-      salaryRange: "$3,500 - $5,500",
-      currency: "USD",
-      status: "Active",
-      applicants: 31,
-      views: 204,
-      postedDate: "March 10, 2024",
-      expiryDate: "April 10, 2024",
-      quickApply: true,
-      visaSponsorship: true,
-      benefits: ["Health Insurance", "Housing Allowance"],
-      minExperience: 2,
-      qualification: "Bachelor's Degree",
-    },
-    {
-      id: 3,
-      title: "Science Lab Coordinator",
-      department: "Science Department",
-      location: "Dubai, UAE",
-      educationLevel: "Secondary (Grades 7-12)",
-      subjects: ["Physics", "Chemistry", "Biology"],
-      salaryRange: "$3,000 - $4,500",
-      currency: "USD",
-      status: "Draft",
-      applicants: 0,
-      views: 12,
-      postedDate: "March 12, 2024",
-      expiryDate: "April 20, 2024",
-      quickApply: false,
-      visaSponsorship: true,
-      benefits: ["Health Insurance"],
-      minExperience: 1,
-      qualification: "Bachelor's Degree in Science",
-    },
-    {
-      id: 4,
-      title: "Art & Design Teacher",
-      department: "Creative Arts",
-      location: "Dubai, UAE",
-      educationLevel: "Primary & Secondary",
-      subjects: ["Visual Arts", "Design Technology"],
-      salaryRange: "$3,200 - $4,800",
-      currency: "USD",
-      status: "Paused",
-      applicants: 18,
-      views: 98,
-      postedDate: "March 8, 2024",
-      expiryDate: "April 25, 2024",
-      quickApply: true,
-      visaSponsorship: false,
-      benefits: ["Health Insurance", "Professional Development"],
-      minExperience: 2,
-      qualification: "Bachelor's in Art/Design",
-    },
-  ];
+  // API hooks
+  const { data: dashboardStats, isLoading: statsLoading } =
+    useSchoolDashboardStats(user?.id || "");
+  const {
+    data: jobsData,
+    isLoading: jobsLoading,
+    refetch: refetchJobs,
+  } = useSchoolJobs(user?.id || "", { page: currentPage, limit: 10 }) as {
+    data: SchoolJobsResponse | undefined;
+    isLoading: boolean;
+    refetch: () => void;
+  };
+  const updateJobStatusMutation = useUpdateJobStatus();
+  const deleteJobMutation = useDeleteJob();
 
-  const getStatusColor = (status: string) => {
+  // Refetch jobs when user ID changes or page changes
+  useEffect(() => {
+    if (user?.id) {
+      refetchJobs();
+    }
+  }, [user?.id, currentPage, refetchJobs]);
+
+  // Filter jobs based on search and status
+  const filteredJobs =
+    (jobsData?.data?.jobs || []).filter((job) => {
+      const matchesSearch =
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.positionCategory
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        job.subjects?.some((subject) =>
+          subject.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      const matchesStatus =
+        statusFilter === "all" || job.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }) || [];
+
+  // Calculate stats from API data
+  const stats = {
+    total: dashboardStats?.data?.totalJobs || 0,
+    published: dashboardStats?.data?.activeJobs || 0, // Using activeJobs for published jobs
+    draft: dashboardStats?.data?.draftJobs || 0,
+    totalApplicants: dashboardStats?.data?.totalApplications || 0,
+  };
+
+  const getStatusColor = (status: JobStatus) => {
     switch (status) {
-      case "Active":
-        return "bg-brand-accent-green text-white";
-      case "Draft":
+      case "draft":
         return "bg-yellow-500 text-white";
-      case "Paused":
-        return "bg-brand-accent-orange text-white";
-      case "Expired":
+      case "published":
+        return "bg-brand-accent-green text-white";
+      case "expired":
         return "bg-red-500 text-white";
+      case "closed":
+        return "bg-gray-500 text-white";
       default:
         return "bg-muted text-muted-foreground";
     }
   };
 
-  const filteredJobs = jobPostings.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || job.status.toLowerCase() === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const stats = {
-    total: jobPostings.length,
-    active: jobPostings.filter((j) => j.status === "Active").length,
-    draft: jobPostings.filter((j) => j.status === "Draft").length,
-    totalApplicants: jobPostings.reduce((sum, job) => sum + job.applicants, 0),
+  const getStatusLabel = (status: JobStatus) => {
+    switch (status) {
+      case "draft":
+        return "Draft";
+      case "published":
+        return "Published";
+      case "expired":
+        return "Expired";
+      case "closed":
+        return "Closed";
+      default:
+        return status;
+    }
   };
 
+  const handleStatusUpdate = async (jobId: string, newStatus: JobStatus) => {
+    try {
+      // Find the current job to check its status
+      const currentJob = filteredJobs.find((job) => job._id === jobId);
+      if (!currentJob) {
+        toast.error("Job not found");
+        return;
+      }
+
+      // Prevent invalid status transitions
+      if (currentJob.status === "closed" && newStatus === "closed") {
+        toast.error("Job is already closed");
+        return;
+      }
+
+      if (currentJob.status === "expired" && newStatus === "expired") {
+        toast.error("Job is already expired");
+        return;
+      }
+
+      // Create appropriate notes based on status change
+      let notes = `Status changed to ${newStatus}`;
+      if (newStatus === "published") {
+        notes = "Job published and is now accepting applications";
+      } else if (newStatus === "draft") {
+        notes = "Job paused and moved to draft status";
+      } else if (newStatus === "closed") {
+        notes = "Job closed and no longer accepting applications";
+      } else if (newStatus === "expired") {
+        notes = "Job expired due to deadline";
+      }
+
+      await updateJobStatusMutation.mutateAsync({
+        jobId,
+        status: newStatus,
+        notes,
+      });
+      toast.success(`Job status updated to ${getStatusLabel(newStatus)}`);
+      refetchJobs();
+    } catch (error) {
+      console.error("Status update error:", error);
+      if (error && typeof error === "object" && "message" in error) {
+        const errorMessage = (error as { message: string }).message;
+        if (errorMessage.includes("JobNotification validation failed")) {
+          toast.error(
+            "Failed to update job status due to notification error. Please try again."
+          );
+        } else {
+          toast.error("Failed to update job status");
+        }
+      } else {
+        toast.error("Failed to update job status");
+      }
+    }
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    const job = filteredJobs.find((j) => j._id === jobId);
+    if (job) {
+      setJobToDelete(job);
+      setDeleteModalOpen(true);
+    }
+  };
+
+  const confirmDeleteJob = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      await deleteJobMutation.mutateAsync(jobToDelete._id);
+      toast.success("Job deleted successfully");
+      refetchJobs();
+      setDeleteModalOpen(false);
+      setJobToDelete(null);
+    } catch (error) {
+      toast.error("Failed to delete job");
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setJobToDelete(null);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      await Promise.all(
+        selectedJobs.map((jobId) => deleteJobMutation.mutateAsync(jobId))
+      );
+      toast.success(`${selectedJobs.length} jobs deleted successfully`);
+      setSelectedJobs([]);
+      refetchJobs();
+      setBulkDeleteModalOpen(false);
+    } catch (error) {
+      toast.error("Failed to delete some jobs");
+    }
+  };
+
+  const closeBulkDeleteModal = () => {
+    setBulkDeleteModalOpen(false);
+  };
+
+  const handleBulkAction = async (action: JobStatus | "delete") => {
+    if (selectedJobs.length === 0) {
+      toast.error("Please select jobs first");
+      return;
+    }
+
+    if (action === "delete") {
+      setBulkDeleteModalOpen(true);
+    } else {
+      // Check if any selected jobs are already closed and prevent invalid transitions
+      const selectedJobObjects = filteredJobs.filter((job) =>
+        selectedJobs.includes(job._id)
+      );
+      const hasClosedJobs = selectedJobObjects.some(
+        (job) => job.status === "closed"
+      );
+
+      if (action === "closed" && hasClosedJobs) {
+        toast.error("Cannot close jobs that are already closed");
+        return;
+      }
+
+      try {
+        // Create appropriate notes based on status change
+        let notes = `Bulk status update to ${action}`;
+        if (action === "published") {
+          notes = "Jobs published and are now accepting applications";
+        } else if (action === "draft") {
+          notes = "Jobs paused and moved to draft status";
+        } else if (action === "closed") {
+          notes = "Jobs closed and no longer accepting applications";
+        } else if (action === "expired") {
+          notes = "Jobs expired due to deadline";
+        }
+
+        await Promise.all(
+          selectedJobs.map((jobId) =>
+            updateJobStatusMutation.mutateAsync({
+              jobId,
+              status: action,
+              notes,
+            })
+          )
+        );
+        toast.success(
+          `${selectedJobs.length} jobs updated to ${getStatusLabel(action)}`
+        );
+        setSelectedJobs([]);
+        refetchJobs();
+      } catch (error) {
+        console.error("Bulk status update error:", error);
+        if (error && typeof error === "object" && "message" in error) {
+          const errorMessage = (error as { message: string }).message;
+          if (errorMessage.includes("JobNotification validation failed")) {
+            toast.error(
+              "Failed to update some job statuses due to notification errors. Please try again."
+            );
+          } else if (errorMessage.includes("Action URL must be a valid URL")) {
+            toast.error(
+              "Failed to update some job statuses due to invalid URL format. Please check job details."
+            );
+          } else {
+            toast.error("Failed to update some job statuses");
+          }
+        } else {
+          toast.error("Failed to update some job statuses");
+        }
+      }
+    }
+  };
+
+  const toggleJobSelection = (jobId: string) => {
+    setSelectedJobs((prev) =>
+      prev.includes(jobId)
+        ? prev.filter((id) => id !== jobId)
+        : [...prev, jobId]
+    );
+  };
+
+  const selectAllJobs = () => {
+    if (selectedJobs.length === filteredJobs.length) {
+      setSelectedJobs([]);
+    } else {
+      setSelectedJobs(filteredJobs.map((job) => job._id));
+    }
+  };
+
+  if (statsLoading || jobsLoading) {
+    return (
+      <DashboardLayout role="school">
+        <JobPostingsSkeleton />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout
-      role="school"
-      userName="Dubai International School"
-      userEmail="admin@isdubai.edu"
-    >
+    <DashboardLayout role="school">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -192,11 +391,13 @@ const JobPostings = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Published Jobs
+              </CardTitle>
               <Eye className="h-4 w-4 text-brand-accent-green" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.active}</div>
+              <div className="text-2xl font-bold">{stats.published}</div>
               <p className="text-xs text-muted-foreground">
                 Currently accepting applications
               </p>
@@ -245,158 +446,389 @@ const JobPostings = () => {
                     className="pl-10 w-64"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) =>
+                    setStatusFilter(value as JobStatus | "all")
+                  }
+                >
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
                     <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {filteredJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="p-6 border border-border rounded-lg hover:border-brand-primary/30 hover:shadow-md transition-all"
-                >
-                  {/* Job Header */}
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-heading font-semibold text-xl">
-                          {job.title}
-                        </h3>
-                        <Badge className={getStatusColor(job.status)}>
-                          {job.status}
-                        </Badge>
-                        {job.quickApply && (
-                          <Badge
-                            variant="outline"
-                            className="text-brand-primary border-brand-primary"
-                          >
-                            Quick Apply
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground">{job.department}</p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="w-4 h-4" />
+            {/* Bulk Actions */}
+            {selectedJobs.length > 0 && (
+              <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {selectedJobs.length} job(s) selected
+                  </span>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkAction("published")}
+                      disabled={updateJobStatusMutation.isPending}
+                    >
+                      <Play className="w-4 h-4 mr-1" />
+                      Publish
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkAction("draft")}
+                      disabled={updateJobStatusMutation.isPending}
+                    >
+                      <Pause className="w-4 h-4 mr-1" />
+                      Pause
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkAction("closed")}
+                      disabled={updateJobStatusMutation.isPending}
+                    >
+                      <Archive className="w-4 h-4 mr-1" />
+                      Close
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleBulkAction("delete")}
+                      disabled={deleteJobMutation.isPending}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
 
-                  {/* Job Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{job.location}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{job.educationLevel}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {job.salaryRange} {job.currency}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Subjects */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {job.subjects.map((subject, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {subject}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* Performance Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-muted/30 rounded-lg">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <Users className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">{job.applicants}</span>
+            <div className="space-y-4">
+              {filteredJobs.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground">
+                    {searchTerm || statusFilter !== "all"
+                      ? "No jobs match the current filters."
+                      : "No job postings found. Create your first job posting to get started!"}
+                  </p>
+                </div>
+              ) : (
+                filteredJobs.map((job) => (
+                  <div
+                    key={job._id}
+                    className={`p-6 border border-border rounded-lg hover:border-brand-primary/30 hover:shadow-md transition-all ${
+                      selectedJobs.includes(job._id)
+                        ? "ring-2 ring-brand-primary"
+                        : ""
+                    }`}
+                  >
+                    {/* Job Header */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedJobs.includes(job._id)}
+                            onChange={() => toggleJobSelection(job._id)}
+                            className="rounded border-gray-300"
+                            aria-label={`Select ${job.title} for bulk action`}
+                            title={`Select ${job.title} for bulk action`}
+                          />
+                          <h3 className="font-heading font-semibold text-xl">
+                            {job.title}
+                          </h3>
+                          <Badge className={getStatusColor(job.status)}>
+                            {getStatusLabel(job.status)}
+                          </Badge>
+                          {job.quickApply && (
+                            <Badge
+                              variant="outline"
+                              className="text-brand-primary border-brand-primary"
+                            >
+                              Quick Apply
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-muted-foreground">
+                          {job.positionCategory}
+                        </p>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        Applicants
-                      </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              navigate(`/dashboard/school/edit-job/${job._id}`)
+                            }
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Job
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              navigate(
+                                `/dashboard/school/candidates?job=${job._id}`
+                              )
+                            }
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            View Candidates ({job.applicantsCount || 0})
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {job.status === "published" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusUpdate(job._id, "draft")
+                              }
+                            >
+                              <Pause className="w-4 h-4 mr-2" />
+                              Pause Job
+                            </DropdownMenuItem>
+                          )}
+                          {job.status === "draft" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusUpdate(job._id, "published")
+                              }
+                            >
+                              <Play className="w-4 h-4 mr-2" />
+                              Publish Job
+                            </DropdownMenuItem>
+                          )}
+                          {job.status !== "closed" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusUpdate(job._id, "closed")
+                              }
+                            >
+                              <Archive className="w-4 h-4 mr-2" />
+                              Close Job
+                            </DropdownMenuItem>
+                          )}
+                          {job.status === "closed" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleStatusUpdate(job._id, "published")
+                              }
+                            >
+                              <Play className="w-4 h-4 mr-2" />
+                              Reopen Job
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteJob(job._id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Job
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">{job.views}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        Views
-                      </span>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-xs">
-                          {job.postedDate}
+
+                    {/* Job Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {job.city}, {job.country}
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        Posted
-                      </span>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-xs">
-                          {job.expiryDate}
+                      <div className="flex items-center space-x-2">
+                        <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">{job.educationLevel}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {job.salaryMin && job.salaryMax
+                            ? `${job.salaryMin} - ${job.salaryMax} ${job.currency}`
+                            : "Salary not disclosed"}
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        Expires
-                      </span>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
-                      {job.visaSponsorship && (
-                        <Badge variant="outline" className="text-xs">
-                          Visa Sponsorship
-                        </Badge>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        Min {job.minExperience} years experience
-                      </span>
+                    {/* Subjects */}
+                    {job.subjects && job.subjects.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {job.subjects.map((subject, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {subject}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Performance Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-muted/30 rounded-lg">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-semibold">
+                            {job.applicantsCount || 0}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Applicants
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-semibold">
+                            {job.viewsCount || 0}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Views
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-semibold text-xs">
+                            {new Date(job.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Posted
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-semibold text-xs">
+                            {job.applicationDeadline
+                              ? new Date(
+                                  job.applicationDeadline
+                                ).toLocaleDateString()
+                              : "No deadline"}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Deadline
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                      <Link to={`/dashboard/school/candidates?job=${job.id}`}>
-                        <Button variant="default" size="sm">
-                          View Candidates ({job.applicants})
+
+                    {/* Actions */}
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        {job.visaSponsorship && (
+                          <Badge variant="outline" className="text-xs">
+                            Visa Sponsorship
+                          </Badge>
+                        )}
+                        {job.minExperience && (
+                          <span className="text-xs text-muted-foreground">
+                            Min {job.minExperience} years experience
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/dashboard/school/edit-job/${job._id}`)
+                          }
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
                         </Button>
-                      </Link>
+                        <Link
+                          to={`/dashboard/school/candidates?job=${job._id}`}
+                        >
+                          <Button variant="default" size="sm">
+                            <Users className="w-4 h-4 mr-1" />
+                            View Candidates ({job.applicantsCount || 0})
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Pagination */}
+            {jobsData?.data?.pagination &&
+              jobsData.data.pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-6 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {(currentPage - 1) * 10 + 1} to{" "}
+                    {Math.min(currentPage * 10, jobsData.data.pagination.total)}{" "}
+                    of {jobsData.data.pagination.total} results
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => prev + 1)}
+                      disabled={
+                        currentPage >= jobsData.data.pagination.totalPages
+                      }
+                    >
+                      Next
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDeleteJob}
+        job={jobToDelete}
+        isLoading={deleteJobMutation.isPending}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <BulkDeleteConfirmationModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={closeBulkDeleteModal}
+        onConfirm={confirmBulkDelete}
+        jobs={filteredJobs.filter((job) => selectedJobs.includes(job._id))}
+        isLoading={deleteJobMutation.isPending}
+      />
     </DashboardLayout>
   );
 };

@@ -261,6 +261,7 @@ export const postJobFormSchema = z
     country: z.string().min(1, "Country is required"),
     city: z.string().min(1, "City is required"),
     educationLevel: z.string().min(1, "Education level is required"),
+    jobType: z.string().min(1, "Job type is required"),
     subjects: z.array(z.string()).min(1, "At least one subject is required"),
     position: z.object({
       category: z.string().min(1, "Position category is required"),
@@ -271,8 +272,9 @@ export const postJobFormSchema = z
       .string()
       .min(1, "Job description is required")
       .min(50, "Job description must be at least 50 characters"),
-    salaryMin: z.string().min(1, "Minimum salary is required"),
-    salaryMax: z.string().min(1, "Maximum salary is required"),
+    requirements: z.array(z.string()).optional(),
+    salaryMin: z.string().optional(),
+    salaryMax: z.string().optional(),
     currency: z.string().min(1, "Currency is required"),
     benefits: z.array(z.string()).optional(),
     salaryDisclose: z.boolean(),
@@ -287,9 +289,15 @@ export const postJobFormSchema = z
     }),
     applicantEmail: z.string().email("Please enter a valid email address"),
     screeningQuestions: z.array(z.string()).optional(),
+    tags: z.array(z.string()).optional(),
+    isUrgent: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
   })
   .refine(
     (data) => {
+      if (!data.salaryDisclose || !data.salaryMin || !data.salaryMax) {
+        return true; // Skip validation if salary is not disclosed
+      }
       const minSalary = parseFloat(data.salaryMin);
       const maxSalary = parseFloat(data.salaryMax);
       return minSalary <= maxSalary;
