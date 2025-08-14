@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Users,
@@ -42,22 +43,38 @@ import {
   CheckCircle,
   XCircle,
   BookOpen,
+  Loader2,
+  AlertCircle,
+  Mail,
+  Phone,
+  ExternalLink,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSchoolJobs } from "@/hooks/useJobs";
+import { toast } from "sonner";
+import type { ApplicationStatus } from "@/types/job";
+import { CandidatesSkeleton } from "@/components/skeletons/candidates-skeleton";
 
 const Candidates = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const selectedJob = searchParams.get("job");
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(
+    "all"
+  );
   const [experienceFilter, setExperienceFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const jobPostings = [
-    { id: "1", title: "Mathematics Teacher - Secondary", applicants: 23 },
-    { id: "2", title: "English Language Teacher - Primary", applicants: 31 },
-    { id: "3", title: "Science Lab Coordinator", applicants: 12 },
-    { id: "4", title: "Art & Design Teacher", applicants: 18 },
-  ];
+  // API hooks
+  const { data: jobsData, isLoading: jobsLoading } = useSchoolJobs(
+    user?.id || "",
+    { page: 1, limit: 100 } // Get all jobs for filtering
+  );
 
+  // Mock candidates data - in real implementation, this would come from the applications API
+  // For now, using mock data to demonstrate the UI
   const candidates = [
     {
       id: 1,
@@ -71,7 +88,7 @@ const Candidates = () => {
       location: "London, UK",
       currentPosition: "Senior Mathematics Teacher",
       rating: 4.8,
-      status: "Interview Scheduled",
+      status: "pending" as ApplicationStatus,
       applicationDate: "March 15, 2024",
       resumeUrl: "#",
       skills: ["Advanced Mathematics", "IB Curriculum", "Student Mentoring"],
@@ -94,7 +111,7 @@ const Candidates = () => {
       location: "Singapore",
       currentPosition: "Primary English Teacher",
       rating: 4.6,
-      status: "Under Review",
+      status: "reviewing" as ApplicationStatus,
       applicationDate: "March 14, 2024",
       resumeUrl: "#",
       skills: ["Phonics", "Reading Comprehension", "Creative Writing"],
@@ -117,7 +134,7 @@ const Candidates = () => {
       location: "Dubai, UAE",
       currentPosition: "Science Department Head",
       rating: 4.9,
-      status: "New Application",
+      status: "pending" as ApplicationStatus,
       applicationDate: "March 13, 2024",
       resumeUrl: "#",
       skills: [
@@ -147,7 +164,7 @@ const Candidates = () => {
       location: "Seoul, South Korea",
       currentPosition: "Mathematics Teacher",
       rating: 4.7,
-      status: "Shortlisted",
+      status: "shortlisted" as ApplicationStatus,
       applicationDate: "March 12, 2024",
       resumeUrl: "#",
       skills: ["Calculus", "Statistics", "Educational Technology"],
@@ -173,7 +190,7 @@ const Candidates = () => {
       location: "Manchester, UK",
       currentPosition: "Head of Art Department",
       rating: 4.8,
-      status: "Rejected",
+      status: "rejected" as ApplicationStatus,
       applicationDate: "March 10, 2024",
       resumeUrl: "#",
       skills: ["Digital Art", "Traditional Media", "Portfolio Development"],
@@ -185,22 +202,45 @@ const Candidates = () => {
     },
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: ApplicationStatus) => {
     switch (status) {
-      case "Interview Scheduled":
-        return "bg-brand-secondary text-white";
-      case "Under Review":
-        return "bg-brand-primary text-white";
-      case "New Application":
+      case "pending":
         return "bg-brand-accent-orange text-white";
-      case "Shortlisted":
+      case "reviewing":
+        return "bg-brand-primary text-white";
+      case "shortlisted":
         return "bg-brand-accent-green text-white";
-      case "Rejected":
-        return "bg-red-500 text-white";
-      case "Hired":
+      case "interviewed":
+        return "bg-brand-secondary text-white";
+      case "accepted":
         return "bg-green-600 text-white";
+      case "rejected":
+        return "bg-red-500 text-white";
+      case "withdrawn":
+        return "bg-gray-500 text-white";
       default:
         return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getStatusLabel = (status: ApplicationStatus) => {
+    switch (status) {
+      case "pending":
+        return "New Application";
+      case "reviewing":
+        return "Under Review";
+      case "shortlisted":
+        return "Shortlisted";
+      case "interviewed":
+        return "Interviewed";
+      case "accepted":
+        return "Accepted";
+      case "rejected":
+        return "Rejected";
+      case "withdrawn":
+        return "Withdrawn";
+      default:
+        return status;
     }
   };
 
@@ -213,8 +253,7 @@ const Candidates = () => {
       );
 
     const matchesStatus =
-      statusFilter === "all" ||
-      candidate.status.toLowerCase().replace(" ", "-") === statusFilter;
+      statusFilter === "all" || candidate.status === statusFilter;
     const matchesJob = !selectedJob || candidate.jobId === selectedJob;
 
     const candidateYears = parseInt(candidate.experience);
@@ -232,27 +271,58 @@ const Candidates = () => {
     return matchesSearch && matchesStatus && matchesJob && matchesExperience;
   });
 
-  const groupedCandidates = jobPostings.map((job) => ({
+  const groupedCandidates = (jobsData?.data?.data || []).map((job) => ({
     ...job,
     candidates: filteredCandidates.filter(
-      (candidate) => candidate.jobId === job.id
+      (candidate) => candidate.jobId === job._id
     ),
   }));
 
   const stats = {
     total: candidates.length,
-    new: candidates.filter((c) => c.status === "New Application").length,
-    interviewed: candidates.filter((c) => c.status === "Interview Scheduled")
-      .length,
-    shortlisted: candidates.filter((c) => c.status === "Shortlisted").length,
+    new: candidates.filter((c) => c.status === "pending").length,
+    reviewing: candidates.filter((c) => c.status === "reviewing").length,
+    shortlisted: candidates.filter((c) => c.status === "shortlisted").length,
   };
 
+  const handleStatusUpdate = async (
+    candidateId: number,
+    newStatus: ApplicationStatus
+  ) => {
+    try {
+      // In real implementation, this would call the API to update application status
+      toast.success(`Candidate status updated to ${getStatusLabel(newStatus)}`);
+      // Refresh candidates list
+    } catch (error) {
+      toast.error("Failed to update candidate status");
+    }
+  };
+
+  const handleSendMessage = (candidateEmail: string) => {
+    // In real implementation, this would open a messaging interface
+    toast.info(`Opening message interface for ${candidateEmail}`);
+  };
+
+  const handleScheduleInterview = (candidateId: number) => {
+    // In real implementation, this would open interview scheduling
+    toast.info("Opening interview scheduling interface");
+  };
+
+  const handleDownloadResume = (candidateId: number) => {
+    // In real implementation, this would download the resume
+    toast.info("Downloading resume...");
+  };
+
+  if (jobsLoading) {
+    return (
+      <DashboardLayout role="school">
+        <CandidatesSkeleton />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout
-      role="school"
-      userName="Dubai International School"
-      userEmail="admin@isdubai.edu"
-    >
+    <DashboardLayout role="school">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -295,13 +365,15 @@ const Candidates = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Interviews Scheduled
+                Under Review
               </CardTitle>
               <Calendar className="h-4 w-4 text-brand-secondary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.interviewed}</div>
-              <p className="text-xs text-muted-foreground">This week</p>
+              <div className="text-2xl font-bold">{stats.reviewing}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently reviewing
+              </p>
             </CardContent>
           </Card>
 
@@ -333,18 +405,22 @@ const Candidates = () => {
                   />
                 </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) =>
+                    setStatusFilter(value as ApplicationStatus | "all")
+                  }
+                >
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="new-application">New</SelectItem>
-                    <SelectItem value="under-review">Under Review</SelectItem>
+                    <SelectItem value="pending">New</SelectItem>
+                    <SelectItem value="reviewing">Under Review</SelectItem>
                     <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                    <SelectItem value="interview-scheduled">
-                      Interview
-                    </SelectItem>
+                    <SelectItem value="interviewed">Interviewed</SelectItem>
+                    <SelectItem value="accepted">Accepted</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
@@ -376,7 +452,7 @@ const Candidates = () => {
 
               <TabsContent value="grouped" className="space-y-6 mt-6">
                 {groupedCandidates.map((job) => (
-                  <div key={job.id}>
+                  <div key={job._id}>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-heading font-semibold text-lg">
                         {job.title}
@@ -424,7 +500,7 @@ const Candidates = () => {
                                           candidate.status
                                         )}
                                       >
-                                        {candidate.status}
+                                        {getStatusLabel(candidate.status)}
                                       </Badge>
                                     </div>
 
@@ -456,21 +532,62 @@ const Candidates = () => {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        navigate(
+                                          `/dashboard/school/candidate-profile/${candidate.id}`
+                                        )
+                                      }
+                                    >
                                       <Eye className="w-4 h-4 mr-2" />
                                       View Full Profile
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleDownloadResume(candidate.id)
+                                      }
+                                    >
                                       <Download className="w-4 h-4 mr-2" />
                                       Download Resume
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleSendMessage(candidate.email)
+                                      }
+                                    >
                                       <MessageCircle className="w-4 h-4 mr-2" />
                                       Send Message
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleScheduleInterview(candidate.id)
+                                      }
+                                    >
                                       <Calendar className="w-4 h-4 mr-2" />
                                       Schedule Interview
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleStatusUpdate(
+                                          candidate.id,
+                                          "shortlisted"
+                                        )
+                                      }
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2" />
+                                      Shortlist
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleStatusUpdate(
+                                          candidate.id,
+                                          "rejected"
+                                        )
+                                      }
+                                    >
+                                      <XCircle className="w-4 h-4 mr-2" />
+                                      Reject
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -521,11 +638,29 @@ const Candidates = () => {
                                 </div>
 
                                 <div className="flex space-x-2">
-                                  <Button variant="outline" size="sm">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleStatusUpdate(
+                                        candidate.id,
+                                        "rejected"
+                                      )
+                                    }
+                                  >
                                     <XCircle className="w-4 h-4 mr-1" />
                                     Reject
                                   </Button>
-                                  <Button variant="default" size="sm">
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleStatusUpdate(
+                                        candidate.id,
+                                        "shortlisted"
+                                      )
+                                    }
+                                  >
                                     <CheckCircle className="w-4 h-4 mr-1" />
                                     Shortlist
                                   </Button>
@@ -573,7 +708,7 @@ const Candidates = () => {
                                 <Badge
                                   className={getStatusColor(candidate.status)}
                                 >
-                                  {candidate.status}
+                                  {getStatusLabel(candidate.status)}
                                 </Badge>
                               </div>
 
@@ -608,21 +743,59 @@ const Candidates = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  navigate(
+                                    `/dashboard/school/candidate-profile/${candidate.id}`
+                                  )
+                                }
+                              >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Full Profile
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleDownloadResume(candidate.id)
+                                }
+                              >
                                 <Download className="w-4 h-4 mr-2" />
                                 Download Resume
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleSendMessage(candidate.email)
+                                }
+                              >
                                 <MessageCircle className="w-4 h-4 mr-2" />
                                 Send Message
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleScheduleInterview(candidate.id)
+                                }
+                              >
                                 <Calendar className="w-4 h-4 mr-2" />
                                 Schedule Interview
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    candidate.id,
+                                    "shortlisted"
+                                  )
+                                }
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Shortlist
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusUpdate(candidate.id, "rejected")
+                                }
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Reject
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -663,11 +836,23 @@ const Candidates = () => {
                           </div>
 
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleStatusUpdate(candidate.id, "rejected")
+                              }
+                            >
                               <XCircle className="w-4 h-4 mr-1" />
                               Reject
                             </Button>
-                            <Button variant="default" size="sm">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() =>
+                                handleStatusUpdate(candidate.id, "shortlisted")
+                              }
+                            >
                               <CheckCircle className="w-4 h-4 mr-1" />
                               Shortlist
                             </Button>

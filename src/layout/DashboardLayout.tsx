@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,23 +29,38 @@ import {
   PlusCircle,
   FileText,
   BarChart3,
+  X,
+  Clock,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  useNotifications,
+  useNotificationStats,
+} from "@/hooks/useNotifications";
 
 interface DashboardLayoutProps {
   children: ReactNode;
   role: "teacher" | "school" | "recruiter" | "supplier";
-  userName?: string;
-  userEmail?: string;
 }
 
-const DashboardLayout = ({
-  children,
-  role,
-  userName = "John Doe",
-  userEmail = "john@example.com",
-}: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  // Get notifications data
+  const { data: notifications } = useNotifications({
+    page: 1,
+    limit: 10,
+    sortBy: "date",
+    sortOrder: "desc",
+  });
+  const { data: notificationStats } = useNotificationStats();
 
   const roleConfig = {
     teacher: {
@@ -168,26 +183,139 @@ const DashboardLayout = ({
 
   const isActive = (href: string) => location.pathname === href;
 
+  // Close sidebar on mobile when navigating
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Keyboard shortcut for toggling sidebar (Ctrl/Cmd + B)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "b") {
+        event.preventDefault();
+        toggleSidebar();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+    // Add visual feedback
+    const button = document.querySelector("[data-sidebar-toggle]");
+    if (button) {
+      button.classList.add("scale-95");
+      setTimeout(() => button.classList.remove("scale-95"), 150);
+    }
+  };
+
+  const toggleNotifications = () => {
+    setNotificationsOpen(!notificationsOpen);
+  };
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    if (notificationsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [notificationsOpen]);
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "job_posted":
+      case "job_updated":
+        return <Briefcase className="w-4 h-4" />;
+      case "application_submitted":
+      case "application_reviewed":
+        return <Users className="w-4 h-4" />;
+      case "reminder_apply":
+      case "deadline_approaching":
+        return <Clock className="w-4 h-4" />;
+      case "system_alert":
+        return <AlertCircle className="w-4 h-4" />;
+      default:
+        return <Bell className="w-4 h-4" />;
+    }
+  };
+
+  const getNotificationColor = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "text-red-600";
+      case "high":
+        return "text-orange-600";
+      case "medium":
+        return "text-yellow-600";
+      default:
+        return "text-blue-600";
+    }
+  };
+
+  // Get user display info
+  const displayName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+  const displayEmail = user?.email;
+  const unreadCount = notificationStats?.data?.unreadCount || 0;
+
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Fixed Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-border shadow-sm z-50">
+      {/* Collapsible Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-full bg-white border-r border-border shadow-sm transition-all duration-300 ease-in-out z-50 ${
+          sidebarOpen ? "w-64" : "w-16"
+        }`}
+      >
         {/* Logo & Role */}
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-              <Globe className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="font-heading font-bold text-lg">Educate Link</div>
-              <Badge
-                variant="outline"
-                className={`${config.color} text-xs mt-1`}
-              >
-                {config.name} Portal
-              </Badge>
-            </div>
-          </Link>
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center flex-shrink-0">
+                <Globe className="w-5 h-5 text-white" />
+              </div>
+              {sidebarOpen && (
+                <div className="min-w-0">
+                  <div className="font-heading font-bold text-lg">
+                    Educate Link
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`${config.color} text-xs mt-1`}
+                  >
+                    {config.name} Portal
+                  </Badge>
+                </div>
+              )}
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="lg:hidden flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -204,34 +332,48 @@ const DashboardLayout = ({
                   active
                     ? "bg-brand-primary text-white"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
+                } ${sidebarOpen ? "justify-start" : "justify-center"}`}
+                title={!sidebarOpen ? item.name : undefined}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.name}</span>
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {sidebarOpen && (
+                  <span className="font-medium">{item.name}</span>
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* Settings */}
-        <div className="absolute bottom-0 w-64 p-4 border-t border-border">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
           <Link
             to={`/dashboard/${role}/settings`}
             className="flex items-center space-x-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            title={!sidebarOpen ? "Settings" : undefined}
           >
-            <Settings className="w-5 h-5" />
-            <span className="font-medium">Settings</span>
+            <Settings className="w-5 h-5 flex-shrink-0" />
+            {sidebarOpen && <span className="font-medium">Settings</span>}
           </Link>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 ml-64 flex flex-col">
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "ml-64" : "ml-16"
+        }`}
+      >
         {/* Fixed Top Bar */}
-        <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-border px-6 flex items-center justify-between z-40">
+        <header className="sticky top-0 h-16 bg-white border-b border-border px-6 flex items-center justify-between z-40">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              <Menu className="w-5 h-5" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              data-sidebar-toggle
+              title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+            >
+              <Menu />
             </Button>
 
             <div className="relative">
@@ -245,12 +387,117 @@ const DashboardLayout = ({
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            {/* Notifications Dropdown */}
+            <div className="relative" ref={notificationsRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleNotifications}
+                className="relative"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Button>
+
+              {/* Notifications Panel */}
+              {notificationsOpen && (
+                <div className="absolute right-0 top-12 w-96 bg-white border border-border rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-lg">Notifications</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleNotifications}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications?.data?.data &&
+                    notifications.data.data.length > 0 ? (
+                      notifications.data.data.map((notification) => (
+                        <div
+                          key={notification._id}
+                          className={`p-4 border-b border-border last:border-b-0 hover:bg-muted/50 ${
+                            !notification.isRead ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div
+                              className={`mt-1 ${getNotificationColor(
+                                notification.priority
+                              )}`}
+                            >
+                              {getNotificationIcon(notification.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-foreground">
+                                  {notification.title}
+                                </p>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(
+                                    notification.createdAt
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {notification.message}
+                              </p>
+                              {notification.actionRequired &&
+                                notification.actionUrl && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2"
+                                    onClick={() => {
+                                      window.open(
+                                        notification.actionUrl,
+                                        "_blank"
+                                      );
+                                      setNotificationsOpen(false);
+                                    }}
+                                  >
+                                    {notification.actionText || "View Details"}
+                                  </Button>
+                                )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No notifications yet</p>
+                        <p className="text-sm">
+                          We'll notify you when something important happens
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {notifications?.data?.data &&
+                    notifications.data.data.length > 0 && (
+                      <div className="p-4 border-t border-border">
+                        <Link
+                          to={`/dashboard/${role}/notifications`}
+                          className="text-sm text-brand-primary hover:underline"
+                          onClick={() => setNotificationsOpen(false)}
+                        >
+                          View all notifications
+                        </Link>
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -261,16 +508,16 @@ const DashboardLayout = ({
                   <Avatar className="w-8 h-8">
                     <AvatarImage src="/api/placeholder/32/32" />
                     <AvatarFallback>
-                      {userName
+                      {displayName
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-left">
-                    <div className="text-sm font-medium">{userName}</div>
+                    <div className="text-sm font-medium">{displayName}</div>
                     <div className="text-xs text-muted-foreground">
-                      {userEmail}
+                      {displayEmail}
                     </div>
                   </div>
                 </Button>
@@ -308,10 +555,18 @@ const DashboardLayout = ({
         </header>
 
         {/* Scrollable Page Content */}
-        <main className="mt-16 flex-1 p-6 bg-background overflow-y-auto">
+        <main className="flex-1 p-6 bg-background overflow-y-auto">
           {children}
         </main>
       </div>
+
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
     </div>
   );
 };

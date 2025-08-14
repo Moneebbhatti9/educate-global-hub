@@ -143,7 +143,7 @@ export interface ProtectedRouteProps {
 
 // JWT Token types
 export interface JWTPayload {
-  sub: string;
+  userId: string;
   email: string;
   role: UserRole;
   iat: number;

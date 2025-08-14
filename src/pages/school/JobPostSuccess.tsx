@@ -99,11 +99,7 @@ const JobPostSuccess = () => {
   ];
 
   return (
-    <DashboardLayout
-      role="school"
-      userName="Dubai International School"
-      userEmail="admin@isdubai.edu"
-    >
+    <DashboardLayout role="school">
       <div className="space-y-8">
         {/* Success Header */}
         <div className="text-center space-y-4">
