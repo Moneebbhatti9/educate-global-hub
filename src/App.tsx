@@ -36,6 +36,17 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import Unauthorized from "./pages/Unauthorized";
 
+// Legal Pages
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import TermsConditions from "./pages/legal/TermsConditions";
+import CookiePolicy from "./pages/legal/CookiePolicy";
+import GDPRCompliance from "./pages/legal/GDPRCompliance";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import JobManagement from "./pages/admin/JobManagement";
+
 const queryClient = new QueryClient();
 
 // Wrapper component to handle scroll to top
@@ -410,6 +421,17 @@ const AppRoutes = () => {
           </SupplierRoute>
         }
       />
+
+      {/* Legal Pages */}
+      <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+      <Route path="/legal/terms" element={<TermsConditions />} />
+      <Route path="/legal/cookies" element={<CookiePolicy />} />
+      <Route path="/legal/gdpr" element={<GDPRCompliance />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/admin/users" element={<UserManagement />} />
+      <Route path="/admin/jobs" element={<JobManagement />} />
 
       {/* Error Routes */}
       <Route path="/unauthorized" element={<Unauthorized />} />

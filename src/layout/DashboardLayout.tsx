@@ -33,7 +33,7 @@ import {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: "teacher" | "school" | "recruiter" | "supplier";
+  role: "teacher" | "school" | "recruiter" | "supplier" | "admin";
   userName?: string;
   userEmail?: string;
 }
@@ -155,6 +155,18 @@ const DashboardLayout = ({
           href: `/dashboard/${role}/messages`,
           icon: MessageSquare,
         },
+      ],
+    },
+    admin: {
+      name: "Admin",
+      icon: Settings,
+      color: "bg-red-600 text-white",
+      navigation: [
+        { name: "Dashboard", href: `/admin/dashboard`, icon: Home },
+        { name: "Users", href: `/admin/users`, icon: Users },
+        { name: "Jobs", href: `/admin/jobs`, icon: Briefcase },
+        { name: "Analytics", href: `/admin/analytics`, icon: BarChart3 },
+        { name: "Settings", href: `/admin/settings`, icon: Settings },
       ],
     },
   };
