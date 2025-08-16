@@ -102,7 +102,11 @@ const AdminDashboard = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <DashboardLayout
+      role="admin"
+      userName="Admin User"
+      userEmail="admin@educatelink.com"
+    >
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>

@@ -56,8 +56,6 @@ export const notificationQueryKeys = {
   all: ["notifications"] as const,
   lists: () => [...notificationQueryKeys.all, "list"] as const,
   list: (filters: any) => [...notificationQueryKeys.lists(), filters] as const,
-  details: () => [...notificationQueryKeys.all, "detail"] as const,
-  detail: (id: string) => [...notificationQueryKeys.details(), id] as const,
   unread: () => [...notificationQueryKeys.all, "unread"] as const,
   stats: () => [...notificationQueryKeys.all, "stats"] as const,
   byJob: (jobId: string) =>

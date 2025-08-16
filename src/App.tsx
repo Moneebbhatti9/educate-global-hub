@@ -47,10 +47,6 @@ import GDPRCompliance from "./pages/legal/GDPRCompliance";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import JobManagement from "./pages/admin/JobManagement";
-import AdvancedJobManagement from "./pages/admin/AdvancedJobManagement";
-import ForumDetail from "./pages/ForumDetail";
-import SavedJobs from "./pages/teacher/SavedJobs";
-import Applications from "./pages/teacher/Applications";
 
 const queryClient = new QueryClient();
 
@@ -443,16 +439,8 @@ const AppRoutes = () => {
 
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/admin/jobs" element={<JobManagement />} />
-          <Route path="/admin/jobs/advanced" element={<AdvancedJobManagement />} />
-          
-          {/* Forum Detail */}
-          <Route path="/forum/:id" element={<ForumDetail />} />
-          
-          {/* Teacher Pages */}
-          <Route path="/dashboard/teacher/saved-jobs" element={<SavedJobs />} />
-          <Route path="/dashboard/teacher/applications" element={<Applications />} />
+      <Route path="/admin/users" element={<UserManagement />} />
+      <Route path="/admin/jobs" element={<JobManagement />} />
 
       {/* Error Routes */}
       <Route path="/unauthorized" element={<Unauthorized />} />
