@@ -1,15 +1,40 @@
 import type { BaseEntity, Priority } from "./job";
 
 export interface SavedJob extends BaseEntity {
-  job: any;
   teacherId: string;
-  jobId: string;
-  notes?: string;
+  jobId: {
+    _id: string;
+    title: string;
+    description: string;
+    country: string;
+    city: string;
+    salaryMin: number;
+    salaryMax: number;
+    currency: string;
+    jobType: string;
+    applicationDeadline: string;
+    status: string;
+    publishedAt: string;
+  };
   priority: Priority;
-  reminderDate?: string;
   isApplied: boolean;
-  appliedAt?: string;
   tags: string[];
+  savedAt: string;
+  daysSinceSaved: number;
+  isOverdue: boolean;
+}
+
+// API Response structure for saved jobs
+export interface SavedJobsResponse {
+  savedJobs: SavedJob[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 export interface SaveJobRequest {

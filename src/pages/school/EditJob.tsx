@@ -46,7 +46,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import { postJobFormSchema } from "@/helpers/validation";
 import { Country } from "@/components/ui/country-dropdown";
 import { useJob, useUpdateJob } from "@/hooks/useJobs";
-import { toast } from "sonner";
+import { customToast } from "@/components/ui/sonner";
 import type { CreateJobRequest, JobType, EducationLevel } from "@/types/job";
 import { useAuth } from "@/contexts/AuthContext";
 import { EditJobFormSkeleton } from "@/components/skeletons/form-skeleton";
@@ -119,8 +119,8 @@ const EditJob = () => {
 
   // Populate form when job data is loaded
   useEffect(() => {
-    if (jobData?.data?.job) {
-      const job = jobData?.data?.job;
+    if ((jobData?.data as any)?.job) {
+      const job = (jobData?.data as any)?.job;
       reset({
         title: job.title || "",
         organization: "",
@@ -284,7 +284,7 @@ const EditJob = () => {
     e.preventDefault();
 
     if (!jobId) {
-      toast.error("Job ID is required");
+      customToast.error("Job ID is required");
       return;
     }
 
@@ -335,15 +335,15 @@ const EditJob = () => {
       });
 
       if (action === "draft") {
-        toast.success("Job updated and saved as draft successfully!");
+        customToast.success("Job updated and saved as draft successfully!");
       } else {
-        toast.success("Job updated and published successfully!");
+        customToast.success("Job updated and published successfully!");
       }
 
       navigate("/dashboard/school/postings");
     } catch (error: unknown) {
       console.error("Error updating job:", error);
-      toast.error("Failed to update job. Please try again.");
+      customToast.error("Failed to update job. Please try again.");
     }
   };
 

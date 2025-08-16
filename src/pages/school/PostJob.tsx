@@ -45,7 +45,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import { postJobFormSchema } from "@/helpers/validation";
 import { Country } from "@/components/ui/country-dropdown";
 import { useCreateJob } from "@/hooks/useJobs";
-import { toast } from "sonner";
+import { customToast } from "@/components/ui/sonner";
 import type { CreateJobRequest, JobType, EducationLevel } from "@/types/job";
 import { useAuth } from "@/contexts/AuthContext";
 import { STORAGE_KEYS } from "@/types/auth";
@@ -225,7 +225,7 @@ const PostJob = () => {
 
     // Double-check authentication before submission
     if (!isAuthenticated || !user) {
-      toast.error("Authentication required. Please sign in again.");
+      customToast.error("Authentication required. Please sign in again.");
       navigate("/signin");
       return;
     }
@@ -233,7 +233,9 @@ const PostJob = () => {
     // Check if we have a valid token
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     if (!token) {
-      toast.error("Authentication token not found. Please sign in again.");
+      customToast.error(
+        "Authentication token not found. Please sign in again."
+      );
       navigate("/signin");
       return;
     }
@@ -307,9 +309,9 @@ const PostJob = () => {
       await createJobMutation.mutateAsync(jobData);
 
       if (action === "draft") {
-        toast.success("Job saved as draft successfully!");
+        customToast.success("Job saved as draft successfully!");
       } else {
-        toast.success("Job posted successfully!");
+        customToast.success("Job posted successfully!");
       }
 
       navigate("/dashboard/school/job-post-success");
@@ -320,13 +322,13 @@ const PostJob = () => {
       if (error && typeof error === "object" && "response" in error) {
         const apiError = error as { response?: { status?: number } };
         if (apiError.response?.status === 401) {
-          toast.error("Authentication failed. Please sign in again.");
+          customToast.error("Authentication failed. Please sign in again.");
           navigate("/signin");
           return;
         }
 
         if (apiError.response?.status === 403) {
-          toast.error("You don't have permission to post jobs.");
+          customToast.error("You don't have permission to post jobs.");
           return;
         }
       }
@@ -338,14 +340,14 @@ const PostJob = () => {
           networkError.message?.includes("Network Error") ||
           networkError.message?.includes("timeout")
         ) {
-          toast.error(
+          customToast.error(
             "Network error. Please check your connection and try again."
           );
           return;
         }
       }
 
-      toast.error("Failed to submit job. Please try again.");
+      customToast.error("Failed to submit job. Please try again.");
     }
   };
 

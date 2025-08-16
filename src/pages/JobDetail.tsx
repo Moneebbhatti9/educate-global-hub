@@ -25,8 +25,12 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
+  Bookmark,
 } from "lucide-react";
 import { useJob } from "@/hooks/useJobs";
+import { useSaveJob, useRemoveSavedJob } from "@/hooks/useSavedJobs";
+import { useAuth } from "@/contexts/AuthContext";
+import { customToast } from "@/components/ui/sonner";
 import type { Job } from "@/types/job";
 
 // Interface for the job detail API response
@@ -50,6 +54,7 @@ interface JobDetailResponse {
 
 const JobDetail = () => {
   const { id } = useParams();
+  const { isAuthenticated, user } = useAuth();
 
   // Fetch job data using the useJob hook
   const {
@@ -62,12 +67,51 @@ const JobDetail = () => {
     error: unknown;
   };
 
+  // Save job hooks
+  const saveJobMutation = useSaveJob();
+  const removeSavedJobMutation = useRemoveSavedJob();
+
   // Extract job from API response - the structure is data.job
   const job = jobData?.data?.job;
   const school = jobData?.data?.school;
   const isSaved = jobData?.data?.isSaved;
   const hasApplied = jobData?.data?.hasApplied;
-  const isAuthenticated = jobData?.data?.isAuthenticated;
+  const isAuthenticatedFromAPI = jobData?.data?.isAuthenticated;
+
+  // Handle save job functionality
+  const handleSaveJob = async () => {
+    if (!isAuthenticated || !user) {
+      customToast.error("Please login first to save this job");
+      return;
+    }
+
+    if (!job?._id) {
+      customToast.error("Job information not available");
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        // Remove from saved jobs
+        await removeSavedJobMutation.mutateAsync(job._id);
+        customToast.success("Job removed from saved list");
+      } else {
+        // Save job
+        await saveJobMutation.mutateAsync({
+          jobId: job._id,
+          data: {
+            priority: "medium",
+            notes: "",
+          },
+        });
+        customToast.success("Job saved successfully!");
+      }
+    } catch (error) {
+      customToast.error(
+        isSaved ? "Failed to remove job from saved list" : "Failed to save job"
+      );
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -212,8 +256,20 @@ const JobDetail = () => {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon">
-                      <Heart className="w-4 h-4" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSaveJob}
+                      disabled={
+                        saveJobMutation.isPending ||
+                        removeSavedJobMutation.isPending
+                      }
+                    >
+                      <Bookmark
+                        className={`w-4 h-4 ${
+                          isSaved ? "fill-current text-brand-primary" : ""
+                        }`}
+                      />
                     </Button>
                     <Button variant="ghost" size="icon">
                       <Share2 className="w-4 h-4" />
@@ -383,11 +439,32 @@ const JobDetail = () => {
                     Already Applied
                   </Button>
                 ) : (
-                  <Button variant="hero" size="lg" className="w-full">
-                    Apply Now
+                  <Button variant="hero" size="lg" className="w-full" asChild>
+                    <Link to={`/dashboard/teacher/job-application/${id}`}>
+                      Apply Now
+                    </Link>
                   </Button>
                 )}
-                <Button variant="hero-outline" size="lg" className="w-full">
+                <Button
+                  variant="hero-outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleSaveJob}
+                  disabled={
+                    saveJobMutation.isPending ||
+                    removeSavedJobMutation.isPending
+                  }
+                >
+                  {saveJobMutation.isPending ||
+                  removeSavedJobMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Bookmark
+                      className={`w-4 h-4 mr-2 ${
+                        isSaved ? "fill-current" : ""
+                      }`}
+                    />
+                  )}
                   {isSaved ? "Saved" : "Save for Later"}
                 </Button>
                 <Separator />

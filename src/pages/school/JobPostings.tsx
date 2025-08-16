@@ -55,7 +55,7 @@ import {
   useUpdateJobStatus,
   useDeleteJob,
 } from "@/hooks/useJobs";
-import { toast } from "sonner";
+import { customToast } from "@/components/ui/sonner";
 import type { JobStatus, Job, PaginatedResponse } from "@/types/job";
 import { JobPostingsSkeleton } from "@/components/skeletons/job-postings-skeleton";
 
@@ -164,18 +164,18 @@ const JobPostings = () => {
       // Find the current job to check its status
       const currentJob = filteredJobs.find((job) => job._id === jobId);
       if (!currentJob) {
-        toast.error("Job not found");
+        customToast.error("Job not found");
         return;
       }
 
       // Prevent invalid status transitions
       if (currentJob.status === "closed" && newStatus === "closed") {
-        toast.error("Job is already closed");
+        customToast.error("Job is already closed");
         return;
       }
 
       if (currentJob.status === "expired" && newStatus === "expired") {
-        toast.error("Job is already expired");
+        customToast.error("Job is already expired");
         return;
       }
 
@@ -196,21 +196,15 @@ const JobPostings = () => {
         status: newStatus,
         notes,
       });
-      toast.success(`Job status updated to ${getStatusLabel(newStatus)}`);
+      customToast.success(`Job status updated to ${getStatusLabel(newStatus)}`);
       refetchJobs();
-    } catch (error) {
-      console.error("Status update error:", error);
-      if (error && typeof error === "object" && "message" in error) {
-        const errorMessage = (error as { message: string }).message;
-        if (errorMessage.includes("JobNotification validation failed")) {
-          toast.error(
-            "Failed to update job status due to notification error. Please try again."
-          );
-        } else {
-          toast.error("Failed to update job status");
-        }
+    } catch (error: any) {
+      if (error?.response?.data?.message) {
+        customToast.error(
+          `Failed to update job status: ${error.response.data.message}`
+        );
       } else {
-        toast.error("Failed to update job status");
+        customToast.error("Failed to update job status");
       }
     }
   };
@@ -228,12 +222,12 @@ const JobPostings = () => {
 
     try {
       await deleteJobMutation.mutateAsync(jobToDelete._id);
-      toast.success("Job deleted successfully");
+      customToast.success("Job deleted successfully");
       refetchJobs();
       setDeleteModalOpen(false);
       setJobToDelete(null);
-    } catch (error) {
-      toast.error("Failed to delete job");
+    } catch (error: any) {
+      customToast.error("Failed to delete job");
     }
   };
 
@@ -247,12 +241,12 @@ const JobPostings = () => {
       await Promise.all(
         selectedJobs.map((jobId) => deleteJobMutation.mutateAsync(jobId))
       );
-      toast.success(`${selectedJobs.length} jobs deleted successfully`);
+      customToast.success(`${selectedJobs.length} jobs deleted successfully`);
       setSelectedJobs([]);
       refetchJobs();
       setBulkDeleteModalOpen(false);
-    } catch (error) {
-      toast.error("Failed to delete some jobs");
+    } catch (error: any) {
+      customToast.error("Failed to delete some jobs");
     }
   };
 
@@ -262,7 +256,7 @@ const JobPostings = () => {
 
   const handleBulkAction = async (action: JobStatus | "delete") => {
     if (selectedJobs.length === 0) {
-      toast.error("Please select jobs first");
+      customToast.error("Please select jobs first");
       return;
     }
 
@@ -278,7 +272,7 @@ const JobPostings = () => {
       );
 
       if (action === "closed" && hasClosedJobs) {
-        toast.error("Cannot close jobs that are already closed");
+        customToast.error("Cannot close jobs that are already closed");
         return;
       }
 
@@ -304,28 +298,18 @@ const JobPostings = () => {
             })
           )
         );
-        toast.success(
+        customToast.success(
           `${selectedJobs.length} jobs updated to ${getStatusLabel(action)}`
         );
         setSelectedJobs([]);
         refetchJobs();
-      } catch (error) {
-        console.error("Bulk status update error:", error);
-        if (error && typeof error === "object" && "message" in error) {
-          const errorMessage = (error as { message: string }).message;
-          if (errorMessage.includes("JobNotification validation failed")) {
-            toast.error(
-              "Failed to update some job statuses due to notification errors. Please try again."
-            );
-          } else if (errorMessage.includes("Action URL must be a valid URL")) {
-            toast.error(
-              "Failed to update some job statuses due to invalid URL format. Please check job details."
-            );
-          } else {
-            toast.error("Failed to update some job statuses");
-          }
+      } catch (error: any) {
+        if (error?.response?.data?.message) {
+          customToast.error(
+            `Failed to update some job statuses: ${error.response.data.message}`
+          );
         } else {
-          toast.error("Failed to update some job statuses");
+          customToast.error("Failed to update some job statuses");
         }
       }
     }

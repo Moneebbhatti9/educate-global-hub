@@ -1,6 +1,7 @@
 import { apiHelpers } from "./client";
 import type {
   SavedJob,
+  SavedJobsResponse,
   SaveJobRequest,
   UpdateSavedJobRequest,
   SavedJobSearchParams,
@@ -95,7 +96,7 @@ export const savedJobsAPI = {
   // Get Saved Jobs
   getSavedJobs: async (
     params: SavedJobSearchParams
-  ): Promise<ApiResponse<PaginatedResponse<SavedJob>>> => {
+  ): Promise<ApiResponse<SavedJobsResponse>> => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -110,7 +111,7 @@ export const savedJobsAPI = {
     const url = `${SAVED_JOB_ENDPOINTS.GET_SAVED_JOBS}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
-    return apiHelpers.get<ApiResponse<PaginatedResponse<SavedJob>>>(url);
+    return apiHelpers.get<ApiResponse<SavedJobsResponse>>(url);
   },
 
   // Get Saved Job by ID

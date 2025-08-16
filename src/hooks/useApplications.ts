@@ -25,6 +25,17 @@ export const useApplications = (filters: ApplicationSearchParams) => {
   });
 };
 
+// New hook for teachers to get their own applications
+export const useTeacherApplications = (
+  params: Omit<ApplicationSearchParams, "jobId">
+) => {
+  return useQuery({
+    queryKey: ["teacherApplications", params],
+    queryFn: () => applicationsAPI.getRecentApplications(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const useApplication = (applicationId: string) => {
   return useQuery({
     queryKey: applicationQueryKeys.detail(applicationId),
@@ -34,7 +45,7 @@ export const useApplication = (applicationId: string) => {
   });
 };
 
-export const useTeacherApplications = (
+export const useApplicationsByTeacher = (
   teacherId: string,
   params: ApplicationSearchParams
 ) => {

@@ -90,10 +90,10 @@ export interface ApiResponse<T> {
 
 // Job Related Types
 export interface Job extends BaseEntity {
-  job: any;
   schoolId: string;
   title: string;
   description: string;
+  organization: string;
   requirements: string[];
   benefits: string[];
   subjects: string[];
@@ -116,13 +116,22 @@ export interface Job extends BaseEntity {
   applicantEmail: string;
   screeningQuestions: string[];
   status: JobStatus;
-  viewsCount: number;
-  applicantsCount: number;
+  viewsCount?: number;
+  applicantsCount?: number;
   publishedAt?: string;
   expiresAt?: string;
   tags: string[];
   isUrgent: boolean;
   isFeatured: boolean;
+  school?: {
+    name: string;
+    country: string;
+    city: string;
+    description: string;
+  };
+  salaryRange?: string;
+  daysPosted?: number;
+  isExpired?: boolean;
 }
 
 export interface CreateJobRequest {

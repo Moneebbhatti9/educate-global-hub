@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
@@ -36,180 +36,200 @@ import {
   Globe,
   Star,
   Eye,
+  Loader2,
 } from "lucide-react";
+import { useJobs } from "@/hooks/useJobs";
+import {
+  useSaveJob,
+  useRemoveSavedJob,
+  useIsJobSaved,
+} from "@/hooks/useSavedJobs";
+import { customToast } from "@/components/ui/sonner";
+import type { JobSearchParams, Job } from "@/types/job";
+
+// Interface for the actual API response structure
+interface JobSearchResponse {
+  success: boolean;
+  message: string;
+  data: {
+    jobs: Job[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+    filters: {
+      page: number;
+      limit: number;
+      sortBy: string;
+      sortOrder: string;
+    };
+  };
+}
 
 const JobSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    location: "any",
-    educationLevel: "any",
-    subject: "any",
-    salaryRange: [0, 10000],
-    jobType: "",
-    visaSponsorship: false,
-    quickApply: false,
+  const [filters, setFilters] = useState<JobSearchParams>({
+    page: 1,
+    limit: 10,
+    q: "",
+    location: "",
+    subject: "",
+    educationLevel: undefined,
+    jobType: undefined,
+    salaryMin: undefined,
+    salaryMax: undefined,
+    country: "",
+    city: "",
+    isUrgent: undefined,
+    isFeatured: undefined,
+    sortBy: "date",
+    sortOrder: "desc",
   });
-  const [savedJobs, setSavedJobs] = useState<number[]>([]);
+  const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
 
-  const jobs = [
-    {
-      id: 1,
-      title: "Mathematics Teacher - Secondary",
-      school: "Dubai International School",
-      location: "Dubai, UAE",
-      educationLevel: "Secondary (Grades 9-12)",
-      subjects: ["Mathematics", "Statistics"],
-      salaryRange: "$4,000 - $6,000",
-      currency: "USD",
-      type: "Full-time",
-      postedDate: "2024-03-15",
-      deadline: "2024-04-15",
-      quickApply: true,
-      visaSponsorship: true,
-      benefits: ["Health Insurance", "Housing Allowance", "Annual Flight"],
-      description:
-        "We are seeking an experienced Mathematics teacher to join our Secondary department. The ideal candidate will have strong classroom management skills and experience with international curricula.",
-      requirements: [
-        "Bachelor's degree in Mathematics or related field",
-        "3+ years teaching experience",
-        "International curriculum experience preferred",
-      ],
-      rating: 4.8,
-      reviews: 156,
-      views: 1234,
-      applicants: 23,
-    },
-    {
-      id: 2,
-      title: "English Language Teacher - Primary",
-      school: "American School of Kuwait",
-      location: "Kuwait City, Kuwait",
-      educationLevel: "Primary (Grades 1-6)",
-      subjects: ["English Language", "Literature"],
-      salaryRange: "$3,500 - $5,500",
-      currency: "USD",
-      type: "Full-time",
-      postedDate: "2024-03-12",
-      deadline: "2024-04-12",
-      quickApply: true,
-      visaSponsorship: true,
-      benefits: [
-        "Health Insurance",
-        "Housing Allowance",
-        "Professional Development",
-      ],
-      description:
-        "Join our vibrant primary team as an English Language teacher. We're looking for a passionate educator who can inspire young learners and implement innovative teaching strategies.",
-      requirements: [
-        "Bachelor's degree in English or Education",
-        "Teaching certification",
-        "2+ years primary teaching experience",
-      ],
-      rating: 4.6,
-      reviews: 89,
-      views: 987,
-      applicants: 31,
-    },
-    {
-      id: 3,
-      title: "Science Lab Coordinator",
-      school: "Qatar International School",
-      location: "Doha, Qatar",
-      educationLevel: "Secondary (Grades 7-12)",
-      subjects: ["Physics", "Chemistry", "Biology"],
-      salaryRange: "$3,000 - $4,500",
-      currency: "USD",
-      type: "Full-time",
-      postedDate: "2024-03-10",
-      deadline: "2024-04-20",
-      quickApply: false,
-      visaSponsorship: true,
-      benefits: ["Health Insurance", "End of Service Gratuity"],
-      description:
-        "We are seeking a qualified Science Lab Coordinator to manage our state-of-the-art laboratory facilities and support our science teachers in delivering exceptional education.",
-      requirements: [
-        "Bachelor's degree in Science",
-        "Lab management experience",
-        "Safety certification preferred",
-      ],
-      rating: 4.7,
-      reviews: 67,
-      views: 743,
-      applicants: 12,
-    },
-    {
-      id: 4,
-      title: "IB Mathematics Teacher",
-      school: "International School of Riyadh",
-      location: "Riyadh, Saudi Arabia",
-      educationLevel: "High School (IB Programme)",
-      subjects: ["IB Mathematics", "Statistics"],
-      salaryRange: "$4,500 - $7,000",
-      currency: "USD",
-      type: "Full-time",
-      postedDate: "2024-03-08",
-      deadline: "2024-04-08",
-      quickApply: true,
-      visaSponsorship: true,
-      benefits: [
-        "Health Insurance",
-        "Housing Allowance",
-        "Annual Flight",
-        "Performance Bonus",
-      ],
-      description:
-        "Seeking an experienced IB Mathematics teacher to join our high-performing team. Must have IB experience and be committed to student-centered learning.",
-      requirements: [
-        "IB Mathematics teaching experience",
-        "IB workshop attendance",
-        "Master's degree preferred",
-      ],
-      rating: 4.9,
-      reviews: 234,
-      views: 1876,
-      applicants: 45,
-    },
-    {
-      id: 5,
-      title: "Art & Design Teacher",
-      school: "British School of Bahrain",
-      location: "Manama, Bahrain",
-      educationLevel: "Primary & Secondary",
-      subjects: ["Visual Arts", "Design Technology"],
-      salaryRange: "$3,200 - $4,800",
-      currency: "USD",
-      type: "Full-time",
-      postedDate: "2024-03-05",
-      deadline: "2024-04-25",
-      quickApply: true,
-      visaSponsorship: false,
-      benefits: [
-        "Health Insurance",
-        "Professional Development",
-        "Art Supplies Budget",
-      ],
-      description:
-        "Join our creative arts team and inspire students through innovative art and design education. We're looking for a teacher who can work across age groups.",
-      requirements: [
-        "Art/Design qualification",
-        "Portfolio of student work",
-        "Technology integration experience",
-      ],
-      rating: 4.5,
-      reviews: 123,
-      views: 654,
-      applicants: 18,
-    },
-  ];
+  // API hooks
+  const {
+    data: jobsResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useJobs(filters) as {
+    data: JobSearchResponse | undefined;
+    isLoading: boolean;
+    error: Error | null;
+    refetch: () => void;
+  };
+  const saveJobMutation = useSaveJob();
+  const removeSavedJobMutation = useRemoveSavedJob();
 
+  // Update filters when search term changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        q: searchTerm || undefined,
+        page: 1, // Reset to first page when searching
+      }));
+    }, 500); // Debounce search
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Extract jobs from response
+  const jobs = jobsResponse?.data?.jobs || [];
+  const pagination = jobsResponse?.data?.pagination;
+
+  // Handle job saving
+  const toggleSaveJob = async (jobId: string) => {
+    try {
+      if (savedJobs.has(jobId)) {
+        await removeSavedJobMutation.mutateAsync(jobId);
+        setSavedJobs((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(jobId);
+          return newSet;
+        });
+        customToast.success("Job removed from saved jobs");
+      } else {
+        await saveJobMutation.mutateAsync({
+          jobId,
+          data: { priority: "medium" },
+        });
+        setSavedJobs((prev) => new Set([...prev, jobId]));
+        customToast.success("Job saved successfully");
+      }
+    } catch (error) {
+      customToast.error("Failed to update saved job status");
+    }
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (
+    key: keyof JobSearchParams,
+    value: string | number | boolean | undefined
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      page: 1, // Reset to first page when filters change
+    }));
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      page: 1,
+      limit: 10,
+      q: "",
+      location: "",
+      subject: "",
+      educationLevel: undefined,
+      jobType: undefined,
+      salaryMin: undefined,
+      salaryMax: undefined,
+      country: "",
+      city: "",
+      isUrgent: undefined,
+      isFeatured: undefined,
+      sortBy: "date",
+      sortOrder: "desc",
+    });
+    setSearchTerm("");
+  };
+
+  // Load more jobs
+  const loadMore = () => {
+    if (pagination?.hasNextPage) {
+      setFilters((prev) => ({
+        ...prev,
+        page: (prev.page || 1) + 1,
+      }));
+    }
+  };
+
+  // Get days ago from date
+  const getDaysAgo = (dateString: string) => {
+    const posted = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - posted.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
+  };
+
+  // Format salary range
+  const formatSalaryRange = (job: Job) => {
+    if (!job.salaryDisclose) return "Salary not disclosed";
+    if (job.salaryMin && job.salaryMax) {
+      return `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`;
+    }
+    if (job.salaryMin) return `From $${job.salaryMin.toLocaleString()}`;
+    if (job.salaryMax) return `Up to $${job.salaryMax.toLocaleString()}`;
+    return "Salary not disclosed";
+  };
+
+  // Education level options
   const educationLevels = [
-    "Early Years (Ages 3-5)",
-    "Primary (Grades 1-6)",
-    "Secondary (Grades 7-9)",
-    "High School (Grades 10-12)",
-    "All Levels",
+    { value: "early_years", label: "Early Years (Ages 3-5)" },
+    { value: "primary", label: "Primary (Grades 1-6)" },
+    { value: "secondary", label: "Secondary (Grades 7-9)" },
+    { value: "high_school", label: "High School (Grades 10-12)" },
+    { value: "foundation", label: "Foundation" },
+    { value: "higher_education", label: "Higher Education" },
   ];
 
+  // Job type options
+  const jobTypes = [
+    { value: "full_time", label: "Full-time" },
+    { value: "part_time", label: "Part-time" },
+    { value: "contract", label: "Contract" },
+    { value: "substitute", label: "Substitute" },
+  ];
+
+  // Common subjects
   const subjects = [
     "Mathematics",
     "English Language",
@@ -225,6 +245,7 @@ const JobSearch = () => {
     "Computer Science",
   ];
 
+  // Common locations
   const locations = [
     "Dubai, UAE",
     "Abu Dhabi, UAE",
@@ -235,64 +256,16 @@ const JobSearch = () => {
     "Muscat, Oman",
   ];
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.subjects.some((subject) =>
-        subject.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-    const matchesLocation =
-      !filters.location ||
-      filters.location === "any" ||
-      job.location === filters.location;
-    const matchesEducationLevel =
-      !filters.educationLevel ||
-      filters.educationLevel === "any" ||
-      job.educationLevel.includes(filters.educationLevel);
-    const matchesSubject =
-      !filters.subject ||
-      filters.subject === "any" ||
-      job.subjects.includes(filters.subject);
-    const matchesVisaSponsorship =
-      !filters.visaSponsorship || job.visaSponsorship;
-    const matchesQuickApply = !filters.quickApply || job.quickApply;
-
-    // Simple salary filtering (extracting min from range)
-    const jobMinSalary = parseInt(
-      job.salaryRange.split(" - ")[0].replace("$", "").replace(",", "")
-    );
-    const matchesSalary =
-      jobMinSalary >= filters.salaryRange[0] &&
-      jobMinSalary <= filters.salaryRange[1];
-
+  if (error) {
     return (
-      matchesSearch &&
-      matchesLocation &&
-      matchesEducationLevel &&
-      matchesSubject &&
-      matchesVisaSponsorship &&
-      matchesQuickApply &&
-      matchesSalary
+      <DashboardLayout role="teacher">
+        <div className="text-center p-8">
+          <p className="text-red-500 mb-4">Failed to load jobs</p>
+          <Button onClick={() => refetch()}>Try Again</Button>
+        </div>
+      </DashboardLayout>
     );
-  });
-
-  const toggleSaveJob = (jobId: number) => {
-    setSavedJobs((prev) =>
-      prev.includes(jobId)
-        ? prev.filter((id) => id !== jobId)
-        : [...prev, jobId]
-    );
-  };
-
-  const getDaysAgo = (dateString: string) => {
-    const posted = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - posted.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays === 1 ? "1 day ago" : `${diffDays} days ago`;
-  };
+  }
 
   return (
     <DashboardLayout role="teacher">
@@ -311,9 +284,9 @@ const JobSearch = () => {
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Select
-                  value={filters.location}
+                  value={filters.location || "any"}
                   onValueChange={(value) =>
-                    setFilters({ ...filters, location: value })
+                    handleFilterChange("location", value === "any" ? "" : value)
                   }
                 >
                   <SelectTrigger>
@@ -334,9 +307,12 @@ const JobSearch = () => {
               <div className="space-y-2">
                 <Label>Education Level</Label>
                 <Select
-                  value={filters.educationLevel}
+                  value={filters.educationLevel || "any"}
                   onValueChange={(value) =>
-                    setFilters({ ...filters, educationLevel: value })
+                    handleFilterChange(
+                      "educationLevel",
+                      value === "any" ? undefined : value
+                    )
                   }
                 >
                   <SelectTrigger>
@@ -345,8 +321,8 @@ const JobSearch = () => {
                   <SelectContent>
                     <SelectItem value="any">Any level</SelectItem>
                     {educationLevels.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {level}
+                      <SelectItem key={level.value} value={level.value}>
+                        {level.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -357,9 +333,9 @@ const JobSearch = () => {
               <div className="space-y-2">
                 <Label>Subject</Label>
                 <Select
-                  value={filters.subject}
+                  value={filters.subject || "any"}
                   onValueChange={(value) =>
-                    setFilters({ ...filters, subject: value })
+                    handleFilterChange("subject", value === "any" ? "" : value)
                   }
                 >
                   <SelectTrigger>
@@ -376,15 +352,42 @@ const JobSearch = () => {
                 </Select>
               </div>
 
+              {/* Job Type Filter */}
+              <div className="space-y-2">
+                <Label>Job Type</Label>
+                <Select
+                  value={filters.jobType || "any"}
+                  onValueChange={(value) =>
+                    handleFilterChange(
+                      "jobType",
+                      value === "any" ? undefined : value
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Any type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any type</SelectItem>
+                    {jobTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Salary Range */}
               <div className="space-y-3">
                 <Label>Salary Range (USD)</Label>
                 <div className="px-2">
                   <Slider
-                    value={filters.salaryRange}
-                    onValueChange={(value) =>
-                      setFilters({ ...filters, salaryRange: value })
-                    }
+                    value={[filters.salaryMin || 0, filters.salaryMax || 10000]}
+                    onValueChange={(value) => {
+                      handleFilterChange("salaryMin", value[0]);
+                      handleFilterChange("salaryMax", value[1]);
+                    }}
                     max={10000}
                     min={0}
                     step={500}
@@ -392,8 +395,8 @@ const JobSearch = () => {
                   />
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>${filters.salaryRange[0].toLocaleString()}</span>
-                  <span>${filters.salaryRange[1].toLocaleString()}</span>
+                  <span>${(filters.salaryMin || 0).toLocaleString()}</span>
+                  <span>${(filters.salaryMax || 10000).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -401,27 +404,27 @@ const JobSearch = () => {
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="visaSponsorship"
-                    checked={filters.visaSponsorship}
+                    id="urgent"
+                    checked={filters.isUrgent || false}
                     onCheckedChange={(checked) =>
-                      setFilters({ ...filters, visaSponsorship: !!checked })
+                      handleFilterChange("isUrgent", checked || undefined)
                     }
                   />
-                  <Label htmlFor="visaSponsorship" className="text-sm">
-                    Visa Sponsorship
+                  <Label htmlFor="urgent" className="text-sm">
+                    Urgent Jobs Only
                   </Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="quickApply"
-                    checked={filters.quickApply}
+                    id="featured"
+                    checked={filters.isFeatured || false}
                     onCheckedChange={(checked) =>
-                      setFilters({ ...filters, quickApply: !!checked })
+                      handleFilterChange("isFeatured", checked || undefined)
                     }
                   />
-                  <Label htmlFor="quickApply" className="text-sm">
-                    Quick Apply Only
+                  <Label htmlFor="featured" className="text-sm">
+                    Featured Jobs Only
                   </Label>
                 </div>
               </div>
@@ -429,17 +432,7 @@ const JobSearch = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() =>
-                  setFilters({
-                    location: "",
-                    educationLevel: "",
-                    subject: "",
-                    salaryRange: [0, 10000],
-                    jobType: "",
-                    visaSponsorship: false,
-                    quickApply: false,
-                  })
-                }
+                onClick={clearFilters}
               >
                 Clear Filters
               </Button>
@@ -475,186 +468,246 @@ const JobSearch = () => {
           {/* Results Header */}
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
-              Showing {filteredJobs.length} of {jobs.length} jobs
+              {isLoading ? "Loading..." : `Showing ${jobs.length} jobs`}
+              {pagination && ` of ${pagination.total} total jobs`}
             </p>
-            <Select defaultValue="recent">
+            <Select
+              value={filters.sortBy}
+              onValueChange={(value) => handleFilterChange("sortBy", value)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Most Recent</SelectItem>
-                <SelectItem value="salary-high">Highest Salary</SelectItem>
-                <SelectItem value="salary-low">Lowest Salary</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="date">Most Recent</SelectItem>
+                <SelectItem value="salary">Highest Salary</SelectItem>
+                <SelectItem value="deadline">Deadline</SelectItem>
+                <SelectItem value="views">Most Viewed</SelectItem>
+                <SelectItem value="relevance">Relevance</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="p-6">
+                  <div className="animate-pulse">
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
           {/* Job Cards */}
-          <div className="space-y-6">
-            {filteredJobs.length === 0 ? (
-              <Card className="p-8 text-center">
-                <div className="text-muted-foreground">
-                  <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-lg font-medium mb-2">No jobs found</p>
-                  <p>Try adjusting your filters or search terms</p>
-                </div>
-              </Card>
-            ) : (
-              filteredJobs.map((job) => (
-                <Card
-                  key={job.id}
-                  className="group hover:shadow-card-hover transition-all duration-300"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-heading font-semibold text-xl group-hover:text-brand-primary transition-colors">
-                            {job.title}
-                          </h3>
-                          {job.quickApply && (
-                            <Badge className="bg-brand-accent-green text-white">
-                              Quick Apply
-                            </Badge>
-                          )}
-                          {job.visaSponsorship && (
-                            <Badge
-                              variant="outline"
-                              className="border-brand-secondary text-brand-secondary"
-                            >
-                              Visa Sponsorship
-                            </Badge>
-                          )}
+          {!isLoading && (
+            <div className="space-y-6">
+              {jobs.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <div className="text-muted-foreground">
+                    <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p className="text-lg font-medium mb-2">No jobs found</p>
+                    <p>Try adjusting your filters or search terms</p>
+                  </div>
+                </Card>
+              ) : (
+                jobs.map((job: Job) => (
+                  <Card
+                    key={job._id}
+                    className="group hover:shadow-card-hover transition-all duration-300"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="font-heading font-semibold text-xl group-hover:text-brand-primary transition-colors">
+                              {job.title}
+                            </h3>
+                            {job.quickApply && (
+                              <Badge className="bg-brand-accent-green text-white">
+                                Quick Apply
+                              </Badge>
+                            )}
+                            {job.visaSponsorship && (
+                              <Badge
+                                variant="outline"
+                                className="border-brand-secondary text-brand-secondary"
+                              >
+                                Visa Sponsorship
+                              </Badge>
+                            )}
+                            {job.isUrgent && (
+                              <Badge className="bg-red-500 text-white">
+                                Urgent
+                              </Badge>
+                            )}
+                            {job.isFeatured && (
+                              <Badge className="bg-yellow-500 text-white">
+                                Featured
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="flex items-center space-x-4 text-muted-foreground mb-3">
+                            <div className="flex items-center space-x-1">
+                              <Building2 className="w-4 h-4" />
+                              <span className="font-medium">
+                                {job.organization ||
+                                  job.school?.name ||
+                                  "School Name"}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>
+                                {job.city}, {job.country}
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="flex items-center space-x-4 text-muted-foreground mb-3">
-                          <div className="flex items-center space-x-1">
-                            <Building2 className="w-4 h-4" />
-                            <span className="font-medium">{job.school}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{job.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>{job.rating}</span>
-                            <span className="text-xs">
-                              ({job.reviews} reviews)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleSaveJob(job.id)}
-                        className={
-                          savedJobs.includes(job.id) ? "text-brand-primary" : ""
-                        }
-                      >
-                        <Heart
-                          className={`w-4 h-4 ${
-                            savedJobs.includes(job.id) ? "fill-current" : ""
-                          }`}
-                        />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div className="flex items-center space-x-2">
-                        <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{job.educationLevel}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          {job.salaryRange} {job.currency}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{job.type}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {job.subjects.map((subject, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleSaveJob(job._id)}
+                          disabled={
+                            saveJobMutation.isPending ||
+                            removeSavedJobMutation.isPending
+                          }
+                          className={
+                            savedJobs.has(job._id) ? "text-brand-primary" : ""
+                          }
                         >
-                          {subject}
-                        </Badge>
-                      ))}
-                    </div>
+                          {saveJobMutation.isPending ||
+                          removeSavedJobMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Heart
+                              className={`w-4 h-4 ${
+                                savedJobs.has(job._id) ? "fill-current" : ""
+                              }`}
+                            />
+                          )}
+                        </Button>
+                      </div>
 
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {job.description}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {job.benefits.slice(0, 3).map((benefit, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {benefit}
-                        </Badge>
-                      ))}
-                      {job.benefits.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{job.benefits.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>Posted {getDaysAgo(job.postedDate)}</span>
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-4 h-4" />
-                          <span>{job.views} views</span>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="flex items-center space-x-2">
+                          <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {educationLevels.find(
+                              (level) => level.value === job.educationLevel
+                            )?.label || job.educationLevel}
+                          </span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="w-4 h-4" />
-                          <span>{job.applicants} applicants</span>
+                        <div className="flex items-center space-x-2">
+                          <DollarSign className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">
+                            {formatSalaryRange(job)} {job.currency}
+                          </span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>
-                            Deadline:{" "}
-                            {new Date(job.deadline).toLocaleDateString()}
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {jobTypes.find((type) => type.value === job.jobType)
+                              ?.label || job.jobType}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                        <Link to={`/dashboard/teacher/apply/${job.id}`}>
-                          <Button variant="default" size="sm">
-                            {job.quickApply ? "Quick Apply" : "Apply Now"}
-                          </Button>
-                        </Link>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {job.subjects.map((subject, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {subject}
+                          </Badge>
+                        ))}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        {job.description}
+                      </p>
+
+                      {job.benefits && job.benefits.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {job.benefits.slice(0, 3).map((benefit, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {benefit}
+                            </Badge>
+                          ))}
+                          {job.benefits.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{job.benefits.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <span>Posted {getDaysAgo(job.createdAt)}</span>
+
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>
+                              Deadline:{" "}
+                              {new Date(
+                                job.applicationDeadline
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-2">
+                          <Link to={`/dashboard/teacher/job/${job._id}`}>
+                            <Button variant="outline" size="sm">
+                              View Details
+                            </Button>
+                          </Link>
+                          <Link
+                            to={`/dashboard/teacher/job-application/${job._id}`}
+                          >
+                            <Button variant="default" size="sm">
+                              {job.quickApply ? "Quick Apply" : "Apply Now"}
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
 
           {/* Load More */}
-          {filteredJobs.length > 0 && (
+          {!isLoading && pagination?.hasNextPage && (
             <div className="text-center">
-              <Button variant="outline" className="w-full sm:w-auto">
-                Load More Jobs
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={loadMore}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More Jobs"
+                )}
               </Button>
             </div>
           )}

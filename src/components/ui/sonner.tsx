@@ -26,37 +26,61 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-// Custom toast variants
+// Custom toast variants with proper styling
 export const customToast = {
   success: (title: string, description?: string) => {
     return toast.success(title, {
       description,
-      className:
-        "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200",
+      classNames: {
+        toast:
+          "!bg-green-50 !border-green-200 !text-green-800 dark:!bg-green-900/20 dark:!border-green-800 dark:!text-green-200",
+        title: "!text-green-800 dark:!text-green-200",
+        description: "!text-green-700 dark:!text-green-300",
+        actionButton: "!bg-green-600 !text-white hover:!bg-green-700",
+        cancelButton: "!bg-green-100 !text-green-800 hover:!bg-green-200",
+      },
       duration: 5000,
     });
   },
   error: (title: string, description?: string) => {
     return toast.error(title, {
       description,
-      className:
-        "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200",
+      classNames: {
+        toast:
+          "!bg-red-50 !border-red-200 !text-red-800 dark:!bg-red-900/20 dark:!border-red-800 dark:!text-red-200",
+        title: "!text-red-800 dark:!text-red-200",
+        description: "!text-red-700 dark:!text-red-300",
+        actionButton: "!bg-red-600 !text-white hover:!bg-red-700",
+        cancelButton: "!bg-red-100 !text-red-800 hover:!bg-red-200",
+      },
       duration: 5000,
     });
   },
   warning: (title: string, description?: string) => {
     return toast.warning(title, {
       description,
-      className:
-        "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-200",
+      classNames: {
+        toast:
+          "!bg-yellow-50 !border-yellow-200 !text-yellow-800 dark:!bg-yellow-900/20 dark:!border-yellow-800 dark:!text-yellow-200",
+        title: "!text-yellow-800 dark:!text-yellow-200",
+        description: "!text-yellow-700 dark:!text-yellow-300",
+        actionButton: "!bg-yellow-600 !text-white hover:!bg-yellow-700",
+        cancelButton: "!bg-yellow-100 !text-yellow-800 hover:!bg-yellow-200",
+      },
       duration: 5000,
     });
   },
   info: (title: string, description?: string) => {
     return toast.info(title, {
       description,
-      className:
-        "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200",
+      classNames: {
+        toast:
+          "!bg-blue-50 !border-blue-200 !text-blue-800 dark:!bg-blue-900/20 dark:!border-blue-800 dark:!text-blue-200",
+        title: "!text-blue-800 dark:!text-blue-200",
+        description: "!text-blue-700 dark:!text-blue-300",
+        actionButton: "!bg-blue-600 !text-white hover:!bg-blue-700",
+        cancelButton: "!bg-blue-100 !text-blue-800 hover:!bg-blue-200",
+      },
       duration: 5000,
     });
   },

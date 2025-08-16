@@ -10,6 +10,7 @@ import type {
   JobDashboardStats,
   JobStatistics,
   ApiResponse,
+  PaginationParams,
 } from "../types/job";
 
 // API endpoints
@@ -197,10 +198,29 @@ export const jobsAPI = {
   },
 
   // Get Job Recommendations
-  getJobRecommendations: async (): Promise<ApiResponse<Job[]>> => {
-    return apiHelpers.get<ApiResponse<Job[]>>(
-      JOB_ENDPOINTS.GET_JOB_RECOMMENDATIONS
-    );
+  getJobRecommendations: async (
+    params?: PaginationParams
+  ): Promise<ApiResponse<PaginatedResponse<Job>>> => {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    const url = `${JOB_ENDPOINTS.GET_JOB_RECOMMENDATIONS}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return apiHelpers.get<ApiResponse<PaginatedResponse<Job>>>(url);
+  },
+
+  // Get Recommended Jobs for Teacher
+  getTeacherRecommendedJobs: async (
+    limit: number = 5
+  ): Promise<ApiResponse<Job[]>> => {
+    const url = `/teacher-profiles/me/recommended-jobs?limit=${limit}`;
+    return apiHelpers.get<ApiResponse<Job[]>>(url);
   },
 
   // Get School Dashboard Stats

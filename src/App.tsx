@@ -33,6 +33,7 @@ import JobPostSuccess from "./pages/school/JobPostSuccess";
 import Candidates from "./pages/school/Candidates";
 import JobSearch from "./pages/teacher/JobSearch";
 import JobApplication from "./pages/teacher/JobApplication";
+import Applications from "./pages/teacher/Applications";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import Unauthorized from "./pages/Unauthorized";
@@ -138,12 +139,21 @@ const AppRoutes = () => {
         path="/dashboard/teacher/applications"
         element={
           <TeacherRoute>
-            <JobApplication />
+            <Applications />
           </TeacherRoute>
         }
       />
       <Route
-        path="/dashboard/teacher/apply/:id"
+        path="/dashboard/teacher/job/:id"
+        element={
+          <TeacherRoute>
+            <JobDetail />
+          </TeacherRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/teacher/job-application/:jobId"
         element={
           <TeacherRoute>
             <JobApplication />

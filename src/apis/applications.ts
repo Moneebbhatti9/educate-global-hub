@@ -32,7 +32,7 @@ const APPLICATION_ENDPOINTS = {
   GET_APPLICATIONS_BY_JOB: "/jobs",
 
   // Get Applications by Teacher
-  GET_APPLICATIONS_BY_TEACHER: "/jobs/applications/teacher",
+  GET_APPLICATIONS_BY_TEACHER: "/jobs/applications/teacher/me",
 
   // Get Application Stats
   GET_APPLICATION_STATS: "/jobs/applications/stats",
@@ -147,6 +147,23 @@ export const applicationsAPI = {
     const url = `${
       APPLICATION_ENDPOINTS.GET_APPLICATIONS_BY_TEACHER
     }/${teacherId}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    return apiHelpers.get<ApiResponse<PaginatedResponse<JobApplication>>>(url);
+  },
+
+  // Get Applications for Current Teacher
+  getCurrentTeacherApplications: async (
+    params: ApplicationSearchParams
+  ): Promise<ApiResponse<PaginatedResponse<JobApplication>>> => {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const url = `${APPLICATION_ENDPOINTS.GET_APPLICATIONS_BY_TEACHER}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
     return apiHelpers.get<ApiResponse<PaginatedResponse<JobApplication>>>(url);

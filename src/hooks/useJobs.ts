@@ -52,11 +52,19 @@ export const useUrgentJobs = () => {
   });
 };
 
-export const useJobRecommendations = () => {
+export const useJobRecommendations = (params?: PaginationParams) => {
   return useQuery({
-    queryKey: jobQueryKeys.recommendations(),
-    queryFn: () => jobsAPI.getJobRecommendations(),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    queryKey: ["jobRecommendations", params],
+    queryFn: () => jobsAPI.getJobRecommendations(params),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useTeacherRecommendedJobs = (limit: number = 5) => {
+  return useQuery({
+    queryKey: ["teacherRecommendedJobs", limit],
+    queryFn: () => jobsAPI.getTeacherRecommendedJobs(limit),
+    staleTime: 5 * 60 * 1000,
   });
 };
 

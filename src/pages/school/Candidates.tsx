@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchoolJobs } from "@/hooks/useJobs";
-import { toast } from "sonner";
+import { customToast } from "@/components/ui/sonner";
 import type { ApplicationStatus } from "@/types/job";
 import { CandidatesSkeleton } from "@/components/skeletons/candidates-skeleton";
 
@@ -285,32 +285,34 @@ const Candidates = () => {
     shortlisted: candidates.filter((c) => c.status === "shortlisted").length,
   };
 
-  const handleStatusUpdate = async (
-    candidateId: number,
+  const handleStatusChange = async (
+    applicationId: string,
     newStatus: ApplicationStatus
   ) => {
     try {
       // In real implementation, this would call the API to update application status
-      toast.success(`Candidate status updated to ${getStatusLabel(newStatus)}`);
+      customToast.success(
+        `Candidate status updated to ${getStatusLabel(newStatus)}`
+      );
       // Refresh candidates list
     } catch (error) {
-      toast.error("Failed to update candidate status");
+      customToast.error("Failed to update candidate status");
     }
   };
 
   const handleSendMessage = (candidateEmail: string) => {
-    // In real implementation, this would open a messaging interface
-    toast.info(`Opening message interface for ${candidateEmail}`);
+    customToast.info(`Opening message interface for ${candidateEmail}`);
+    // TODO: Implement message interface
   };
 
-  const handleScheduleInterview = (candidateId: number) => {
-    // In real implementation, this would open interview scheduling
-    toast.info("Opening interview scheduling interface");
+  const handleScheduleInterview = (candidateEmail: string) => {
+    customToast.info("Opening interview scheduling interface");
+    // TODO: Implement interview scheduling interface
   };
 
-  const handleDownloadResume = (candidateId: number) => {
-    // In real implementation, this would download the resume
-    toast.info("Downloading resume...");
+  const handleDownloadResume = (resumeUrl: string) => {
+    customToast.info("Downloading resume...");
+    // TODO: Implement resume download
   };
 
   if (jobsLoading) {
@@ -544,7 +546,9 @@ const Candidates = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        handleDownloadResume(candidate.id)
+                                        handleDownloadResume(
+                                          candidate.resumeUrl
+                                        )
                                       }
                                     >
                                       <Download className="w-4 h-4 mr-2" />
@@ -561,7 +565,7 @@ const Candidates = () => {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        handleScheduleInterview(candidate.id)
+                                        handleScheduleInterview(candidate.email)
                                       }
                                     >
                                       <Calendar className="w-4 h-4 mr-2" />
@@ -569,8 +573,8 @@ const Candidates = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        handleStatusUpdate(
-                                          candidate.id,
+                                        handleStatusChange(
+                                          candidate.id.toString(),
                                           "shortlisted"
                                         )
                                       }
@@ -580,8 +584,8 @@ const Candidates = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        handleStatusUpdate(
-                                          candidate.id,
+                                        handleStatusChange(
+                                          candidate.id.toString(),
                                           "rejected"
                                         )
                                       }
@@ -642,8 +646,8 @@ const Candidates = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() =>
-                                      handleStatusUpdate(
-                                        candidate.id,
+                                      handleStatusChange(
+                                        candidate.id.toString(),
                                         "rejected"
                                       )
                                     }
@@ -655,8 +659,8 @@ const Candidates = () => {
                                     variant="default"
                                     size="sm"
                                     onClick={() =>
-                                      handleStatusUpdate(
-                                        candidate.id,
+                                      handleStatusChange(
+                                        candidate.id.toString(),
                                         "shortlisted"
                                       )
                                     }
@@ -755,7 +759,7 @@ const Candidates = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() =>
-                                  handleDownloadResume(candidate.id)
+                                  handleDownloadResume(candidate.resumeUrl)
                                 }
                               >
                                 <Download className="w-4 h-4 mr-2" />
@@ -772,7 +776,7 @@ const Candidates = () => {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() =>
-                                  handleScheduleInterview(candidate.id)
+                                  handleScheduleInterview(candidate.email)
                                 }
                               >
                                 <Calendar className="w-4 h-4 mr-2" />
@@ -780,8 +784,8 @@ const Candidates = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() =>
-                                  handleStatusUpdate(
-                                    candidate.id,
+                                  handleStatusChange(
+                                    candidate.id.toString(),
                                     "shortlisted"
                                   )
                                 }
@@ -791,7 +795,10 @@ const Candidates = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() =>
-                                  handleStatusUpdate(candidate.id, "rejected")
+                                  handleStatusChange(
+                                    candidate.id.toString(),
+                                    "rejected"
+                                  )
                                 }
                               >
                                 <XCircle className="w-4 h-4 mr-2" />
@@ -840,7 +847,10 @@ const Candidates = () => {
                               variant="outline"
                               size="sm"
                               onClick={() =>
-                                handleStatusUpdate(candidate.id, "rejected")
+                                handleStatusChange(
+                                  candidate.id.toString(),
+                                  "rejected"
+                                )
                               }
                             >
                               <XCircle className="w-4 h-4 mr-1" />
@@ -850,7 +860,10 @@ const Candidates = () => {
                               variant="default"
                               size="sm"
                               onClick={() =>
-                                handleStatusUpdate(candidate.id, "shortlisted")
+                                handleStatusChange(
+                                  candidate.id.toString(),
+                                  "shortlisted"
+                                )
                               }
                             >
                               <CheckCircle className="w-4 h-4 mr-1" />

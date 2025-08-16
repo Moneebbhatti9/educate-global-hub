@@ -313,8 +313,9 @@ export const jobApplicationFormSchema = z.object({
   coverLetter: z
     .string()
     .min(1, "Cover letter is required")
-    .min(200, "Cover letter must be at least 200 characters"),
-  expectedSalary: z.string().min(1, "Expected salary is required"),
+    .min(200, "Cover letter must be at least 200 characters")
+    .max(2000, "Cover letter cannot exceed 2000 characters"),
+  expectedSalary: z.string().optional(),
   availableFrom: z.date({
     required_error: "Available from date is required",
     invalid_type_error: "Please select a valid date",

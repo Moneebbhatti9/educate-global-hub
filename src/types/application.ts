@@ -4,10 +4,11 @@ import type {
   PaginationParams,
   PaginatedResponse,
   ApplicationStatus,
+  Job,
 } from "./job";
 
 export interface JobApplication extends BaseEntity {
-  job: any;
+  job: Job;
   jobId: string;
   teacherId: string;
   coverLetter: string;
@@ -62,6 +63,7 @@ export interface ApplicationFilters {
 export interface ApplicationSearchParams
   extends PaginationParams,
     ApplicationFilters {
+  search?: string;
   sortBy?: "date" | "status" | "name";
   sortOrder?: "asc" | "desc";
 }

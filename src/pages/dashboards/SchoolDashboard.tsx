@@ -52,7 +52,7 @@ import { useAcceptApplication } from "@/hooks/useApplications";
 import { useRejectApplication } from "@/hooks/useApplications";
 import { useShortlistApplication } from "@/hooks/useApplications";
 import { useMoveToReviewing } from "@/hooks/useApplications";
-import { toast } from "sonner";
+import { customToast } from "@/components/ui/sonner";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 const SchoolDashboard = () => {
@@ -150,52 +150,52 @@ const SchoolDashboard = () => {
       switch (action) {
         case "schedule_interview":
           if (!data || !("interviewDate" in data)) {
-            toast.error("Interview date is required");
+            customToast.error("Interview date is required");
             return;
           }
           await scheduleInterview.mutateAsync({
             applicationId,
             data: data as unknown as InterviewScheduleRequest,
           });
-          toast.success("Interview scheduled successfully");
+          customToast.success("Interview scheduled successfully");
           break;
         case "accept":
           await acceptApplication.mutateAsync({
             applicationId,
             data: data as ApplicationAcceptanceRequest,
           });
-          toast.success("Application accepted successfully");
+          customToast.success("Application accepted successfully");
           break;
         case "reject":
           if (!data || !("reason" in data)) {
-            toast.error("Rejection reason is required");
+            customToast.error("Rejection reason is required");
             return;
           }
           await rejectApplication.mutateAsync({
             applicationId,
             data: data as unknown as ApplicationRejectionRequest,
           });
-          toast.success("Application rejected successfully");
+          customToast.success("Application rejected successfully");
           break;
         case "shortlist":
           await shortlistApplication.mutateAsync({
             applicationId,
             data: data as ApplicationShortlistRequest,
           });
-          toast.success("Application shortlisted successfully");
+          customToast.success("Application shortlisted successfully");
           break;
         case "reviewing":
           await moveToReviewing.mutateAsync({
             applicationId,
             data: data as ApplicationReviewRequest,
           });
-          toast.success("Application moved to reviewing");
+          customToast.success("Application moved to reviewing");
           break;
         default:
           break;
       }
     } catch (error) {
-      toast.error("Failed to update application status");
+      customToast.error("Failed to update application status");
     }
   };
 
