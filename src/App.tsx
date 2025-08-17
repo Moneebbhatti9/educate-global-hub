@@ -17,7 +17,11 @@ import Index from "./pages/Index";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Forum from "./pages/Forum";
+import ForumDetail from "./pages/ForumDetail";
 import Resources from "./pages/Resources";
+import TeacherProfile from "./pages/TeacherProfile";
+import SchoolProfile from "./pages/SchoolProfile";
+import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import OTPVerificationPage from "./pages/OTPVerificationPage";
@@ -61,8 +65,12 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/jobs" element={<Jobs />} />
       <Route path="/jobs/:id" element={<JobDetail />} />
-      <Route path="/forum" element={<Forum />} />
-      <Route path="/resources" element={<Resources />} />
+          <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/:id" element={<ForumDetail />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/teacher-profile" element={<TeacherProfile />} />
+          <Route path="/school-profile" element={<SchoolProfile />} />
+          <Route path="/settings" element={<Settings />} />
 
       {/* Authentication Routes - Public Routes */}
       <Route
