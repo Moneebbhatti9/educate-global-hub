@@ -183,11 +183,7 @@ const JobManagement = () => {
   };
 
   return (
-    <DashboardLayout
-      role="admin"
-      userName="Admin User"
-      userEmail="admin@educatelink.com"
-    >
+    <DashboardLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
         <div>

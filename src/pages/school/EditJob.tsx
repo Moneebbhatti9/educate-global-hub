@@ -186,7 +186,7 @@ const EditJob = () => {
     );
   }
 
-  if (jobError || !jobData?.data?.job) {
+  if (jobError || !jobData?.data) {
     return (
       <DashboardLayout role="school">
         <div className="flex items-center justify-center min-h-[400px]">
