@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   User,
   MapPin,
@@ -101,7 +102,7 @@ const TeacherProfile = () => {
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
-// Mock profile data
+  // Mock profile data
   const [profile, setProfile] = useState({
     personalInfo: {
       firstName: "Sarah",
@@ -126,8 +127,10 @@ const TeacherProfile = () => {
       },
     },
     bio: "Passionate mathematics educator with 8+ years of experience in middle and high school education. Specializes in making complex mathematical concepts accessible and engaging for all learners.",
-    professionalSummary: "Dedicated and innovative mathematics teacher with over 8 years of experience in developing curriculum and fostering student achievement in diverse educational settings. Expert in utilizing technology-enhanced learning methodologies to make complex mathematical concepts accessible to students of varying abilities. Proven track record of improving student performance by 25% through personalized learning approaches and data-driven instruction.",
-    careerObjectives: "Seeking a challenging role as a Senior Mathematics Teacher or Department Head where I can leverage my expertise in curriculum development and student mentoring to drive academic excellence. Looking to contribute to a progressive educational institution that values innovation, inclusivity, and continuous professional development.",
+    professionalSummary:
+      "Dedicated and innovative mathematics teacher with over 8 years of experience in developing curriculum and fostering student achievement in diverse educational settings. Expert in utilizing technology-enhanced learning methodologies to make complex mathematical concepts accessible to students of varying abilities. Proven track record of improving student performance by 25% through personalized learning approaches and data-driven instruction.",
+    careerObjectives:
+      "Seeking a challenging role as a Senior Mathematics Teacher or Department Head where I can leverage my expertise in curriculum development and student mentoring to drive academic excellence. Looking to contribute to a progressive educational institution that values innovation, inclusivity, and continuous professional development.",
     subjects: ["Mathematics", "Algebra", "Geometry", "Statistics"],
     yearsOfExperience: 8,
     qualifications: [
@@ -160,7 +163,7 @@ const TeacherProfile = () => {
   // Modal handlers
   const handleSaveLanguage = (language: Language) => {
     if (editingItem) {
-      setLanguages(languages.map(l => l.id === language.id ? language : l));
+      setLanguages(languages.map((l) => (l.id === language.id ? language : l)));
     } else {
       setLanguages([...languages, language]);
     }
@@ -169,15 +172,21 @@ const TeacherProfile = () => {
 
   const handleSaveExperience = (experience: Experience) => {
     if (editingItem) {
-      setExperiences(experiences.map(e => e.id === experience.id ? experience : e));
+      setExperiences(
+        experiences.map((e) => (e.id === experience.id ? experience : e))
+      );
     } else {
       setExperiences([...experiences, experience]);
     }
     setEditingItem(null);
   };
 
-  const handleProfileSummaryUpdate = (data: { bio: string; professionalSummary: string; careerObjectives: string }) => {
-    setProfile(prev => ({
+  const handleProfileSummaryUpdate = (data: {
+    bio: string;
+    professionalSummary: string;
+    careerObjectives: string;
+  }) => {
+    setProfile((prev) => ({
       ...prev,
       bio: data.bio,
       professionalSummary: data.professionalSummary,
@@ -305,8 +314,8 @@ const TeacherProfile = () => {
                     <FileText className="w-5 h-5 mr-2" />
                     Professional Summary
                   </CardTitle>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => setShowSummaryModal(true)}
                   >
@@ -318,11 +327,9 @@ const TeacherProfile = () => {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">Professional Bio</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.bio}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{profile.bio}</p>
                 </div>
-                
+
                 {profile.professionalSummary && (
                   <div>
                     <h4 className="font-semibold mb-2">Detailed Summary</h4>
@@ -331,7 +338,7 @@ const TeacherProfile = () => {
                     </p>
                   </div>
                 )}
-                
+
                 {profile.careerObjectives && (
                   <div>
                     <h4 className="font-semibold mb-2">Career Objectives</h4>
@@ -483,11 +490,27 @@ const TeacherProfile = () => {
                     </div>
                     <div>
                       <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                      <Input
+                      <DatePicker
                         id="dateOfBirth"
-                        type="date"
-                        value={profile.personalInfo.dateOfBirth}
-                        readOnly={!isEditing}
+                        value={
+                          profile.personalInfo.dateOfBirth
+                            ? new Date(profile.personalInfo.dateOfBirth)
+                            : undefined
+                        }
+                        onValueChange={(date) => {
+                          if (date) {
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                dateOfBirth: date.toISOString().split("T")[0],
+                              },
+                            }));
+                          }
+                        }}
+                        placeholder="Select date of birth"
+                        disabled={!isEditing}
+                        max={new Date()}
                       />
                     </div>
                     <div>
@@ -661,7 +684,11 @@ const TeacherProfile = () => {
                       <Languages className="w-5 h-5 mr-2" />
                       Languages Spoken
                     </h3>
-                    <Button variant="outline" size="sm" onClick={() => setShowLanguageModal(true)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowLanguageModal(true)}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Language
                     </Button>
@@ -702,7 +729,10 @@ const TeacherProfile = () => {
                     <Briefcase className="w-5 h-5 mr-2" />
                     Employment History
                   </CardTitle>
-                  <Button variant="outline" onClick={() => setShowExperienceModal(true)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowExperienceModal(true)}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Position
                   </Button>
@@ -819,7 +849,10 @@ const TeacherProfile = () => {
                     <GraduationCap className="w-5 h-5 mr-2" />
                     Educational Background
                   </CardTitle>
-                  <Button variant="outline" onClick={() => setShowEducationModal(true)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowEducationModal(true)}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Education
                   </Button>
@@ -842,7 +875,10 @@ const TeacherProfile = () => {
                     <Award className="w-5 h-5 mr-2" />
                     Teacher Qualifications & Certifications
                   </CardTitle>
-                  <Button variant="outline" onClick={() => setShowQualificationModal(true)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowQualificationModal(true)}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Qualification
                   </Button>
@@ -880,7 +916,10 @@ const TeacherProfile = () => {
                     <Users className="w-5 h-5 mr-2" />
                     Professional Referees
                   </CardTitle>
-                  <Button variant="outline" onClick={() => setShowRefereeModal(true)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRefereeModal(true)}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Referee
                   </Button>
@@ -950,7 +989,7 @@ const TeacherProfile = () => {
           onSave={handleSaveLanguage}
           editingLanguage={editingItem}
         />
-        
+
         <AddExperienceModal
           open={showExperienceModal}
           onOpenChange={setShowExperienceModal}

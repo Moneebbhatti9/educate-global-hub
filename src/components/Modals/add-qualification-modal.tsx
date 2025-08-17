@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Award } from "lucide-react";
 
 interface Qualification {
@@ -38,7 +39,7 @@ export const AddQualificationModal = ({
   onSave,
   editingQualification,
 }: AddQualificationModalProps) => {
-  const [formData, setFormData] = useState<Omit<Qualification, 'id'>>({
+  const [formData, setFormData] = useState<Omit<Qualification, "id">>({
     title: editingQualification?.title || "",
     institution: editingQualification?.institution || "",
     subject: editingQualification?.subject || "",
@@ -59,7 +60,7 @@ export const AddQualificationModal = ({
 
     onSave(newQualification);
     onOpenChange(false);
-    
+
     // Reset form if not editing
     if (!editingQualification) {
       setFormData({
@@ -76,7 +77,7 @@ export const AddQualificationModal = ({
   };
 
   const updateField = (field: keyof typeof formData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -88,13 +89,12 @@ export const AddQualificationModal = ({
             {editingQualification ? "Edit Qualification" : "Add Qualification"}
           </DialogTitle>
           <DialogDescription>
-            {editingQualification 
+            {editingQualification
               ? "Update your certification or qualification details."
-              : "Add your teaching certifications, licenses, or qualifications."
-            }
+              : "Add your teaching certifications, licenses, or qualifications."}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -103,17 +103,17 @@ export const AddQualificationModal = ({
                 id="title"
                 placeholder="e.g., Teaching License"
                 value={formData.title}
-                onChange={(e) => updateField('title', e.target.value)}
+                onChange={(e) => updateField("title", e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="institution">Issuing Institution *</Label>
               <Input
                 id="institution"
                 placeholder="e.g., Department of Education"
                 value={formData.institution}
-                onChange={(e) => updateField('institution', e.target.value)}
+                onChange={(e) => updateField("institution", e.target.value)}
               />
             </div>
           </div>
@@ -125,17 +125,17 @@ export const AddQualificationModal = ({
                 id="subject"
                 placeholder="e.g., Mathematics"
                 value={formData.subject}
-                onChange={(e) => updateField('subject', e.target.value)}
+                onChange={(e) => updateField("subject", e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="certificationId">Certification ID</Label>
               <Input
                 id="certificationId"
                 placeholder="e.g., TL-123456"
                 value={formData.certificationId}
-                onChange={(e) => updateField('certificationId', e.target.value)}
+                onChange={(e) => updateField("certificationId", e.target.value)}
               />
             </div>
           </div>
@@ -143,21 +143,39 @@ export const AddQualificationModal = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="issueDate">Issue Date</Label>
-              <Input
+              <DatePicker
                 id="issueDate"
-                type="date"
-                value={formData.issueDate}
-                onChange={(e) => updateField('issueDate', e.target.value)}
+                value={
+                  formData.issueDate ? new Date(formData.issueDate) : undefined
+                }
+                onValueChange={(date) => {
+                  if (date) {
+                    updateField("issueDate", date.toISOString().split("T")[0]);
+                  }
+                }}
+                placeholder="Select issue date"
+                max={new Date()}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="expiryDate">Expiry Date</Label>
-              <Input
+              <DatePicker
                 id="expiryDate"
-                type="date"
-                value={formData.expiryDate}
-                onChange={(e) => updateField('expiryDate', e.target.value)}
+                value={
+                  formData.expiryDate
+                    ? new Date(formData.expiryDate)
+                    : undefined
+                }
+                onValueChange={(date) => {
+                  if (date) {
+                    updateField("expiryDate", date.toISOString().split("T")[0]);
+                  }
+                }}
+                placeholder="Select expiry date"
+                min={
+                  formData.issueDate ? new Date(formData.issueDate) : undefined
+                }
               />
             </div>
           </div>
@@ -167,8 +185,13 @@ export const AddQualificationModal = ({
             <Input
               id="ageRanges"
               placeholder="e.g., 6-11, 12-16 (comma separated)"
-              value={formData.ageRanges.join(', ')}
-              onChange={(e) => updateField('ageRanges', e.target.value.split(',').map(s => s.trim()))}
+              value={formData.ageRanges.join(", ")}
+              onChange={(e) =>
+                updateField(
+                  "ageRanges",
+                  e.target.value.split(",").map((s) => s.trim())
+                )
+              }
             />
           </div>
 
@@ -178,7 +201,7 @@ export const AddQualificationModal = ({
               id="description"
               placeholder="Additional details about this qualification..."
               value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
+              onChange={(e) => updateField("description", e.target.value)}
               rows={3}
             />
           </div>
@@ -188,8 +211,8 @@ export const AddQualificationModal = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={!formData.title.trim() || !formData.institution.trim()}
           >
             {editingQualification ? "Update" : "Add"} Qualification

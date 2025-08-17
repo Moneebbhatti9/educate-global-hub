@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Building,
   MapPin,
@@ -87,17 +88,23 @@ const SchoolProfile = () => {
     ],
     aboutSchool:
       "Lincoln International Academy is a premier educational institution committed to fostering global citizenship and academic excellence. Our diverse community of learners represents over 40 nationalities, creating a rich multicultural environment that prepares students for success in an interconnected world.",
-    professionalSummary: "Lincoln International Academy stands as a beacon of educational excellence in the heart of Boston, serving a vibrant community of over 1,200 students from more than 40 countries. Our comprehensive international curriculum, combined with state-of-the-art facilities and world-class faculty, creates an environment where academic rigor meets global perspective. We are committed to developing not just academically successful students, but globally-minded citizens who will shape the future.",
+    professionalSummary:
+      "Lincoln International Academy stands as a beacon of educational excellence in the heart of Boston, serving a vibrant community of over 1,200 students from more than 40 countries. Our comprehensive international curriculum, combined with state-of-the-art facilities and world-class faculty, creates an environment where academic rigor meets global perspective. We are committed to developing not just academically successful students, but globally-minded citizens who will shape the future.",
     mission:
       "To provide an exceptional international education that develops inquiring, knowledgeable, and caring young people who help to create a better and more peaceful world through intercultural understanding and respect.",
     vision:
       "To be a leading international school that inspires students to achieve their full potential and become responsible global citizens.",
-    careerObjectives: "Lincoln International Academy seeks to continue expanding our global reach and educational impact by attracting top-tier educators who share our commitment to international education. We aim to be the preferred destination for families seeking world-class education and for educators looking to make a meaningful difference in students' lives. Our goal is to maintain our position as a leader in international education while continuously innovating our teaching methodologies and student support systems.",
+    careerObjectives:
+      "Lincoln International Academy seeks to continue expanding our global reach and educational impact by attracting top-tier educators who share our commitment to international education. We aim to be the preferred destination for families seeking world-class education and for educators looking to make a meaningful difference in students' lives. Our goal is to maintain our position as a leader in international education while continuously innovating our teaching methodologies and student support systems.",
   });
 
   // Modal handlers
-  const handleProfileSummaryUpdate = (data: { bio: string; professionalSummary: string; careerObjectives: string }) => {
-    setProfile(prev => ({
+  const handleProfileSummaryUpdate = (data: {
+    bio: string;
+    professionalSummary: string;
+    careerObjectives: string;
+  }) => {
+    setProfile((prev) => ({
       ...prev,
       aboutSchool: data.bio,
       professionalSummary: data.professionalSummary,
@@ -223,8 +230,8 @@ const SchoolProfile = () => {
                     <FileText className="w-5 h-5 mr-2" />
                     School Summary & Vision
                   </CardTitle>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => setShowSummaryModal(true)}
                   >
@@ -240,7 +247,7 @@ const SchoolProfile = () => {
                     {profile.aboutSchool}
                   </p>
                 </div>
-                
+
                 {profile.professionalSummary && (
                   <div>
                     <h4 className="font-semibold mb-2">Detailed Overview</h4>
@@ -249,7 +256,7 @@ const SchoolProfile = () => {
                     </p>
                   </div>
                 )}
-                
+
                 {profile.careerObjectives && (
                   <div>
                     <h4 className="font-semibold mb-2">Institutional Goals</h4>
@@ -476,10 +483,27 @@ const SchoolProfile = () => {
                     </div>
                     <div>
                       <Label htmlFor="establishedYear">Established Year</Label>
-                      <Input
+                      <DatePicker
                         id="establishedYear"
-                        value={profile.schoolInfo.establishedYear}
-                        readOnly={!isEditing}
+                        value={
+                          profile.schoolInfo.establishedYear
+                            ? new Date(profile.schoolInfo.establishedYear)
+                            : undefined
+                        }
+                        onValueChange={(date) => {
+                          if (date) {
+                            setProfile((prev) => ({
+                              ...prev,
+                              schoolInfo: {
+                                ...prev.schoolInfo,
+                                establishedYear: date.getFullYear().toString(),
+                              },
+                            }));
+                          }
+                        }}
+                        placeholder="Select year"
+                        disabled={!isEditing}
+                        max={new Date()}
                       />
                     </div>
                   </div>

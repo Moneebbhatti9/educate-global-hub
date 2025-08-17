@@ -40,7 +40,7 @@ export const AddExperienceModal = ({
   onSave,
   editingExperience,
 }: AddExperienceModalProps) => {
-  const [formData, setFormData] = useState<Omit<Experience, 'id'>>({
+  const [formData, setFormData] = useState<Omit<Experience, "id">>({
     title: editingExperience?.title || "",
     employer: editingExperience?.employer || "",
     location: editingExperience?.location || "",
@@ -61,7 +61,7 @@ export const AddExperienceModal = ({
 
     onSave(newExperience);
     onOpenChange(false);
-    
+
     // Reset form if not editing
     if (!editingExperience) {
       setFormData({
@@ -78,7 +78,7 @@ export const AddExperienceModal = ({
   };
 
   const updateField = (field: keyof typeof formData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -90,13 +90,12 @@ export const AddExperienceModal = ({
             {editingExperience ? "Edit Experience" : "Add Experience"}
           </DialogTitle>
           <DialogDescription>
-            {editingExperience 
+            {editingExperience
               ? "Update your employment history details."
-              : "Add your employment or teaching experience."
-            }
+              : "Add your employment or teaching experience."}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -105,17 +104,17 @@ export const AddExperienceModal = ({
                 id="title"
                 placeholder="e.g., Mathematics Teacher"
                 value={formData.title}
-                onChange={(e) => updateField('title', e.target.value)}
+                onChange={(e) => updateField("title", e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="employer">Employer/School *</Label>
               <Input
                 id="employer"
                 placeholder="e.g., Lincoln High School"
                 value={formData.employer}
-                onChange={(e) => updateField('employer', e.target.value)}
+                onChange={(e) => updateField("employer", e.target.value)}
               />
             </div>
           </div>
@@ -126,29 +125,46 @@ export const AddExperienceModal = ({
               id="location"
               placeholder="e.g., Boston, MA, USA"
               value={formData.location}
-              onChange={(e) => updateField('location', e.target.value)}
+              onChange={(e) => updateField("location", e.target.value)}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date *</Label>
-              <Input
+              <DatePicker
                 id="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => updateField('startDate', e.target.value)}
+                value={
+                  formData.startDate ? new Date(formData.startDate) : undefined
+                }
+                onValueChange={(date) => {
+                  if (date) {
+                    updateField("startDate", date.toISOString().split("T")[0]);
+                  }
+                }}
+                placeholder="Select start date"
+                max={new Date()}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="endDate">End Date</Label>
-              <Input
+              <DatePicker
                 id="endDate"
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => updateField('endDate', e.target.value)}
+                value={
+                  formData.endDate ? new Date(formData.endDate) : undefined
+                }
+                onValueChange={(date) => {
+                  if (date) {
+                    updateField("endDate", date.toISOString().split("T")[0]);
+                  }
+                }}
+                placeholder="Select end date"
                 disabled={formData.current}
+                min={
+                  formData.startDate ? new Date(formData.startDate) : undefined
+                }
+                max={new Date()}
               />
             </div>
           </div>
@@ -157,7 +173,7 @@ export const AddExperienceModal = ({
             <Checkbox
               id="current"
               checked={formData.current}
-              onCheckedChange={(checked) => updateField('current', checked)}
+              onCheckedChange={(checked) => updateField("current", checked)}
             />
             <Label htmlFor="current">I currently work here</Label>
           </div>
@@ -168,7 +184,7 @@ export const AddExperienceModal = ({
               id="responsibilities"
               placeholder="Describe your key responsibilities and achievements..."
               value={formData.responsibilities}
-              onChange={(e) => updateField('responsibilities', e.target.value)}
+              onChange={(e) => updateField("responsibilities", e.target.value)}
               rows={4}
             />
           </div>
@@ -179,7 +195,7 @@ export const AddExperienceModal = ({
               id="contactPerson"
               placeholder="e.g., John Smith - Principal"
               value={formData.contactPerson}
-              onChange={(e) => updateField('contactPerson', e.target.value)}
+              onChange={(e) => updateField("contactPerson", e.target.value)}
             />
           </div>
         </div>
@@ -188,8 +204,8 @@ export const AddExperienceModal = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={!formData.title.trim() || !formData.employer.trim()}
           >
             {editingExperience ? "Update" : "Add"} Experience
