@@ -48,6 +48,12 @@ import {
   Building,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { AddLanguageModal } from "@/components/Modals/add-language-modal";
+import { AddExperienceModal } from "@/components/Modals/add-experience-modal";
+import { AddQualificationModal } from "@/components/Modals/add-qualification-modal";
+import { AddEducationModal } from "@/components/Modals/add-education-modal";
+import { AddRefereeModal } from "@/components/Modals/add-referee-modal";
+import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
 
 interface Experience {
   id: string;
@@ -86,7 +92,16 @@ const TeacherProfile = () => {
   const [educations, setEducations] = useState<Education[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
 
-  // Mock profile data
+  // Modal states
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showExperienceModal, setShowExperienceModal] = useState(false);
+  const [showQualificationModal, setShowQualificationModal] = useState(false);
+  const [showEducationModal, setShowEducationModal] = useState(false);
+  const [showRefereeModal, setShowRefereeModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+// Mock profile data
   const [profile, setProfile] = useState({
     personalInfo: {
       firstName: "Sarah",
@@ -111,6 +126,8 @@ const TeacherProfile = () => {
       },
     },
     bio: "Passionate mathematics educator with 8+ years of experience in middle and high school education. Specializes in making complex mathematical concepts accessible and engaging for all learners.",
+    professionalSummary: "Dedicated and innovative mathematics teacher with over 8 years of experience in developing curriculum and fostering student achievement in diverse educational settings. Expert in utilizing technology-enhanced learning methodologies to make complex mathematical concepts accessible to students of varying abilities. Proven track record of improving student performance by 25% through personalized learning approaches and data-driven instruction.",
+    careerObjectives: "Seeking a challenging role as a Senior Mathematics Teacher or Department Head where I can leverage my expertise in curriculum development and student mentoring to drive academic excellence. Looking to contribute to a progressive educational institution that values innovation, inclusivity, and continuous professional development.",
     subjects: ["Mathematics", "Algebra", "Geometry", "Statistics"],
     yearsOfExperience: 8,
     qualifications: [
@@ -138,6 +155,34 @@ const TeacherProfile = () => {
 
   const removeExperience = (id: string) => {
     setExperiences(experiences.filter((exp) => exp.id !== id));
+  };
+
+  // Modal handlers
+  const handleSaveLanguage = (language: Language) => {
+    if (editingItem) {
+      setLanguages(languages.map(l => l.id === language.id ? language : l));
+    } else {
+      setLanguages([...languages, language]);
+    }
+    setEditingItem(null);
+  };
+
+  const handleSaveExperience = (experience: Experience) => {
+    if (editingItem) {
+      setExperiences(experiences.map(e => e.id === experience.id ? experience : e));
+    } else {
+      setExperiences([...experiences, experience]);
+    }
+    setEditingItem(null);
+  };
+
+  const handleProfileSummaryUpdate = (data: { bio: string; professionalSummary: string; careerObjectives: string }) => {
+    setProfile(prev => ({
+      ...prev,
+      bio: data.bio,
+      professionalSummary: data.professionalSummary,
+      careerObjectives: data.careerObjectives,
+    }));
   };
 
   return (
@@ -252,6 +297,52 @@ const TeacherProfile = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Profile Summary Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center">
+                    <FileText className="w-5 h-5 mr-2" />
+                    Professional Summary
+                  </CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowSummaryModal(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Summary
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Professional Bio</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {profile.bio}
+                  </p>
+                </div>
+                
+                {profile.professionalSummary && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Detailed Summary</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profile.professionalSummary}
+                    </p>
+                  </div>
+                )}
+                
+                {profile.careerObjectives && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Career Objectives</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profile.careerObjectives}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Quick Stats */}
               <Card>
@@ -570,7 +661,7 @@ const TeacherProfile = () => {
                       <Languages className="w-5 h-5 mr-2" />
                       Languages Spoken
                     </h3>
-                    <Button variant="outline" size="sm" onClick={() => {}}>
+                    <Button variant="outline" size="sm" onClick={() => setShowLanguageModal(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Language
                     </Button>
@@ -611,7 +702,7 @@ const TeacherProfile = () => {
                     <Briefcase className="w-5 h-5 mr-2" />
                     Employment History
                   </CardTitle>
-                  <Button variant="outline" onClick={addExperience}>
+                  <Button variant="outline" onClick={() => setShowExperienceModal(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Position
                   </Button>
@@ -728,7 +819,7 @@ const TeacherProfile = () => {
                     <GraduationCap className="w-5 h-5 mr-2" />
                     Educational Background
                   </CardTitle>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={() => setShowEducationModal(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Education
                   </Button>
@@ -746,10 +837,16 @@ const TeacherProfile = () => {
           <TabsContent value="qualifications" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <Award className="w-5 h-5 mr-2" />
-                  Teacher Qualifications & Certifications
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center">
+                    <Award className="w-5 h-5 mr-2" />
+                    Teacher Qualifications & Certifications
+                  </CardTitle>
+                  <Button variant="outline" onClick={() => setShowQualificationModal(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Qualification
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
@@ -778,10 +875,16 @@ const TeacherProfile = () => {
           <TabsContent value="referees" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Professional Referees
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Professional Referees
+                  </CardTitle>
+                  <Button variant="outline" onClick={() => setShowRefereeModal(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Referee
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
@@ -839,6 +942,53 @@ const TeacherProfile = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Modals */}
+        <AddLanguageModal
+          open={showLanguageModal}
+          onOpenChange={setShowLanguageModal}
+          onSave={handleSaveLanguage}
+          editingLanguage={editingItem}
+        />
+        
+        <AddExperienceModal
+          open={showExperienceModal}
+          onOpenChange={setShowExperienceModal}
+          onSave={handleSaveExperience}
+          editingExperience={editingItem}
+        />
+
+        <AddQualificationModal
+          open={showQualificationModal}
+          onOpenChange={setShowQualificationModal}
+          onSave={() => {}}
+          editingQualification={editingItem}
+        />
+
+        <AddEducationModal
+          open={showEducationModal}
+          onOpenChange={setShowEducationModal}
+          onSave={() => {}}
+          editingEducation={editingItem}
+        />
+
+        <AddRefereeModal
+          open={showRefereeModal}
+          onOpenChange={setShowRefereeModal}
+          onSave={() => {}}
+          editingReferee={editingItem}
+        />
+
+        <ProfileSummaryModal
+          open={showSummaryModal}
+          onOpenChange={setShowSummaryModal}
+          onSave={handleProfileSummaryUpdate}
+          initialData={{
+            bio: profile.bio,
+            professionalSummary: profile.professionalSummary,
+            careerObjectives: profile.careerObjectives,
+          }}
+        />
       </div>
     </DashboardLayout>
   );

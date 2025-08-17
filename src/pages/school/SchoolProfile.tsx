@@ -47,10 +47,14 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
 
 const SchoolProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+
+  // Modal states
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   // Mock school profile data
   const [profile, setProfile] = useState({
@@ -83,11 +87,23 @@ const SchoolProfile = () => {
     ],
     aboutSchool:
       "Lincoln International Academy is a premier educational institution committed to fostering global citizenship and academic excellence. Our diverse community of learners represents over 40 nationalities, creating a rich multicultural environment that prepares students for success in an interconnected world.",
+    professionalSummary: "Lincoln International Academy stands as a beacon of educational excellence in the heart of Boston, serving a vibrant community of over 1,200 students from more than 40 countries. Our comprehensive international curriculum, combined with state-of-the-art facilities and world-class faculty, creates an environment where academic rigor meets global perspective. We are committed to developing not just academically successful students, but globally-minded citizens who will shape the future.",
     mission:
       "To provide an exceptional international education that develops inquiring, knowledgeable, and caring young people who help to create a better and more peaceful world through intercultural understanding and respect.",
     vision:
       "To be a leading international school that inspires students to achieve their full potential and become responsible global citizens.",
+    careerObjectives: "Lincoln International Academy seeks to continue expanding our global reach and educational impact by attracting top-tier educators who share our commitment to international education. We aim to be the preferred destination for families seeking world-class education and for educators looking to make a meaningful difference in students' lives. Our goal is to maintain our position as a leader in international education while continuously innovating our teaching methodologies and student support systems.",
   });
+
+  // Modal handlers
+  const handleProfileSummaryUpdate = (data: { bio: string; professionalSummary: string; careerObjectives: string }) => {
+    setProfile(prev => ({
+      ...prev,
+      aboutSchool: data.bio,
+      professionalSummary: data.professionalSummary,
+      careerObjectives: data.careerObjectives,
+    }));
+  };
 
   return (
     <DashboardLayout role="school">
@@ -199,6 +215,52 @@ const SchoolProfile = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* School Summary Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center">
+                    <FileText className="w-5 h-5 mr-2" />
+                    School Summary & Vision
+                  </CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowSummaryModal(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Summary
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">About Our School</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {profile.aboutSchool}
+                  </p>
+                </div>
+                
+                {profile.professionalSummary && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Detailed Overview</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profile.professionalSummary}
+                    </p>
+                  </div>
+                )}
+                
+                {profile.careerObjectives && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Institutional Goals</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {profile.careerObjectives}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Quick Stats */}
               <Card>
@@ -748,6 +810,18 @@ const SchoolProfile = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Modals */}
+        <ProfileSummaryModal
+          open={showSummaryModal}
+          onOpenChange={setShowSummaryModal}
+          onSave={handleProfileSummaryUpdate}
+          initialData={{
+            bio: profile.aboutSchool,
+            professionalSummary: profile.professionalSummary,
+            careerObjectives: profile.careerObjectives,
+          }}
+        />
       </div>
     </DashboardLayout>
   );
