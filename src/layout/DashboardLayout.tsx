@@ -109,9 +109,9 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: Users,
         },
         {
-          name: "Messages",
-          href: `/dashboard/${role}/messages`,
-          icon: MessageSquare,
+          name: "Profile",
+          href: `/dashboard/${role}/profile`,
+          icon: User,
         },
         {
           name: "Analytics",

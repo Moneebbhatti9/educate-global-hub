@@ -19,8 +19,8 @@ import JobDetail from "./pages/JobDetail";
 import Forum from "./pages/Forum";
 import ForumDetail from "./pages/ForumDetail";
 import Resources from "./pages/Resources";
-import TeacherProfile from "./pages/TeacherProfile";
-import SchoolProfile from "./pages/SchoolProfile";
+import TeacherProfile from "./pages/teacher/TeacherProfile";
+import SchoolProfile from "./pages/school/SchoolProfile";
 import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -65,12 +65,10 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/jobs" element={<Jobs />} />
       <Route path="/jobs/:id" element={<JobDetail />} />
-          <Route path="/forum" element={<Forum />} />
-          <Route path="/forum/:id" element={<ForumDetail />} />
-          <Route path="/resources" element={<Resources />} />
-          <Route path="/teacher-profile" element={<TeacherProfile />} />
-          <Route path="/school-profile" element={<SchoolProfile />} />
-          <Route path="/settings" element={<Settings />} />
+      <Route path="/forum" element={<Forum />} />
+      <Route path="/forum/:id" element={<ForumDetail />} />
+      <Route path="/resources" element={<Resources />} />
+      <Route path="/settings" element={<Settings />} />
 
       {/* Authentication Routes - Public Routes */}
       <Route
@@ -318,15 +316,13 @@ const AppRoutes = () => {
           </div>
         }
       />
+
       <Route
-        path="/dashboard/:role/profile"
+        path="/dashboard/teacher/teacher-profile"
         element={
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Profile</h1>
-            <p className="text-muted-foreground">
-              User profile management will be displayed here.
-            </p>
-          </div>
+          <TeacherRoute>
+            <TeacherProfile />
+          </TeacherRoute>
         }
       />
       <Route
@@ -346,12 +342,7 @@ const AppRoutes = () => {
         path="/dashboard/teacher/profile"
         element={
           <TeacherRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Teacher Profile</h1>
-              <p className="text-muted-foreground">
-                Teacher profile management will be displayed here.
-              </p>
-            </div>
+            <TeacherProfile />
           </TeacherRoute>
         }
       />
@@ -359,12 +350,7 @@ const AppRoutes = () => {
         path="/dashboard/school/profile"
         element={
           <SchoolRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">School Profile</h1>
-              <p className="text-muted-foreground">
-                School profile management will be displayed here.
-              </p>
-            </div>
+            <SchoolProfile />
           </SchoolRoute>
         }
       />

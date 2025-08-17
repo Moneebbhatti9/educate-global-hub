@@ -3,21 +3,40 @@ import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Search, 
-  MessageCircle, 
-  Users, 
-  ThumbsUp, 
-  Clock, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Search,
+  MessageCircle,
+  Users,
+  ThumbsUp,
+  Clock,
   Pin,
   TrendingUp,
   BookOpen,
@@ -25,7 +44,7 @@ import {
   Lightbulb,
   Plus,
   Tag,
-  Send
+  Send,
 } from "lucide-react";
 
 const Forum = () => {
@@ -34,7 +53,7 @@ const Forum = () => {
     title: "",
     content: "",
     category: "",
-    tags: ""
+    tags: "",
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -54,7 +73,7 @@ const Forum = () => {
       icon: Lightbulb,
       color: "bg-brand-accent-orange/10 text-brand-accent-orange",
       posts: 156,
-      members: 1240
+      members: 1240,
     },
     {
       id: "curriculum",
@@ -63,7 +82,7 @@ const Forum = () => {
       icon: BookOpen,
       color: "bg-brand-accent-green/10 text-brand-accent-green",
       posts: 89,
-      members: 890
+      members: 890,
     },
     {
       id: "career-advice",
@@ -72,7 +91,7 @@ const Forum = () => {
       icon: TrendingUp,
       color: "bg-brand-secondary/10 text-brand-secondary",
       posts: 234,
-      members: 1560
+      members: 1560,
     },
     {
       id: "help-support",
@@ -81,8 +100,8 @@ const Forum = () => {
       icon: HelpCircle,
       color: "bg-brand-primary/10 text-brand-primary",
       posts: 67,
-      members: 450
-    }
+      members: 450,
+    },
   ];
 
   const discussions = [
@@ -93,16 +112,17 @@ const Forum = () => {
         name: "Sarah Johnson",
         avatar: "/api/placeholder/40/40",
         role: "Mathematics Teacher",
-        reputation: 1250
+        reputation: 1250,
       },
       category: "Teaching Tips & Strategies",
-      content: "I'm struggling with a few students who seem disinterested in math. Has anyone found effective strategies to make mathematics more engaging?",
+      content:
+        "I'm struggling with a few students who seem disinterested in math. Has anyone found effective strategies to make mathematics more engaging?",
       replies: 23,
       likes: 45,
       views: 234,
       lastActivity: "2 hours ago",
       isPinned: false,
-      tags: ["mathematics", "engagement", "classroom-management"]
+      tags: ["mathematics", "engagement", "classroom-management"],
     },
     {
       id: 2,
@@ -111,16 +131,17 @@ const Forum = () => {
         name: "Michael Chen",
         avatar: "/api/placeholder/40/40",
         role: "High School Principal",
-        reputation: 2100
+        reputation: 2100,
       },
       category: "Curriculum & Resources",
-      content: "With hybrid learning becoming more common, what are your go-to methods for authentic online assessment?",
+      content:
+        "With hybrid learning becoming more common, what are your go-to methods for authentic online assessment?",
       replies: 31,
       likes: 67,
       views: 445,
       lastActivity: "4 hours ago",
       isPinned: true,
-      tags: ["remote-learning", "assessment", "technology"]
+      tags: ["remote-learning", "assessment", "technology"],
     },
     {
       id: 3,
@@ -129,16 +150,17 @@ const Forum = () => {
         name: "Emily Rodriguez",
         avatar: "/api/placeholder/40/40",
         role: "Curriculum Specialist",
-        reputation: 890
+        reputation: 890,
       },
       category: "Career Advice",
-      content: "After 8 years in the classroom, I'm considering a move to curriculum development. What skills should I focus on developing?",
+      content:
+        "After 8 years in the classroom, I'm considering a move to curriculum development. What skills should I focus on developing?",
       replies: 18,
       likes: 32,
       views: 167,
       lastActivity: "6 hours ago",
       isPinned: false,
-      tags: ["career-change", "curriculum-development", "professional-growth"]
+      tags: ["career-change", "curriculum-development", "professional-growth"],
     },
     {
       id: 4,
@@ -147,16 +169,17 @@ const Forum = () => {
         name: "David Kim",
         avatar: "/api/placeholder/40/40",
         role: "Technology Coordinator",
-        reputation: 1450
+        reputation: 1450,
       },
       category: "Teaching Tips & Strategies",
-      content: "I'm curious about how other educators are incorporating AI tools into their teaching. What has worked well for you?",
+      content:
+        "I'm curious about how other educators are incorporating AI tools into their teaching. What has worked well for you?",
       replies: 42,
       likes: 89,
       views: 678,
       lastActivity: "8 hours ago",
       isPinned: false,
-      tags: ["artificial-intelligence", "edtech", "innovation"]
+      tags: ["artificial-intelligence", "edtech", "innovation"],
     },
     {
       id: 5,
@@ -165,17 +188,18 @@ const Forum = () => {
         name: "Lisa Thompson",
         avatar: "/api/placeholder/40/40",
         role: "Elementary Teacher",
-        reputation: 560
+        reputation: 560,
       },
       category: "Help & Support",
-      content: "First-year teacher here! I need advice on organizing parent-teacher conferences. Any templates or systems you'd recommend?",
+      content:
+        "First-year teacher here! I need advice on organizing parent-teacher conferences. Any templates or systems you'd recommend?",
       replies: 15,
       likes: 28,
       views: 123,
       lastActivity: "1 day ago",
       isPinned: false,
-      tags: ["parent-communication", "organization", "new-teacher"]
-    }
+      tags: ["parent-communication", "organization", "new-teacher"],
+    },
   ];
 
   const trendingTopics = [
@@ -183,13 +207,13 @@ const Forum = () => {
     { name: "Classroom Management", posts: 67 },
     { name: "Remote Learning", posts: 34 },
     { name: "Professional Development", posts: 28 },
-    { name: "Student Engagement", posts: 52 }
+    { name: "Student Engagement", posts: 52 },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -199,8 +223,8 @@ const Forum = () => {
                 Education Forum
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl">
-                Connect with educators worldwide. Share knowledge, ask questions, and grow together 
-                as a global education community.
+                Connect with educators worldwide. Share knowledge, ask
+                questions, and grow together as a global education community.
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -212,12 +236,15 @@ const Forum = () => {
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle className="font-heading text-xl">Start a New Discussion</DialogTitle>
+                  <DialogTitle className="font-heading text-xl">
+                    Start a New Discussion
+                  </DialogTitle>
                   <DialogDescription>
-                    Share your thoughts, ask questions, or start a conversation with the community.
+                    Share your thoughts, ask questions, or start a conversation
+                    with the community.
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <form onSubmit={handleCreateDiscussion} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">Discussion Title *</Label>
@@ -225,38 +252,61 @@ const Forum = () => {
                       id="title"
                       placeholder="Enter a clear, descriptive title for your discussion"
                       value={newDiscussion.title}
-                      onChange={(e) => setNewDiscussion({...newDiscussion, title: e.target.value})}
+                      onChange={(e) =>
+                        setNewDiscussion({
+                          ...newDiscussion,
+                          title: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="category">Category *</Label>
-                    <Select value={newDiscussion.category} onValueChange={(value) => setNewDiscussion({...newDiscussion, category: value})}>
+                    <Select
+                      value={newDiscussion.category}
+                      onValueChange={(value) =>
+                        setNewDiscussion({ ...newDiscussion, category: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="teaching-tips">Teaching Tips & Strategies</SelectItem>
-                        <SelectItem value="curriculum">Curriculum & Resources</SelectItem>
-                        <SelectItem value="career-advice">Career Advice</SelectItem>
-                        <SelectItem value="help-support">Help & Support</SelectItem>
+                        <SelectItem value="teaching-tips">
+                          Teaching Tips & Strategies
+                        </SelectItem>
+                        <SelectItem value="curriculum">
+                          Curriculum & Resources
+                        </SelectItem>
+                        <SelectItem value="career-advice">
+                          Career Advice
+                        </SelectItem>
+                        <SelectItem value="help-support">
+                          Help & Support
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="content">Content *</Label>
                     <Textarea
                       id="content"
                       placeholder="Share your thoughts, ask your question, or describe your topic in detail..."
                       value={newDiscussion.content}
-                      onChange={(e) => setNewDiscussion({...newDiscussion, content: e.target.value})}
+                      onChange={(e) =>
+                        setNewDiscussion({
+                          ...newDiscussion,
+                          content: e.target.value,
+                        })
+                      }
                       rows={6}
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="tags">Tags</Label>
                     <div className="relative">
@@ -265,7 +315,12 @@ const Forum = () => {
                         id="tags"
                         placeholder="e.g., mathematics, classroom-management, new-teacher (separate with commas)"
                         value={newDiscussion.tags}
-                        onChange={(e) => setNewDiscussion({...newDiscussion, tags: e.target.value})}
+                        onChange={(e) =>
+                          setNewDiscussion({
+                            ...newDiscussion,
+                            tags: e.target.value,
+                          })
+                        }
                         className="pl-10"
                       />
                     </div>
@@ -273,9 +328,13 @@ const Forum = () => {
                       Add relevant tags to help others find your discussion
                     </p>
                   </div>
-                  
+
                   <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" variant="hero">
@@ -314,7 +373,10 @@ const Forum = () => {
 
                 <TabsContent value="recent" className="space-y-4 mt-6">
                   {discussions.map((discussion) => (
-                    <Card key={discussion.id} className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20">
+                    <Card
+                      key={discussion.id}
+                      className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20"
+                    >
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -326,8 +388,13 @@ const Forum = () => {
                                 {discussion.category}
                               </Badge>
                             </div>
-                            <CardTitle className="font-heading text-lg group-hover:text-brand-primary transition-colors cursor-pointer">
-                              {discussion.title}
+                            <CardTitle className="font-heading text-lg">
+                              <Link
+                                to={`/forum/${discussion.id}`}
+                                className="hover:text-brand-primary transition-colors cursor-pointer block hover:underline"
+                              >
+                                {discussion.title}
+                              </Link>
                             </CardTitle>
                             <CardDescription className="mt-2 line-clamp-2">
                               {discussion.content}
@@ -337,7 +404,11 @@ const Forum = () => {
 
                         <div className="flex flex-wrap gap-2 mt-3">
                           {discussion.tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               #{tag}
                             </Badge>
                           ))}
@@ -349,11 +420,20 @@ const Forum = () => {
                           <div className="flex items-center space-x-4">
                             <Avatar className="w-8 h-8">
                               <AvatarImage src={discussion.author.avatar} />
-                              <AvatarFallback>{discussion.author.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              <AvatarFallback>
+                                {discussion.author.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="font-medium text-sm">{discussion.author.name}</div>
-                              <div className="text-xs text-muted-foreground">{discussion.author.role}</div>
+                              <div className="font-medium text-sm">
+                                {discussion.author.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {discussion.author.role}
+                              </div>
                             </div>
                           </div>
 
@@ -379,19 +459,22 @@ const Forum = () => {
 
                 <TabsContent value="trending" className="mt-6">
                   <p className="text-center text-muted-foreground py-8">
-                    Trending discussions will be shown here based on engagement and activity.
+                    Trending discussions will be shown here based on engagement
+                    and activity.
                   </p>
                 </TabsContent>
 
                 <TabsContent value="unanswered" className="mt-6">
                   <p className="text-center text-muted-foreground py-8">
-                    Discussions without replies will be displayed here to encourage community support.
+                    Discussions without replies will be displayed here to
+                    encourage community support.
                   </p>
                 </TabsContent>
 
                 <TabsContent value="following" className="mt-6">
                   <p className="text-center text-muted-foreground py-8">
-                    Discussions from people and topics you follow will appear here.
+                    Discussions from people and topics you follow will appear
+                    here.
                   </p>
                 </TabsContent>
               </Tabs>
@@ -403,15 +486,21 @@ const Forum = () => {
             {/* Categories */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg">Categories</CardTitle>
+                <CardTitle className="font-heading text-lg">
+                  Categories
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {categories.map((category) => {
                   const IconComponent = category.icon;
                   return (
-                    <div key={category.id} 
-                         className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group">
-                      <div className={`w-10 h-10 rounded-lg ${category.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <div
+                      key={category.id}
+                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-lg ${category.color} flex items-center justify-center group-hover:scale-110 transition-transform`}
+                      >
                         <IconComponent className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -439,9 +528,14 @@ const Forum = () => {
               <CardContent>
                 <div className="space-y-3">
                   {trendingTopics.map((topic, index) => (
-                    <div key={index} className="flex justify-between items-center py-2 hover:bg-muted/30 -mx-2 px-2 rounded cursor-pointer">
+                    <div
+                      key={index}
+                      className="flex justify-between items-center py-2 hover:bg-muted/30 -mx-2 px-2 rounded cursor-pointer"
+                    >
                       <span className="text-sm font-medium">#{topic.name}</span>
-                      <span className="text-xs text-muted-foreground">{topic.posts}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {topic.posts}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -451,20 +545,32 @@ const Forum = () => {
             {/* Community Stats */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg">Community</CardTitle>
+                <CardTitle className="font-heading text-lg">
+                  Community
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-brand-primary">15,240</div>
-                  <div className="text-sm text-muted-foreground">Active Members</div>
+                  <div className="text-2xl font-bold text-brand-primary">
+                    15,240
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Active Members
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <div className="text-lg font-semibold text-foreground">1,456</div>
-                    <div className="text-xs text-muted-foreground">Discussions</div>
+                    <div className="text-lg font-semibold text-foreground">
+                      1,456
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Discussions
+                    </div>
                   </div>
                   <div>
-                    <div className="text-lg font-semibold text-foreground">8,932</div>
+                    <div className="text-lg font-semibold text-foreground">
+                      8,932
+                    </div>
                     <div className="text-xs text-muted-foreground">Replies</div>
                   </div>
                 </div>
