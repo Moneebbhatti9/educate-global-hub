@@ -10,15 +10,6 @@ const Navigation = () => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  const handleSignOut = async () => {
-    try {
-      await logout();
-      toggleMenu();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,9 +58,6 @@ const Navigation = () => {
                       <LayoutDashboard className="w-4 h-4 mr-2" />
                       Dashboard
                     </Link>
-                  </Button>
-                  <Button variant="ghost" onClick={handleSignOut}>
-                    Sign Out
                   </Button>
                 </>
               ) : (
@@ -122,13 +110,13 @@ const Navigation = () => {
               >
                 Forum
               </Link>
-              <Link
+              {/* <Link
                 to="/suppliers"
                 className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
                 onClick={toggleMenu}
               >
                 Suppliers
-              </Link>
+              </Link> */}
               <div className="pt-4 pb-3 border-t border-border">
                 <div className="flex flex-col space-y-3 px-3">
                   {isAuthenticated && user ? (
@@ -141,13 +129,6 @@ const Navigation = () => {
                           <LayoutDashboard className="w-4 h-4 mr-2" />
                           Dashboard
                         </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="justify-start"
-                        onClick={handleSignOut}
-                      >
-                        Sign Out
                       </Button>
                     </>
                   ) : (

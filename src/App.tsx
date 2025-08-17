@@ -2,56 +2,90 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import {
   TeacherRoute,
   SchoolRoute,
-  RecruiterRoute,
-  SupplierRoute,
   PublicRoute,
   ProfileCompletionRoute,
 } from "./components/ProtectedRoute";
 import { useScrollToTop } from "./hooks/useScrollToTop";
-import Index from "./pages/Index";
-import Jobs from "./pages/Jobs";
-import JobDetail from "./pages/JobDetail";
-import Forum from "./pages/Forum";
-import ForumDetail from "./pages/ForumDetail";
-import Resources from "./pages/Resources";
-import TeacherProfile from "./pages/teacher/TeacherProfile";
-import SchoolProfile from "./pages/school/SchoolProfile";
-import Settings from "./pages/Settings";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import OTPVerificationPage from "./pages/OTPVerificationPage";
-import ProfileCompletionPage from "./pages/ProfileCompletionPage";
-import TeacherDashboard from "./pages/dashboards/TeacherDashboard";
-import SchoolDashboard from "./pages/dashboards/SchoolDashboard";
-import RecruiterDashboard from "./pages/dashboards/RecruiterDashboard";
-import SupplierDashboard from "./pages/dashboards/SupplierDashboard";
-import JobPostings from "./pages/school/JobPostings";
-import PostJob from "./pages/school/PostJob";
-import EditJob from "./pages/school/EditJob";
-import JobPostSuccess from "./pages/school/JobPostSuccess";
-import Candidates from "./pages/school/Candidates";
-import JobSearch from "./pages/teacher/JobSearch";
-import JobApplication from "./pages/teacher/JobApplication";
-import Applications from "./pages/teacher/Applications";
-import NotFound from "./pages/NotFound";
-import SignIn from "./pages/SignIn";
-import Unauthorized from "./pages/Unauthorized";
+import { Suspense, lazy } from "react";
+
+// Lazy load components
+const Index = lazy(() => import("./pages/Index"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const JobDetail = lazy(() => import("./pages/JobDetail"));
+const Forum = lazy(() => import("./pages/Forum"));
+const ForumDetail = lazy(() => import("./pages/ForumDetail"));
+const Resources = lazy(() => import("./pages/Resources"));
+const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
+const SchoolProfile = lazy(() => import("./pages/school/SchoolProfile"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const OTPVerificationPage = lazy(() => import("./pages/OTPVerificationPage"));
+const ProfileCompletionPage = lazy(
+  () => import("./pages/ProfileCompletionPage")
+);
+const TeacherDashboard = lazy(
+  () => import("./pages/dashboards/TeacherDashboard")
+);
+const SchoolDashboard = lazy(
+  () => import("./pages/dashboards/SchoolDashboard")
+);
+const JobPostings = lazy(() => import("./pages/school/JobPostings"));
+const PostJob = lazy(() => import("./pages/school/PostJob"));
+const EditJob = lazy(() => import("./pages/school/EditJob"));
+const JobPostSuccess = lazy(() => import("./pages/school/JobPostSuccess"));
+const Candidates = lazy(() => import("./pages/school/Candidates"));
+const JobSearch = lazy(() => import("./pages/teacher/JobSearch"));
+const JobApplication = lazy(() => import("./pages/teacher/JobApplication"));
+const Applications = lazy(() => import("./pages/teacher/Applications"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
 // Legal Pages
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import TermsConditions from "./pages/legal/TermsConditions";
-import CookiePolicy from "./pages/legal/CookiePolicy";
-import GDPRCompliance from "./pages/legal/GDPRCompliance";
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
+const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
+const GDPRCompliance = lazy(() => import("./pages/legal/GDPRCompliance"));
 
 // Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import UserManagement from "./pages/admin/UserManagement";
-import JobManagement from "./pages/admin/JobManagement";
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const JobManagement = lazy(() => import("./pages/admin/JobManagement"));
+const TeacherSettings = lazy(() => import("./pages/teacher/TeacherSettings"));
+const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+  </div>
+);
+
+// Simple layout wrappers that use Outlet
+const TeacherLayout = () => (
+  <TeacherRoute>
+    <Outlet />
+  </TeacherRoute>
+);
+
+const SchoolLayout = () => (
+  <SchoolRoute>
+    <Outlet />
+  </SchoolRoute>
+);
+
+const AdminLayout = () => <Outlet />;
 
 const queryClient = new QueryClient();
 
@@ -60,398 +94,109 @@ const AppRoutes = () => {
   useScrollToTop();
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/jobs" element={<Jobs />} />
-      <Route path="/jobs/:id" element={<JobDetail />} />
-      <Route path="/forum" element={<Forum />} />
-      <Route path="/forum/:id" element={<ForumDetail />} />
-      <Route path="/resources" element={<Resources />} />
-      <Route path="/settings" element={<Settings />} />
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        {/* ======================================== */}
+        {/* PUBLIC WEBSITE ROUTES - NO AUTH REQUIRED */}
+        {/* ======================================== */}
+        <Route path="/" element={<Index />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/jobs/:id" element={<JobDetail />} />
+        <Route path="/forum" element={<Forum />} />
+        <Route path="/forum/:id" element={<ForumDetail />} />
+        <Route path="/resources" element={<Resources />} />
 
-      {/* Authentication Routes - Public Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <SignIn />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <SignUp />
-          </PublicRoute>
-        }
-      />
-      <Route path="/otp-verification" element={<OTPVerificationPage />} />
-      <Route
-        path="/profile-completion"
-        element={
-          <ProfileCompletionRoute>
-            <ProfileCompletionPage />
-          </ProfileCompletionRoute>
-        }
-      />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* Legal Pages */}
+        <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+        <Route path="/legal/terms" element={<TermsConditions />} />
+        <Route path="/legal/cookies" element={<CookiePolicy />} />
+        <Route path="/legal/gdpr" element={<GDPRCompliance />} />
 
-      {/* Protected Dashboard Routes */}
-      <Route
-        path="/dashboard/teacher"
-        element={
-          <TeacherRoute>
-            <TeacherDashboard />
-          </TeacherRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school"
-        element={
-          <SchoolRoute>
-            <SchoolDashboard />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/recruiter"
-        element={
-          <RecruiterRoute>
-            <RecruiterDashboard />
-          </RecruiterRoute>
-        }
-      />
-      <Route
-        path="/dashboard/supplier"
-        element={
-          <SupplierRoute>
-            <SupplierDashboard />
-          </SupplierRoute>
-        }
-      />
+        {/* ======================================== */}
+        {/* AUTHENTICATION ROUTES - PUBLIC ACCESS */}
+        {/* ======================================== */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <SignIn />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <SignUp />
+            </PublicRoute>
+          }
+        />
+        <Route path="/otp-verification" element={<OTPVerificationPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route
+          path="/profile-completion"
+          element={
+            <ProfileCompletionRoute>
+              <ProfileCompletionPage />
+            </ProfileCompletionRoute>
+          }
+        />
 
-      {/* Teacher Dashboard Routes */}
-      <Route
-        path="/dashboard/teacher/jobs"
-        element={
-          <TeacherRoute>
-            <JobSearch />
-          </TeacherRoute>
-        }
-      />
-      <Route
-        path="/dashboard/teacher/applications"
-        element={
-          <TeacherRoute>
-            <Applications />
-          </TeacherRoute>
-        }
-      />
-      <Route
-        path="/dashboard/teacher/job/:id"
-        element={
-          <TeacherRoute>
-            <JobDetail />
-          </TeacherRoute>
-        }
-      />
+        {/* ======================================== */}
+        {/* TEACHER DASHBOARD ROUTES - PROTECTED */}
+        {/* ======================================== */}
+        <Route path="/dashboard/teacher" element={<TeacherLayout />}>
+          <Route index element={<TeacherDashboard />} />
+          <Route path="jobs" element={<JobSearch />} />
+          <Route path="applications" element={<Applications />} />
+          <Route path="job/:id" element={<JobDetail />} />
+          <Route path="job-application/:jobId" element={<JobApplication />} />
+          <Route path="profile" element={<TeacherProfile />} />
+          <Route path="teacher-profile" element={<TeacherProfile />} />
+          <Route path="settings" element={<TeacherSettings />} />
+        </Route>
 
-      <Route
-        path="/dashboard/teacher/job-application/:jobId"
-        element={
-          <TeacherRoute>
-            <JobApplication />
-          </TeacherRoute>
-        }
-      />
+        {/* ======================================== */}
+        {/* SCHOOL DASHBOARD ROUTES - PROTECTED */}
+        {/* ======================================== */}
+        <Route path="/dashboard/school" element={<SchoolLayout />}>
+          <Route index element={<SchoolDashboard />} />
+          <Route path="postings" element={<JobPostings />} />
+          <Route path="post-job" element={<PostJob />} />
+          <Route path="edit-job/:jobId" element={<EditJob />} />
+          <Route path="candidates" element={<Candidates />} />
+          <Route path="job-post-success" element={<JobPostSuccess />} />
+          <Route path="profile" element={<SchoolProfile />} />
+          <Route path="settings" element={<SchoolSettings />} />
+          <Route
+            path="analytics"
+            element={
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
+                <p className="text-muted-foreground">
+                  School analytics and insights will be displayed here.
+                </p>
+              </div>
+            }
+          />
+        </Route>
 
-      {/* School Dashboard Routes */}
-      <Route
-        path="/dashboard/school/postings"
-        element={
-          <SchoolRoute>
-            <JobPostings />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/post-job"
-        element={
-          <SchoolRoute>
-            <PostJob />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/edit-job/:jobId"
-        element={
-          <SchoolRoute>
-            <EditJob />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/candidates"
-        element={
-          <SchoolRoute>
-            <Candidates />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/job-post-success"
-        element={
-          <SchoolRoute>
-            <JobPostSuccess />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/analytics"
-        element={
-          <SchoolRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
-              <p className="text-muted-foreground">
-                School analytics and insights will be displayed here.
-              </p>
-            </div>
-          </SchoolRoute>
-        }
-      />
+        {/* ======================================== */}
+        {/* ADMIN ROUTES - PROTECTED */}
+        {/* ======================================== */}
+        <Route path="/dashboard/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="jobs" element={<JobManagement />} />
+        </Route>
 
-      {/* Recruiter Dashboard Routes */}
-      <Route
-        path="/dashboard/recruiter/placements"
-        element={
-          <RecruiterRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Placements</h1>
-              <p className="text-muted-foreground">
-                Recruiter placements and tracking will be displayed here.
-              </p>
-            </div>
-          </RecruiterRoute>
-        }
-      />
-      <Route
-        path="/dashboard/recruiter/candidates"
-        element={
-          <RecruiterRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Candidates</h1>
-              <p className="text-muted-foreground">
-                Recruiter candidate management will be displayed here.
-              </p>
-            </div>
-          </RecruiterRoute>
-        }
-      />
-      <Route
-        path="/dashboard/recruiter/clients"
-        element={
-          <RecruiterRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Clients</h1>
-              <p className="text-muted-foreground">
-                Recruiter client management will be displayed here.
-              </p>
-            </div>
-          </RecruiterRoute>
-        }
-      />
-
-      {/* Supplier Dashboard Routes */}
-      <Route
-        path="/dashboard/supplier/products"
-        element={
-          <SupplierRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Products</h1>
-              <p className="text-muted-foreground">
-                Supplier product catalog will be displayed here.
-              </p>
-            </div>
-          </SupplierRoute>
-        }
-      />
-      <Route
-        path="/dashboard/supplier/orders"
-        element={
-          <SupplierRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Orders</h1>
-              <p className="text-muted-foreground">
-                Supplier order management will be displayed here.
-              </p>
-            </div>
-          </SupplierRoute>
-        }
-      />
-      <Route
-        path="/dashboard/supplier/clients"
-        element={
-          <SupplierRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Clients</h1>
-              <p className="text-muted-foreground">
-                Supplier client management will be displayed here.
-              </p>
-            </div>
-          </SupplierRoute>
-        }
-      />
-
-      {/* Common Dashboard Routes */}
-      <Route
-        path="/dashboard/:role/messages"
-        element={
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Messages</h1>
-            <p className="text-muted-foreground">
-              Messaging system will be displayed here.
-            </p>
-          </div>
-        }
-      />
-
-      <Route
-        path="/dashboard/teacher/teacher-profile"
-        element={
-          <TeacherRoute>
-            <TeacherProfile />
-          </TeacherRoute>
-        }
-      />
-      <Route
-        path="/dashboard/:role/settings"
-        element={
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Settings</h1>
-            <p className="text-muted-foreground">
-              User settings will be displayed here.
-            </p>
-          </div>
-        }
-      />
-
-      {/* Additional Dashboard Routes */}
-      <Route
-        path="/dashboard/teacher/profile"
-        element={
-          <TeacherRoute>
-            <TeacherProfile />
-          </TeacherRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/profile"
-        element={
-          <SchoolRoute>
-            <SchoolProfile />
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/recruiter/profile"
-        element={
-          <RecruiterRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Recruiter Profile</h1>
-              <p className="text-muted-foreground">
-                Recruiter profile management will be displayed here.
-              </p>
-            </div>
-          </RecruiterRoute>
-        }
-      />
-      <Route
-        path="/dashboard/supplier/profile"
-        element={
-          <SupplierRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Supplier Profile</h1>
-              <p className="text-muted-foreground">
-                Supplier profile management will be displayed here.
-              </p>
-            </div>
-          </SupplierRoute>
-        }
-      />
-
-      {/* Settings Routes */}
-      <Route
-        path="/dashboard/teacher/settings"
-        element={
-          <TeacherRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Teacher Settings</h1>
-              <p className="text-muted-foreground">
-                Teacher settings and preferences will be displayed here.
-              </p>
-            </div>
-          </TeacherRoute>
-        }
-      />
-      <Route
-        path="/dashboard/school/settings"
-        element={
-          <SchoolRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">School Settings</h1>
-              <p className="text-muted-foreground">
-                School settings and preferences will be displayed here.
-              </p>
-            </div>
-          </SchoolRoute>
-        }
-      />
-      <Route
-        path="/dashboard/recruiter/settings"
-        element={
-          <RecruiterRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Recruiter Settings</h1>
-              <p className="text-muted-foreground">
-                Recruiter settings and preferences will be displayed here.
-              </p>
-            </div>
-          </RecruiterRoute>
-        }
-      />
-      <Route
-        path="/dashboard/supplier/settings"
-        element={
-          <SupplierRoute>
-            <div className="p-6">
-              <h1 className="text-2xl font-bold mb-4">Supplier Settings</h1>
-              <p className="text-muted-foreground">
-                Supplier settings and preferences will be displayed here.
-              </p>
-            </div>
-          </SupplierRoute>
-        }
-      />
-
-      {/* Legal Pages */}
-      <Route path="/legal/privacy" element={<PrivacyPolicy />} />
-      <Route path="/legal/terms" element={<TermsConditions />} />
-      <Route path="/legal/cookies" element={<CookiePolicy />} />
-      <Route path="/legal/gdpr" element={<GDPRCompliance />} />
-
-      {/* Admin Routes */}
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/users" element={<UserManagement />} />
-      <Route path="/admin/jobs" element={<JobManagement />} />
-
-      {/* Error Routes */}
-      <Route path="/unauthorized" element={<Unauthorized />} />
-
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* ======================================== */}
+        {/* ERROR ROUTES */}
+        {/* ======================================== */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 

@@ -48,7 +48,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -68,23 +68,18 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
       icon: User,
       color: "bg-brand-primary text-white",
       navigation: [
-        { name: "Dashboard", href: `/dashboard/${role}`, icon: Home },
+        { name: "Dashboard", href: `/dashboard/teacher`, icon: Home },
         {
           name: "Job Search",
-          href: `/dashboard/${role}/jobs`,
+          href: `/dashboard/teacher/jobs`,
           icon: Briefcase,
         },
         {
           name: "Applications",
-          href: `/dashboard/${role}/applications`,
+          href: `/dashboard/teacher/applications`,
           icon: FileText,
         },
-        {
-          name: "Messages",
-          href: `/dashboard/${role}/messages`,
-          icon: MessageSquare,
-        },
-        { name: "Profile", href: `/dashboard/${role}/profile`, icon: User },
+        { name: "Profile", href: `/dashboard/teacher/profile`, icon: User },
       ],
     },
     school: {
@@ -92,96 +87,48 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
       icon: Building2,
       color: "bg-brand-accent-green text-white",
       navigation: [
-        { name: "Dashboard", href: `/dashboard/${role}`, icon: Home },
+        { name: "Dashboard", href: `/dashboard/school`, icon: Home },
         {
           name: "Job Postings",
-          href: `/dashboard/${role}/postings`,
+          href: `/dashboard/school/postings`,
           icon: Briefcase,
         },
         {
           name: "Post Job",
-          href: `/dashboard/${role}/post-job`,
+          href: `/dashboard/school/post-job`,
           icon: PlusCircle,
         },
         {
           name: "Candidates",
-          href: `/dashboard/${role}/candidates`,
+          href: `/dashboard/school/candidates`,
           icon: Users,
         },
         {
           name: "Profile",
-          href: `/dashboard/${role}/profile`,
+          href: `/dashboard/school/profile`,
           icon: User,
         },
         {
           name: "Analytics",
-          href: `/dashboard/${role}/analytics`,
+          href: `/dashboard/school/analytics`,
           icon: BarChart3,
         },
       ],
     },
-    recruiter: {
-      name: "Recruiter",
-      icon: UserCheck,
-      color: "bg-brand-secondary text-white",
-      navigation: [
-        { name: "Dashboard", href: `/dashboard/${role}`, icon: Home },
-        {
-          name: "Placements",
-          href: `/dashboard/${role}/placements`,
-          icon: Briefcase,
-        },
-        {
-          name: "Candidates",
-          href: `/dashboard/${role}/candidates`,
-          icon: Users,
-        },
-        {
-          name: "Clients",
-          href: `/dashboard/${role}/clients`,
-          icon: Building2,
-        },
-        {
-          name: "Messages",
-          href: `/dashboard/${role}/messages`,
-          icon: MessageSquare,
-        },
-      ],
-    },
-    supplier: {
-      name: "Supplier",
-      icon: Truck,
-      color: "bg-brand-accent-orange text-white",
-      navigation: [
-        { name: "Dashboard", href: `/dashboard/${role}`, icon: Home },
-        {
-          name: "Products",
-          href: `/dashboard/${role}/products`,
-          icon: BookOpen,
-        },
-        { name: "Orders", href: `/dashboard/${role}/orders`, icon: Briefcase },
-        {
-          name: "Clients",
-          href: `/dashboard/${role}/clients`,
-          icon: Building2,
-        },
-        {
-          name: "Messages",
-          href: `/dashboard/${role}/messages`,
-          icon: MessageSquare,
-        },
-      ],
-    },
+
     admin: {
       name: "Admin",
       icon: Settings,
       color: "bg-red-600 text-white",
       navigation: [
-        { name: "Dashboard", href: `/admin/dashboard`, icon: Home },
-        { name: "Users", href: `/admin/users`, icon: Users },
-        { name: "Jobs", href: `/admin/jobs`, icon: Briefcase },
-        { name: "Analytics", href: `/admin/analytics`, icon: BarChart3 },
-        { name: "Settings", href: `/admin/settings`, icon: Settings },
+        { name: "Dashboard", href: `/dashboard/admin`, icon: Home },
+        { name: "Users", href: `/dashboard/admin/users`, icon: Users },
+        { name: "Jobs", href: `/dashboard/admin/jobs`, icon: Briefcase },
+        {
+          name: "Analytics",
+          href: `/dashboard/admin/analytics`,
+          icon: BarChart3,
+        },
       ],
     },
   };
@@ -189,8 +136,13 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const config = roleConfig[role];
   const RoleIcon = config.icon;
 
-  const handleSignOut = () => {
-    navigate("/");
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const isActive = (href: string) => location.pathname === href;
@@ -355,18 +307,6 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
             );
           })}
         </nav>
-
-        {/* Settings */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-          <Link
-            to={`/dashboard/${role}/settings`}
-            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            title={!sidebarOpen ? "Settings" : undefined}
-          >
-            <Settings className="w-5 h-5 flex-shrink-0" />
-            {sidebarOpen && <span className="font-medium">Settings</span>}
-          </Link>
-        </div>
       </aside>
 
       {/* Main Content Area */}
@@ -499,7 +439,13 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                     notifications.data.data.length > 0 && (
                       <div className="p-4 border-t border-border">
                         <Link
-                          to={`/dashboard/${role}/notifications`}
+                          to={`/dashboard/${
+                            role === "teacher"
+                              ? "teacher"
+                              : role === "school"
+                              ? "school"
+                              : "admin"
+                          }/notifications`}
                           className="text-sm text-brand-primary hover:underline"
                           onClick={() => setNotificationsOpen(false)}
                         >
@@ -537,7 +483,13 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
                   <Link
-                    to={`/dashboard/${role}/profile`}
+                    to={`/dashboard/${
+                      role === "teacher"
+                        ? "teacher"
+                        : role === "school"
+                        ? "school"
+                        : "admin"
+                    }/profile`}
                     className="cursor-pointer"
                   >
                     <User className="w-4 h-4 mr-2" />
@@ -546,7 +498,13 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    to={`/dashboard/${role}/settings`}
+                    to={`/dashboard/${
+                      role === "teacher"
+                        ? "teacher"
+                        : role === "school"
+                        ? "school"
+                        : "admin"
+                    }/settings`}
                     className="cursor-pointer"
                   >
                     <Settings className="w-4 h-4 mr-2" />
@@ -556,9 +514,9 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-red-500 hover:bg-red-100 hover:text-red-600 focus:bg-red-100 focus:text-red-600"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="w-4 h-4 mr-2 text-red-500 group-hover:text-red-600" />
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
