@@ -196,7 +196,7 @@ const SchoolProfile = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 h-auto p-1">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">
               Overview
             </TabsTrigger>
@@ -205,15 +205,6 @@ const SchoolProfile = () => {
             </TabsTrigger>
             <TabsTrigger value="academics" className="text-xs sm:text-sm">
               Academics
-            </TabsTrigger>
-            <TabsTrigger value="facilities" className="text-xs sm:text-sm">
-              Facilities
-            </TabsTrigger>
-            <TabsTrigger value="staff" className="text-xs sm:text-sm">
-              Staff
-            </TabsTrigger>
-            <TabsTrigger value="admissions" className="text-xs sm:text-sm">
-              Admissions
             </TabsTrigger>
             <TabsTrigger value="media" className="text-xs sm:text-sm">
               Media
@@ -745,55 +736,6 @@ const SchoolProfile = () => {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Additional tabs would follow similar pattern... */}
-          <TabsContent value="facilities" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <Building className="w-5 h-5 mr-2" />
-                  School Facilities & Infrastructure
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  School facilities and infrastructure details...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="staff" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Staff & Faculty Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Staff and faculty management section...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="admissions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
-                  Admissions & Enrollment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Admissions process and requirements section...
-                </p>
               </CardContent>
             </Card>
           </TabsContent>
