@@ -1272,7 +1272,7 @@ const TeacherProfile = () => {
                           Add Education
                         </Button>
                         <Button
-                          onClick={handleSaveEducation}
+                          onClick={handleSaveEducationData}
                           className="flex items-center gap-2"
                         >
                           <Save className="w-4 h-4" />
@@ -1631,7 +1631,7 @@ const TeacherProfile = () => {
                           Add Membership
                         </Button>
                         <Button
-                          onClick={handleSaveDevelopment}
+                          onClick={handleSaveDevelopmentData}
                           className="flex items-center gap-2"
                         >
                           <Save className="w-4 h-4" />
