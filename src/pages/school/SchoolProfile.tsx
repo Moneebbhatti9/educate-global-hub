@@ -1,6 +1,4 @@
 import { useState } from "react";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +22,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { DatePicker } from "@/components/ui/date-picker";
 import {
   Building,
   MapPin,
@@ -46,16 +43,53 @@ import {
   GraduationCap,
   Target,
   Image as ImageIcon,
+  Save,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
+import { AddProgramModal } from "@/components/Modals/add-program-modal";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { z } from "zod";
+
+// Schema for school information validation
+const schoolInfoSchema = z.object({
+  schoolName: z.string().min(1, "School name is required"),
+  schoolEmail: z.string().email("Valid email is required"),
+  schoolContactNumber: z.string().min(1, "Contact number is required"),
+  alternateContact: z.string().optional(),
+  country: z.string().min(1, "Country is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  zipCode: z.string().min(1, "Zip code is required"),
+  address: z.string().min(1, "Address is required"),
+  schoolWebsite: z.string().optional(),
+  establishedYear: z.string().min(1, "Established year is required"),
+  registrationNumber: z.string().min(1, "Registration number is required"),
+});
+
+interface Program {
+  id: string;
+  name: string;
+  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
+  curriculum: string;
+  ageRange: string;
+  duration: string;
+  subjects: string[];
+  description: string;
+  requirements: string[];
+  capacity: number;
+  fees?: string;
+}
 
 const SchoolProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+  const [programs, setPrograms] = useState<Program[]>([]);
 
   // Modal states
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showProgramModal, setShowProgramModal] = useState(false);
+  const [editingProgram, setEditingProgram] = useState<Program | undefined>(undefined);
 
   // Mock school profile data
   const [profile, setProfile] = useState({
@@ -98,6 +132,47 @@ const SchoolProfile = () => {
       "Lincoln International Academy seeks to continue expanding our global reach and educational impact by attracting top-tier educators who share our commitment to international education. We aim to be the preferred destination for families seeking world-class education and for educators looking to make a meaningful difference in students' lives. Our goal is to maintain our position as a leader in international education while continuously innovating our teaching methodologies and student support systems.",
   });
 
+  // Form validation hooks
+  const schoolInfoForm = useFormValidation({
+    schema: schoolInfoSchema,
+    defaultValues: profile.schoolInfo,
+  });
+
+  // Save handlers for each section
+  const handleSaveSchoolInfo = async () => {
+    try {
+      const isValid = await schoolInfoForm.trigger();
+      if (!isValid) return;
+
+      const formData = schoolInfoForm.getValues();
+      // API call would go here
+      console.log("Saving school info:", formData);
+      
+      setProfile(prev => ({
+        ...prev,
+        schoolInfo: {
+          ...formData,
+          alternateContact: formData.alternateContact || "",
+          schoolWebsite: formData.schoolWebsite || "",
+        },
+      }));
+      
+      // Success notification would go here
+    } catch (error) {
+      console.error("Error saving school info:", error);
+    }
+  };
+
+  const handleSaveAcademics = async () => {
+    try {
+      // API call would go here
+      console.log("Saving academics data:", programs);
+      // Success notification would go here
+    } catch (error) {
+      console.error("Error saving academics data:", error);
+    }
+  };
+
   // Modal handlers
   const handleProfileSummaryUpdate = (data: {
     bio: string;
@@ -110,6 +185,24 @@ const SchoolProfile = () => {
       professionalSummary: data.professionalSummary,
       careerObjectives: data.careerObjectives,
     }));
+  };
+
+  const handleSaveProgram = (program: Program) => {
+    if (editingProgram) {
+      setPrograms(programs.map((p) => (p.id === program.id ? program : p)));
+    } else {
+      setPrograms([...programs, program]);
+    }
+    setEditingProgram(undefined);
+  };
+
+  const removeProgram = (id: string) => {
+    setPrograms(programs.filter((program) => program.id !== id));
+  };
+
+  const editProgram = (program: Program) => {
+    setEditingProgram(program);
+    setShowProgramModal(true);
   };
 
   return (
@@ -179,7 +272,7 @@ const SchoolProfile = () => {
                   onClick={() => setIsEditing(!isEditing)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  {isEditing ? "Save Changes" : "Edit Profile"}
+                  {isEditing ? "Exit Edit Mode" : "Edit Profile"}
                 </Button>
                 <Button variant="hero">
                   <Download className="w-4 h-4 mr-2" />
@@ -419,10 +512,21 @@ const SchoolProfile = () => {
           <TabsContent value="school-info" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <Building className="w-5 h-5 mr-2" />
-                  School Details & Contact Information
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center">
+                    <Building className="w-5 h-5 mr-2" />
+                    School Details & Contact Information
+                  </CardTitle>
+                  {isEditing && (
+                    <Button
+                      onClick={handleSaveSchoolInfo}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -431,228 +535,171 @@ const SchoolProfile = () => {
                       <Label htmlFor="schoolName">School Name *</Label>
                       <Input
                         id="schoolName"
-                        value={profile.schoolInfo.schoolName}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("schoolName")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("schoolName") ? "border-destructive" : ""}
                       />
+                      {schoolInfoForm.isFieldInvalid("schoolName") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("schoolName")}
+                        </p>
+                      )}
                     </div>
+
                     <div>
                       <Label htmlFor="schoolEmail">School Email *</Label>
                       <Input
                         id="schoolEmail"
                         type="email"
-                        value={profile.schoolInfo.schoolEmail}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("schoolEmail")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("schoolEmail") ? "border-destructive" : ""}
                       />
+                      {schoolInfoForm.isFieldInvalid("schoolEmail") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("schoolEmail")}
+                        </p>
+                      )}
                     </div>
+
                     <div>
-                      <Label htmlFor="schoolContactNumber">
-                        Primary Contact *
-                      </Label>
+                      <Label htmlFor="schoolContactNumber">Contact Number *</Label>
                       <Input
                         id="schoolContactNumber"
-                        value={profile.schoolInfo.schoolContactNumber}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("schoolContactNumber")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("schoolContactNumber") ? "border-destructive" : ""}
                       />
+                      {schoolInfoForm.isFieldInvalid("schoolContactNumber") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("schoolContactNumber")}
+                        </p>
+                      )}
                     </div>
+
                     <div>
-                      <Label htmlFor="alternateContact">
-                        Alternate Contact
-                      </Label>
+                      <Label htmlFor="alternateContact">Alternate Contact</Label>
                       <Input
                         id="alternateContact"
-                        value={profile.schoolInfo.alternateContact}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("alternateContact")}
+                        disabled={!isEditing}
                       />
                     </div>
+
                     <div>
                       <Label htmlFor="schoolWebsite">School Website</Label>
                       <Input
                         id="schoolWebsite"
-                        value={profile.schoolInfo.schoolWebsite}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("schoolWebsite")}
+                        disabled={!isEditing}
                       />
                     </div>
+
                     <div>
-                      <Label htmlFor="establishedYear">Established Year</Label>
-                      <DatePicker
+                      <Label htmlFor="establishedYear">Established Year *</Label>
+                      <Input
                         id="establishedYear"
-                        value={
-                          profile.schoolInfo.establishedYear
-                            ? new Date(profile.schoolInfo.establishedYear)
-                            : undefined
-                        }
-                        onValueChange={(date) => {
-                          if (date) {
-                            setProfile((prev) => ({
-                              ...prev,
-                              schoolInfo: {
-                                ...prev.schoolInfo,
-                                establishedYear: date.getFullYear().toString(),
-                              },
-                            }));
-                          }
-                        }}
-                        placeholder="Select year"
+                        {...schoolInfoForm.register("establishedYear")}
                         disabled={!isEditing}
-                        max={new Date()}
+                        className={schoolInfoForm.isFieldInvalid("establishedYear") ? "border-destructive" : ""}
                       />
+                      {schoolInfoForm.isFieldInvalid("establishedYear") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("establishedYear")}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="country">Country *</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={profile.schoolInfo.country}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="us">United States</SelectItem>
-                          <SelectItem value="ca">Canada</SelectItem>
-                          <SelectItem value="uk">United Kingdom</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="registrationNumber">Registration Number *</Label>
+                      <Input
+                        id="registrationNumber"
+                        {...schoolInfoForm.register("registrationNumber")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("registrationNumber") ? "border-destructive" : ""}
+                      />
+                      {schoolInfoForm.isFieldInvalid("registrationNumber") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("registrationNumber")}
+                        </p>
+                      )}
                     </div>
+
+                    <div>
+                      <Label htmlFor="address">Address *</Label>
+                      <Input
+                        id="address"
+                        {...schoolInfoForm.register("address")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("address") ? "border-destructive" : ""}
+                      />
+                      {schoolInfoForm.isFieldInvalid("address") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("address")}
+                        </p>
+                      )}
+                    </div>
+
                     <div>
                       <Label htmlFor="city">City *</Label>
                       <Input
                         id="city"
-                        value={profile.schoolInfo.city}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("city")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("city") ? "border-destructive" : ""}
                       />
+                      {schoolInfoForm.isFieldInvalid("city") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("city")}
+                        </p>
+                      )}
                     </div>
+
                     <div>
-                      <Label htmlFor="state">State/Province</Label>
+                      <Label htmlFor="state">State/Province *</Label>
                       <Input
                         id="state"
-                        value={profile.schoolInfo.state}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("state")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("state") ? "border-destructive" : ""}
                       />
+                      {schoolInfoForm.isFieldInvalid("state") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("state")}
+                        </p>
+                      )}
                     </div>
+
                     <div>
-                      <Label htmlFor="zipCode">Zip/Postal Code</Label>
+                      <Label htmlFor="country">Country *</Label>
+                      <Input
+                        id="country"
+                        {...schoolInfoForm.register("country")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("country") ? "border-destructive" : ""}
+                      />
+                      {schoolInfoForm.isFieldInvalid("country") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("country")}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="zipCode">Zip Code *</Label>
                       <Input
                         id="zipCode"
-                        value={profile.schoolInfo.zipCode}
-                        readOnly={!isEditing}
+                        {...schoolInfoForm.register("zipCode")}
+                        disabled={!isEditing}
+                        className={schoolInfoForm.isFieldInvalid("zipCode") ? "border-destructive" : ""}
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="address">Street Address</Label>
-                      <Input
-                        id="address"
-                        value={profile.schoolInfo.address}
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="registrationNumber">
-                        Registration Number
-                      </Label>
-                      <Input
-                        id="registrationNumber"
-                        value={profile.schoolInfo.registrationNumber}
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                {/* School Classification */}
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">
-                    School Classification
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="schoolType">School Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder={profile.schoolType} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="public">Public</SelectItem>
-                          <SelectItem value="private">Private</SelectItem>
-                          <SelectItem value="international">
-                            International
-                          </SelectItem>
-                          <SelectItem value="charter">Charter</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="schoolSize">School Size</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder={profile.schoolSize} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">
-                            Small (1-500 students)
-                          </SelectItem>
-                          <SelectItem value="medium">
-                            Medium (501-1000 students)
-                          </SelectItem>
-                          <SelectItem value="large">
-                            Large (1001+ students)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="genderType">Gender Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder={profile.genderType} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mixed">Mixed</SelectItem>
-                          <SelectItem value="boys-only">Boys Only</SelectItem>
-                          <SelectItem value="girls-only">Girls Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                {/* About School */}
-                <div>
-                  <h3 className="font-semibold text-lg mb-4">
-                    About the School
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="aboutSchool">School Description</Label>
-                      <Textarea
-                        id="aboutSchool"
-                        value={profile.aboutSchool}
-                        rows={4}
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="mission">Mission Statement</Label>
-                      <Textarea
-                        id="mission"
-                        value={profile.mission}
-                        rows={3}
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="vision">Vision Statement</Label>
-                      <Textarea
-                        id="vision"
-                        value={profile.vision}
-                        rows={3}
-                        readOnly={!isEditing}
-                      />
+                      {schoolInfoForm.isFieldInvalid("zipCode") && (
+                        <p className="text-sm text-destructive mt-1">
+                          {schoolInfoForm.getFieldError("zipCode")}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -666,111 +713,150 @@ const SchoolProfile = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="font-heading text-lg flex items-center">
-                    <GraduationCap className="w-5 h-5 mr-2" />
-                    Academic Programs & Curriculum
+                    <BookOpen className="w-5 h-5 mr-2" />
+                    Academic Programs
                   </CardTitle>
-                  <Button variant="outline">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Program
-                  </Button>
+                  <div className="flex gap-2">
+                    {isEditing && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingProgram(undefined);
+                            setShowProgramModal(true);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Program
+                        </Button>
+                        <Button
+                          onClick={handleSaveAcademics}
+                          className="flex items-center gap-2"
+                        >
+                          <Save className="w-4 h-4" />
+                          Save Changes
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div>
-                    <Label>Curriculum Offered</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                      {[
-                        "International Baccalaureate",
-                        "American Curriculum",
-                        "British Curriculum",
-                        "Advanced Placement",
-                        "Cambridge IGCSE",
-                        "National Curriculum",
-                      ].map((curr, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2"
-                        >
-                          <input
-                            title={curr}
-                            aria-label={curr}
-                            type="checkbox"
-                            id={`curr-${index}`}
-                            checked={profile.curriculum.includes(curr)}
-                            className="rounded border-border"
-                          />
-                          <Label htmlFor={`curr-${index}`} className="text-sm">
-                            {curr}
-                          </Label>
+                  {programs.map((program) => (
+                    <div key={program.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{program.name}</h3>
+                          <p className="text-brand-primary font-medium">
+                            {program.curriculum} • {program.level}
+                          </p>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {program.ageRange} • {program.duration} • Capacity: {program.capacity}
+                          </p>
+                          {program.fees && (
+                            <p className="text-sm font-medium text-brand-accent-green mb-2">
+                              Fees: {program.fees}
+                            </p>
+                          )}
+                          <p className="text-sm mb-3">{program.description}</p>
+                          
+                          {program.subjects.length > 0 && (
+                            <div className="mb-3">
+                              <h4 className="font-medium text-sm mb-2">Core Subjects:</h4>
+                              <div className="flex flex-wrap gap-1">
+                                {program.subjects.map((subject, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {subject}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {program.requirements.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2">Requirements:</h4>
+                              <div className="flex flex-wrap gap-1">
+                                {program.requirements.map((req, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {req}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                        {isEditing && (
+                          <div className="flex space-x-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => editProgram(program)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeProgram(program.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-
-                  <div>
-                    <Label>Age Groups Served</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                      {[
-                        "Early Years (2-5 years)",
-                        "Primary (6-11 years)",
-                        "Secondary (12-16 years)",
-                        "Sixth Form/High School (17-18 years)",
-                      ].map((age, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2"
+                  ))}
+                  {programs.length === 0 && (
+                    <div className="text-center py-12">
+                      <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="font-semibold mb-2">No academic programs</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Add your school's academic programs and curricula.
+                      </p>
+                      {isEditing && (
+                        <Button
+                          onClick={() => {
+                            setEditingProgram(undefined);
+                            setShowProgramModal(true);
+                          }}
                         >
-                          <input
-                            title={age}
-                            type="checkbox"
-                            id={`age-${index}`}
-                            checked={profile.ageGroup.includes(age)}
-                            className="rounded border-border"
-                          />
-                          <Label htmlFor={`age-${index}`} className="text-sm">
-                            {age}
-                          </Label>
-                        </div>
-                      ))}
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Your First Program
+                        </Button>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Media Tab */}
           <TabsContent value="media" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="font-heading text-lg flex items-center">
                   <ImageIcon className="w-5 h-5 mr-2" />
-                  School Media & Documents
+                  School Media & Gallery
                 </CardTitle>
+                <CardDescription>
+                  Upload photos, videos, and other media showcasing your school.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-semibold mb-3">School Photos</h4>
-                    <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-                      <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-4">
-                        Upload school photos and campus images
-                      </p>
-                      <Button variant="outline">Choose Images</Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-3">School Documents</h4>
-                    <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-                      <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-4">
-                        Upload brochures, handbooks, and other documents
-                      </p>
-                      <Button variant="outline">Choose Files</Button>
-                    </div>
-                  </div>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                  <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="font-semibold mb-2">Upload School Media</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Add photos of campus, classrooms, events, and facilities
+                  </p>
+                  <Button variant="outline">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose Files
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -787,6 +873,13 @@ const SchoolProfile = () => {
             professionalSummary: profile.professionalSummary,
             careerObjectives: profile.careerObjectives,
           }}
+        />
+
+        <AddProgramModal
+          open={showProgramModal}
+          onOpenChange={setShowProgramModal}
+          onSave={handleSaveProgram}
+          editingProgram={editingProgram}
         />
       </div>
     </DashboardLayout>
