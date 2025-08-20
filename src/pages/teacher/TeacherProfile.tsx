@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,6 @@ import {
   Award,
   Users,
   Upload,
-  Edit,
   Plus,
   Trash2,
   Download,
@@ -47,6 +46,7 @@ import {
   Shield,
   FileText,
   Building,
+  AlertCircle,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { AddLanguageModal } from "@/components/Modals/add-language-modal";
@@ -54,7 +54,10 @@ import { AddExperienceModal } from "@/components/Modals/add-experience-modal";
 import { AddQualificationModal } from "@/components/Modals/add-qualification-modal";
 import { AddEducationModal } from "@/components/Modals/add-education-modal";
 import { AddRefereeModal } from "@/components/Modals/add-referee-modal";
-import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
+import { useAuth } from "@/contexts/AuthContext";
+import { teacherProfileAPI } from "@/apis/profiles";
+import { TeacherProfile as TeacherProfileType } from "@/types/profiles";
+import { TeacherProfileSkeleton } from "@/components/skeletons";
 
 interface Experience {
   id: string;
@@ -87,11 +90,80 @@ interface Language {
 }
 
 const TeacherProfile = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  const [isEditing, setIsEditing] = useState(false);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch teacher profile data when component mounts
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) {
+        console.log('No user ID available');
+        return;
+      }
+      
+      console.log('Fetching profile for user ID:', user.id);
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const response = await teacherProfileAPI.getById(user.id);
+        console.log('Profile API response:', response);
+        
+        if (response.success && response.data) {
+          // Update the profile state with fetched data
+          const fetchedProfile = response.data;
+          console.log('Fetched profile data:', fetchedProfile);
+          
+          // Map API response to profile schema
+          setProfile(prevProfile => ({
+            ...prevProfile,
+            personalInfo: {
+              ...prevProfile.personalInfo,
+              firstName: fetchedProfile.user?.firstName || fetchedProfile.fullName?.split(' ')[0] || "",
+              lastName: fetchedProfile.user?.lastName || fetchedProfile.fullName?.split(' ').slice(1).join(' ') || "",
+              email: fetchedProfile.user?.email || "",
+              phone: fetchedProfile.phoneNumber || "",
+              address: {
+                ...prevProfile.personalInfo.address,
+                city: fetchedProfile.city || "",
+                state: fetchedProfile.province || "",
+                country: fetchedProfile.country || "",
+                postalCode: fetchedProfile.zipCode || "",
+              }
+            },
+            bio: fetchedProfile.professionalBio || "",
+            subjects: fetchedProfile.subject ? [fetchedProfile.subject] : [],
+            yearsOfExperience: fetchedProfile.yearsOfTeachingExperience || 0,
+            qualifications: fetchedProfile.additionalQualifications || [],
+            profileCompletion: fetchedProfile.profileCompletion || 0,
+            isProfileComplete: fetchedProfile.isProfileComplete || false,
+            pgce: fetchedProfile.pgce || false,
+            keyAchievements: fetchedProfile.keyAchievements || [],
+            certifications: fetchedProfile.certifications || [],
+            employment: fetchedProfile.employment || [],
+            education: fetchedProfile.education || [],
+            referees: fetchedProfile.referees || [],
+            development: fetchedProfile.development || [],
+            memberships: fetchedProfile.memberships || [],
+          }));
+        } else {
+          console.log('API response not successful:', response);
+        }
+      } catch (err) {
+        console.error('Error fetching teacher profile:', err);
+        setError('Failed to load profile data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user?.id]);
 
   // Modal states
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -99,46 +171,90 @@ const TeacherProfile = () => {
   const [showQualificationModal, setShowQualificationModal] = useState(false);
   const [showEducationModal, setShowEducationModal] = useState(false);
   const [showRefereeModal, setShowRefereeModal] = useState(false);
-  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
-  // Mock profile data
-  const [profile, setProfile] = useState({
+  // Define profile type based on API response
+  type ProfileData = {
     personalInfo: {
-      firstName: "Sarah",
-      lastName: "Johnson",
-      title: "Mathematics Teacher & Curriculum Developer",
-      email: "sarah.johnson@email.com",
-      phone: "+1 (555) 123-4567",
-      alternatePhone: "+1 (555) 987-6543",
-      dateOfBirth: "1988-03-15",
-      placeOfBirth: "Boston, MA, USA",
-      nationality: "American",
-      passportNo: "123456789",
-      gender: "Female",
-      maritalStatus: "Married",
-      linkedIn: "linkedin.com/in/sarahjohnson",
+      firstName: string;
+      lastName: string;
+      title: string;
+      email: string;
+      phone: string;
+      alternatePhone: string;
+      dateOfBirth: string;
+      placeOfBirth: string;
+      nationality: string;
+      passportNo: string;
+      gender: string;
+      maritalStatus: string;
+      linkedIn: string;
       address: {
-        street: "123 Maple Street",
-        city: "Boston",
-        state: "Massachusetts",
-        country: "United States",
-        postalCode: "02101",
+        street: string;
+        city: string;
+        state: string;
+        country: string;
+        postalCode: string;
+      };
+    };
+    bio: string;
+    professionalSummary: string;
+    careerObjectives: string;
+    subjects: string[];
+    yearsOfExperience: number;
+    qualifications: string[];
+    profileCompletion: number;
+    isProfileComplete: boolean;
+    pgce: boolean;
+    keyAchievements: string[];
+    certifications: string[];
+    employment: any[];
+    education: any[];
+    referees: any[];
+    development: any[];
+    memberships: any[];
+  };
+
+  // Empty profile data structure
+  const [profile, setProfile] = useState<ProfileData>({
+    personalInfo: {
+      firstName: "",
+      lastName: "",
+      title: "",
+      email: "",
+      phone: "",
+      alternatePhone: "",
+      dateOfBirth: "",
+      placeOfBirth: "",
+      nationality: "",
+      passportNo: "",
+      gender: "",
+      maritalStatus: "",
+      linkedIn: "",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        country: "",
+        postalCode: "",
       },
     },
-    bio: "Passionate mathematics educator with 8+ years of experience in middle and high school education. Specializes in making complex mathematical concepts accessible and engaging for all learners.",
-    professionalSummary:
-      "Dedicated and innovative mathematics teacher with over 8 years of experience in developing curriculum and fostering student achievement in diverse educational settings. Expert in utilizing technology-enhanced learning methodologies to make complex mathematical concepts accessible to students of varying abilities. Proven track record of improving student performance by 25% through personalized learning approaches and data-driven instruction.",
-    careerObjectives:
-      "Seeking a challenging role as a Senior Mathematics Teacher or Department Head where I can leverage my expertise in curriculum development and student mentoring to drive academic excellence. Looking to contribute to a progressive educational institution that values innovation, inclusivity, and continuous professional development.",
-    subjects: ["Mathematics", "Algebra", "Geometry", "Statistics"],
-    yearsOfExperience: 8,
-    qualifications: [
-      "Master of Education in Mathematics",
-      "Bachelor of Science in Mathematics",
-      "Teaching License (Mathematics 6-12)",
-      "PGCE Certified",
-    ],
+    bio: "",
+    professionalSummary: "",
+    careerObjectives: "",
+    subjects: [],
+    yearsOfExperience: 0,
+    qualifications: [],
+    profileCompletion: 0,
+    isProfileComplete: false,
+    pgce: false,
+    keyAchievements: [],
+    certifications: [],
+    employment: [],
+    education: [],
+    referees: [],
+    development: [],
+    memberships: [],
   });
 
   const addExperience = () => {
@@ -181,24 +297,42 @@ const TeacherProfile = () => {
     setEditingItem(null);
   };
 
-  const handleProfileSummaryUpdate = (data: {
-    bio: string;
-    professionalSummary: string;
-    careerObjectives: string;
-  }) => {
-    setProfile((prev) => ({
-      ...prev,
-      bio: data.bio,
-      professionalSummary: data.professionalSummary,
-      careerObjectives: data.careerObjectives,
-    }));
+  // Helper function to handle undefined/null values
+  const getDisplayValue = (value: any, fallback: string = "Not Provided") => {
+    if (value === undefined || value === null || value === "") {
+      return fallback;
+    }
+    return value;
   };
 
   return (
     <DashboardLayout role="teacher">
-      <div className="space-y-6">
-        {/* Profile Header */}
-        <Card className="mb-8">
+      {/* Loading State */}
+      {isLoading && <TeacherProfileSkeleton />}
+
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <p className="text-destructive font-medium">{error}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && !error && (
+        <div className="space-y-6">
+          {/* Profile Header */}
+          <Card className="mb-8">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
               <div className="relative">
@@ -216,52 +350,51 @@ const TeacherProfile = () => {
               </div>
 
               <div className="flex-1">
-                <h1 className="font-heading font-bold text-2xl sm:text-3xl text-foreground mb-2">
-                  {profile.personalInfo.firstName}{" "}
-                  {profile.personalInfo.lastName}
-                </h1>
-                <p className="text-xl text-muted-foreground mb-3">
-                  {profile.personalInfo.title}
-                </p>
-                <p className="text-foreground max-w-2xl mb-4">{profile.bio}</p>
+                                 <h1 className="font-heading font-bold text-2xl sm:text-3xl text-foreground mb-2">
+                   {getDisplayValue(profile.personalInfo.firstName, "First Name")}{" "}
+                   {getDisplayValue(profile.personalInfo.lastName, "Last Name")}
+                 </h1>
+                 <p className="text-xl text-muted-foreground mb-3">
+                   {getDisplayValue(profile.personalInfo.title, "Professional Title")}
+                 </p>
+                 <p className="text-foreground max-w-2xl mb-4">{getDisplayValue(profile.bio, "No bio available")}</p>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {profile.subjects.map((subject, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="bg-brand-primary/10 text-brand-primary"
-                    >
-                      {subject}
-                    </Badge>
-                  ))}
-                </div>
+                                 <div className="flex flex-wrap gap-2 mb-4">
+                   {profile.subjects.length > 0 ? (
+                     profile.subjects.map((subject, index) => (
+                       <Badge
+                         key={index}
+                         variant="secondary"
+                         className="bg-brand-primary/10 text-brand-primary"
+                       >
+                         {subject}
+                       </Badge>
+                     ))
+                   ) : (
+                     <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                       No subjects specified
+                     </Badge>
+                   )}
+                 </div>
 
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {profile.personalInfo.address.city},{" "}
-                    {profile.personalInfo.address.state}
-                  </div>
-                  <div className="flex items-center">
-                    <Briefcase className="w-4 h-4 mr-1" />
-                    {profile.yearsOfExperience} years experience
-                  </div>
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 mr-1" />
-                    {profile.personalInfo.email}
-                  </div>
-                </div>
+                                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                   <div className="flex items-center">
+                     <MapPin className="w-4 h-4 mr-1" />
+                     {getDisplayValue(profile.personalInfo.address.city, "City")},{" "}
+                     {getDisplayValue(profile.personalInfo.address.state, "State")}
+                   </div>
+                   <div className="flex items-center">
+                     <Briefcase className="w-4 h-4 mr-1" />
+                     {profile.yearsOfExperience > 0 ? `${profile.yearsOfExperience} years experience` : "No experience specified"}
+                   </div>
+                   <div className="flex items-center">
+                     <Mail className="w-4 h-4 mr-1" />
+                     {getDisplayValue(profile.personalInfo.email, "Email not provided")}
+                   </div>
+                 </div>
               </div>
 
               <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  {isEditing ? "Save Changes" : "Edit Profile"}
-                </Button>
                 <Button variant="hero">
                   <Download className="w-4 h-4 mr-2" />
                   Download CV
@@ -309,44 +442,30 @@ const TeacherProfile = () => {
             {/* Profile Summary Section */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <FileText className="w-5 h-5 mr-2" />
-                    Professional Summary
-                  </CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSummaryModal(true)}
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Summary
-                  </Button>
-                </div>
+                <CardTitle className="font-heading text-lg flex items-center">
+                  <FileText className="w-5 h-5 mr-2" />
+                  Professional Summary
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Professional Bio</h4>
-                  <p className="text-sm text-muted-foreground">{profile.bio}</p>
-                </div>
+                                 <div>
+                   <h4 className="font-semibold mb-2">Professional Bio</h4>
+                   <p className="text-sm text-muted-foreground">{getDisplayValue(profile.bio, "No bio available")}</p>
+                 </div>
 
-                {profile.professionalSummary && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Detailed Summary</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {profile.professionalSummary}
-                    </p>
-                  </div>
-                )}
+                 <div>
+                   <h4 className="font-semibold mb-2">Detailed Summary</h4>
+                   <p className="text-sm text-muted-foreground">
+                     {getDisplayValue(profile.professionalSummary, "No detailed summary available")}
+                   </p>
+                 </div>
 
-                {profile.careerObjectives && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Career Objectives</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {profile.careerObjectives}
-                    </p>
-                  </div>
-                )}
+                 <div>
+                   <h4 className="font-semibold mb-2">Career Objectives</h4>
+                   <p className="text-sm text-muted-foreground">
+                     {getDisplayValue(profile.careerObjectives, "No career objectives specified")}
+                   </p>
+                 </div>
               </CardContent>
             </Card>
 
@@ -359,24 +478,36 @@ const TeacherProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                                     <div className="flex items-center justify-between">
+                     <span className="text-muted-foreground">Experience</span>
+                     <span className="font-semibold">
+                       {profile.yearsOfExperience > 0 ? `${profile.yearsOfExperience} years` : "Not specified"}
+                     </span>
+                   </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-muted-foreground">Subjects</span>
+                     <span className="font-semibold">
+                       {profile.subjects.length > 0 ? profile.subjects.length : "None"}
+                     </span>
+                   </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-muted-foreground">
+                       Qualifications
+                     </span>
+                     <span className="font-semibold">
+                       {profile.qualifications.length > 0 ? profile.qualifications.length : "None"}
+                     </span>
+                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Experience</span>
+                    <span className="text-muted-foreground">PGCE</span>
                     <span className="font-semibold">
-                      {profile.yearsOfExperience} years
+                      {profile.pgce ? "Yes" : "No"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Subjects</span>
+                    <span className="text-muted-foreground">Key Achievements</span>
                     <span className="font-semibold">
-                      {profile.subjects.length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">
-                      Qualifications
-                    </span>
-                    <span className="font-semibold">
-                      {profile.qualifications.length}
+                      {profile.keyAchievements.length > 0 ? profile.keyAchievements.length : "None"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -384,33 +515,41 @@ const TeacherProfile = () => {
                       Profile Complete
                     </span>
                     <span className="font-semibold text-brand-accent-green">
-                      85%
+                      {profile.profileCompletion}%
                     </span>
                   </div>
-                  <Progress value={85} className="mt-2" />
+                  <Progress value={profile.profileCompletion} className="mt-2" />
                 </CardContent>
               </Card>
 
-              {/* Recent Qualifications */}
+              {/* Key Achievements */}
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading text-lg flex items-center">
                     <Award className="w-5 h-5 mr-2 text-brand-accent-orange" />
-                    Recent Qualifications
+                    Key Achievements
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {profile.qualifications.slice(0, 3).map((qual, index) => (
-                    <div key={index} className="p-3 bg-muted/30 rounded-lg">
-                      <div className="font-medium text-sm">{qual}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        2023
-                      </div>
+                  {profile.keyAchievements.length > 0 ? (
+                    <>
+                      {profile.keyAchievements.slice(0, 3).map((achievement, index) => (
+                        <div key={index} className="p-3 bg-muted/30 rounded-lg">
+                          <div className="font-medium text-sm">{achievement}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Achievement
+                          </div>
+                        </div>
+                      ))}
+                      <Button variant="outline" size="sm" className="w-full">
+                        View All Achievements
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="p-3 bg-muted/30 rounded-lg text-center">
+                      <div className="text-sm text-muted-foreground">No achievements added yet</div>
                     </div>
-                  ))}
-                  <Button variant="outline" size="sm" className="w-full">
-                    View All Qualifications
-                  </Button>
+                  )}
                 </CardContent>
               </Card>
 
@@ -421,33 +560,33 @@ const TeacherProfile = () => {
                     Contact Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {profile.personalInfo.phone}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {profile.personalInfo.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      {profile.personalInfo.address.city},{" "}
-                      {profile.personalInfo.address.country}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Globe className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-brand-primary cursor-pointer hover:underline">
-                      {profile.personalInfo.linkedIn}
-                    </span>
-                  </div>
-                </CardContent>
+                                 <CardContent className="space-y-3">
+                   <div className="flex items-center space-x-3">
+                     <Phone className="w-4 h-4 text-muted-foreground" />
+                     <span className="text-sm">
+                       {getDisplayValue(profile.personalInfo.phone, "Phone not provided")}
+                     </span>
+                   </div>
+                   <div className="flex items-center space-x-3">
+                     <Mail className="w-4 h-4 text-muted-foreground" />
+                     <span className="text-sm">
+                       {getDisplayValue(profile.personalInfo.email, "Email not provided")}
+                     </span>
+                   </div>
+                   <div className="flex items-center space-x-3">
+                     <MapPin className="w-4 h-4 text-muted-foreground" />
+                     <span className="text-sm">
+                       {getDisplayValue(profile.personalInfo.address.city, "City")},{" "}
+                       {getDisplayValue(profile.personalInfo.address.country, "Country")}
+                     </span>
+                   </div>
+                   <div className="flex items-center space-x-3">
+                     <Globe className="w-4 h-4 text-muted-foreground" />
+                     <span className="text-sm text-brand-primary cursor-pointer hover:underline">
+                       {getDisplayValue(profile.personalInfo.linkedIn, "LinkedIn not provided")}
+                     </span>
+                   </div>
+                 </CardContent>
               </Card>
             </div>
           </TabsContent>
@@ -469,7 +608,8 @@ const TeacherProfile = () => {
                       <Input
                         id="firstName"
                         value={profile.personalInfo.firstName}
-                        readOnly={!isEditing}
+                        placeholder="Enter first name"
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -477,7 +617,8 @@ const TeacherProfile = () => {
                       <Input
                         id="lastName"
                         value={profile.personalInfo.lastName}
-                        readOnly={!isEditing}
+                        placeholder="Enter last name"
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -485,7 +626,8 @@ const TeacherProfile = () => {
                       <Input
                         id="title"
                         value={profile.personalInfo.title}
-                        readOnly={!isEditing}
+                        placeholder="Enter professional title"
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -509,7 +651,7 @@ const TeacherProfile = () => {
                           }
                         }}
                         placeholder="Select date of birth"
-                        disabled={!isEditing}
+                        disabled={true}
                         max={new Date()}
                       />
                     </div>
@@ -518,12 +660,12 @@ const TeacherProfile = () => {
                       <Input
                         id="placeOfBirth"
                         value={profile.personalInfo.placeOfBirth}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
                       <Label htmlFor="nationality">Nationality</Label>
-                      <Select>
+                      <Select disabled={true}>
                         <SelectTrigger>
                           <SelectValue
                             placeholder={profile.personalInfo.nationality}
@@ -544,7 +686,7 @@ const TeacherProfile = () => {
                       <Input
                         id="phone"
                         value={profile.personalInfo.phone}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -552,7 +694,7 @@ const TeacherProfile = () => {
                       <Input
                         id="alternatePhone"
                         value={profile.personalInfo.alternatePhone}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -561,7 +703,7 @@ const TeacherProfile = () => {
                         id="email"
                         type="email"
                         value={profile.personalInfo.email}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -569,12 +711,12 @@ const TeacherProfile = () => {
                       <Input
                         id="passportNo"
                         value={profile.personalInfo.passportNo}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
                       <Label htmlFor="gender">Gender</Label>
-                      <Select>
+                      <Select disabled={true}>
                         <SelectTrigger>
                           <SelectValue
                             placeholder={profile.personalInfo.gender}
@@ -592,7 +734,7 @@ const TeacherProfile = () => {
                     </div>
                     <div>
                       <Label htmlFor="maritalStatus">Marital Status</Label>
-                      <Select>
+                      <Select disabled={true}>
                         <SelectTrigger>
                           <SelectValue
                             placeholder={profile.personalInfo.maritalStatus}
@@ -622,7 +764,7 @@ const TeacherProfile = () => {
                       <Input
                         id="street"
                         value={profile.personalInfo.address.street}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -630,7 +772,7 @@ const TeacherProfile = () => {
                       <Input
                         id="city"
                         value={profile.personalInfo.address.city}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -638,12 +780,12 @@ const TeacherProfile = () => {
                       <Input
                         id="state"
                         value={profile.personalInfo.address.state}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
                       <Label htmlFor="country">Country</Label>
-                      <Select>
+                      <Select disabled={true}>
                         <SelectTrigger>
                           <SelectValue
                             placeholder={profile.personalInfo.address.country}
@@ -661,7 +803,7 @@ const TeacherProfile = () => {
                       <Input
                         id="postalCode"
                         value={profile.personalInfo.address.postalCode}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                     <div>
@@ -669,7 +811,7 @@ const TeacherProfile = () => {
                       <Input
                         id="linkedin"
                         value={profile.personalInfo.linkedIn}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                   </div>
@@ -694,27 +836,29 @@ const TeacherProfile = () => {
                     </Button>
                   </div>
 
-                  <div className="space-y-3">
-                    {[
-                      "English (Native)",
-                      "Spanish (Fluent)",
-                      "French (Intermediate)",
-                    ].map((lang, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <span>{lang}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                                     <div className="space-y-3">
+                     {languages.length > 0 ? (
+                       languages.map((lang, index) => (
+                         <div
+                           key={index}
+                           className="flex items-center justify-between p-3 border rounded-lg"
+                         >
+                           <span>{lang.language} ({lang.proficiency})</span>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             className="text-destructive"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </Button>
+                         </div>
+                       ))
+                     ) : (
+                       <div className="p-3 border rounded-lg text-center text-muted-foreground">
+                         No languages added yet
+                       </div>
+                     )}
+                   </div>
                 </div>
               </CardContent>
             </Card>
@@ -754,9 +898,6 @@ const TeacherProfile = () => {
                       </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -773,7 +914,7 @@ const TeacherProfile = () => {
                       <Textarea
                         value="• Teach Algebra I and II to 9th and 10th grade students\n• Develop engaging curriculum aligned with state standards\n• Implement differentiated instruction strategies\n• Mentor new teachers in mathematics department"
                         rows={4}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
 
@@ -781,7 +922,7 @@ const TeacherProfile = () => {
                       <Label>Contact Person</Label>
                       <Input
                         value="Dr. Maria Rodriguez, Principal - mrodriguez@lincolnhs.edu"
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                   </div>
@@ -802,9 +943,6 @@ const TeacherProfile = () => {
                       </p>
                     </div>
                     <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -821,7 +959,7 @@ const TeacherProfile = () => {
                       <Textarea
                         value="• Provided one-on-one tutoring in algebra and geometry\n• Assisted students in developing study skills and confidence\n• Tracked student progress and communicated with parents"
                         rows={3}
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
 
@@ -829,7 +967,7 @@ const TeacherProfile = () => {
                       <Label>Contact Person</Label>
                       <Input
                         value="James Wilson, Center Director - jwilson@academicsuccess.com"
-                        readOnly={!isEditing}
+                        readOnly={true}
                       />
                     </div>
                   </div>
@@ -1017,18 +1155,8 @@ const TeacherProfile = () => {
           onSave={() => {}}
           editingReferee={editingItem}
         />
-
-        <ProfileSummaryModal
-          open={showSummaryModal}
-          onOpenChange={setShowSummaryModal}
-          onSave={handleProfileSummaryUpdate}
-          initialData={{
-            bio: profile.bio,
-            professionalSummary: profile.professionalSummary,
-            careerObjectives: profile.careerObjectives,
-          }}
-        />
-      </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

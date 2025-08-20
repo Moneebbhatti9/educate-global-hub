@@ -46,6 +46,13 @@ export interface TeacherProfile extends BaseProfile {
   keyAchievements?: string[];
   certifications?: string[];
   additionalQualifications?: string[];
+  profileCompletion?: number;
+  employment?: any[];
+  education?: any[];
+  qualifications?: any[];
+  referees?: any[];
+  development?: any[];
+  memberships?: any[];
 }
 
 export interface TeacherProfileRequest {
@@ -70,6 +77,7 @@ export interface TeacherProfileRequest {
   keyAchievements?: string[];
   certifications?: string[];
   additionalQualifications?: string[];
+  profileCompletion?: number;
 }
 
 // School Profile Types
