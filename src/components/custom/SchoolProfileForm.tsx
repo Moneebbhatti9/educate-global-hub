@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -95,6 +95,18 @@ const SchoolProfileForm = ({
   });
 
   const formData = watch();
+
+  // Pre-fill form with initial data when component mounts
+  useEffect(() => {
+    if (initialData) {
+      // Pre-fill basic information that was collected during signup
+      if (initialData.schoolEmail) {
+        setValue("schoolEmail", initialData.schoolEmail);
+      }
+      
+
+    }
+  }, [initialData, setValue]);
 
   const addCurriculum = () => {
     if (
@@ -295,20 +307,40 @@ const SchoolProfileForm = ({
       {/* Form */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">
-            Step {currentStep} of 3
+          <CardTitle className="font-heading text-xl text-center">
+            Complete Your School Profile
           </CardTitle>
-          <CardDescription>
-            {currentStep === 1 &&
-              "Let's start with your school's basic information"}
-            {currentStep === 2 && "Tell us about your school"}
-            {currentStep === 3 && "Review your school profile"}
+          <CardDescription className="text-center">
+            {initialData?.schoolEmail ? (
+              <div className="space-y-2">
+                <p>Welcome! Let's complete your school profile.</p>
+                <p className="text-sm text-muted-foreground">
+                  Some fields have been pre-filled based on your signup information.
+                </p>
+              </div>
+            ) : (
+              "Fill in your school details to complete your profile"
+            )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+              <span>Step {currentStep} of 3</span>
+              <span>{Math.round((currentStep / 3) * 100)}% Complete</span>
+            </div>
+            <Progress value={(currentStep / 3) * 100} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Basic Info</span>
+              <span>School Details</span>
+              <span>Review</span>
+            </div>
+          </div>
+
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="schoolName">School Name *</Label>
                 <Input
@@ -318,6 +350,7 @@ const SchoolProfileForm = ({
                   className={
                     isFieldInvalid("schoolName") ? "border-red-500" : ""
                   }
+                  readOnly
                 />
                 {getFieldError("schoolName") && (
                   <p className="text-sm text-red-500">
@@ -447,6 +480,9 @@ const SchoolProfileForm = ({
                   {...register("address")}
                   className={isFieldInvalid("address") ? "border-red-500" : ""}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Address must be at least 5 characters long
+                </p>
                 {getFieldError("address") && (
                   <p className="text-sm text-red-500">
                     {getFieldError("address")}
@@ -681,9 +717,9 @@ const SchoolProfileForm = ({
             </div>
           )}
 
-          {/* Step 2: About School */}
+          {/* Step 2: School Details */}
           {currentStep === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="aboutSchool">About School *</Label>
                 <Textarea
@@ -707,9 +743,9 @@ const SchoolProfileForm = ({
             </div>
           )}
 
-          {/* Step 3: Review */}
+          {/* Step 3: Review and Submit */}
           {currentStep === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-lg mb-4">
                   Review Your School Profile

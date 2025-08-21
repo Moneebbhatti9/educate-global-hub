@@ -85,6 +85,12 @@ const ProfileCompletionPage = () => {
           role={state.role}
           onComplete={handleComplete}
           onBack={handleBack}
+          initialUserData={{
+            firstName: state.firstName,
+            lastName: state.lastName,
+            email: state.email,
+            role: state.role,
+          }}
         />
       </main>
 

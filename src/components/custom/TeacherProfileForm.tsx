@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -88,6 +88,17 @@ const TeacherProfileForm = ({
       additionalQualifications: initialData?.additionalQualifications || [],
     },
   });
+
+  // Pre-fill form with initial data when component mounts
+  useEffect(() => {
+    if (initialData) {
+      // Pre-fill basic information that was collected during signup
+      if (initialData.fullName) {
+        setValue("fullName", initialData.fullName);
+      }
+      
+    }
+  }, [initialData, setValue]);
 
   const formData = watch();
 
@@ -313,19 +324,40 @@ const TeacherProfileForm = ({
       {/* Form */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">
-            Step {currentStep} of 3
+          <CardTitle className="font-heading text-xl text-center">
+            Complete Your Teacher Profile
           </CardTitle>
-          <CardDescription>
-            {currentStep === 1 && "Let's start with your basic information"}
-            {currentStep === 2 && "Tell us about your professional background"}
-            {currentStep === 3 && "Review your profile information"}
+          <CardDescription className="text-center">
+            {initialData?.fullName ? (
+              <div className="space-y-2">
+                <p>Welcome, {initialData.fullName}! Let's complete your profile.</p>
+                <p className="text-sm text-muted-foreground">
+                  Some fields have been pre-filled based on your signup information.
+                </p>
+              </div>
+            ) : (
+              "Fill in your details to complete your profile"
+            )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+              <span>Step {currentStep} of 3</span>
+              <span>{Math.round((currentStep / 3) * 100)}% Complete</span>
+            </div>
+            <Progress value={(currentStep / 3) * 100} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Basic Info</span>
+              <span>Professional</span>
+              <span>Review</span>
+            </div>
+          </div>
+          
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name *</Label>
                 <Input
@@ -333,6 +365,7 @@ const TeacherProfileForm = ({
                   placeholder="Enter your full name"
                   {...register("fullName")}
                   className={isFieldInvalid("fullName") ? "border-red-500" : ""}
+                  readOnly
                 />
                 {getFieldError("fullName") && (
                   <p className="text-sm text-red-500">
@@ -436,6 +469,9 @@ const TeacherProfileForm = ({
                   {...register("address")}
                   className={isFieldInvalid("address") ? "border-red-500" : ""}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Address must be at least 5 characters long
+                </p>
                 {getFieldError("address") && (
                   <p className="text-sm text-red-500">
                     {getFieldError("address")}
@@ -544,9 +580,9 @@ const TeacherProfileForm = ({
             </div>
           )}
 
-          {/* Step 2: Professional Information */}
+          {/* Step 2: Professional Background */}
           {currentStep === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="professionalBio">Professional Bio *</Label>
                 <Textarea
@@ -684,9 +720,9 @@ const TeacherProfileForm = ({
             </div>
           )}
 
-          {/* Step 3: Review */}
+          {/* Step 3: Review and Submit */}
           {currentStep === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-lg mb-4">
                   Review Your Profile
