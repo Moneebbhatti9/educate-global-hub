@@ -21,19 +21,22 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface UserData {
-  id: number;
-  name: string;
+  id?: string;
+  _id?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
-  status: string;
-  avatar: string;
+  status?: string;
+  avatar?: string;
+  [key: string]: any; // Allow additional fields from API
 }
 
 interface ChangeStatusModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userData: UserData | null;
-  onStatusChange: (userId: number, newStatus: string, reason?: string) => void;
+  onStatusChange: (userId: string, newStatus: string, reason?: string) => void;
 }
 
 export const ChangeStatusModal = ({
@@ -45,12 +48,22 @@ export const ChangeStatusModal = ({
   const [newStatus, setNewStatus] = useState<string>("");
   const [reason, setReason] = useState("");
 
+  console.log("ChangeStatusModal userData:", userData); // Debug log
+
   if (!userData) return null;
 
   const handleSubmit = () => {
-    if (!newStatus || newStatus === userData.status) return;
-    
-    onStatusChange(userData.id, newStatus, reason);
+    if (!newStatus || newStatus === (userData.status || "pending")) return;
+
+    // Handle both id and _id fields
+    const userId = userData.id || userData._id;
+    if (!userId) {
+      console.error("No user ID found:", userData);
+      return;
+    }
+
+    console.log("Submitting status change:", { userId, newStatus, reason }); // Debug log
+    onStatusChange(userId, newStatus, reason);
     onOpenChange(false);
     setNewStatus("");
     setReason("");
@@ -62,6 +75,8 @@ export const ChangeStatusModal = ({
         return "bg-brand-accent-green text-white";
       case "pending":
         return "bg-brand-accent-orange text-white";
+      case "inactive":
+        return "bg-gray-500 text-white";
       case "suspended":
         return "bg-red-500 text-white";
       default:
@@ -70,9 +85,26 @@ export const ChangeStatusModal = ({
   };
 
   const statusOptions = [
-    { value: "active", label: "Active", description: "User can access all features" },
-    { value: "pending", label: "Pending", description: "User access is under review" },
-    { value: "suspended", label: "Suspended", description: "User access is temporarily disabled" },
+    {
+      value: "active",
+      label: "Active",
+      description: "User can access all features",
+    },
+    {
+      value: "pending",
+      label: "Pending",
+      description: "User access is under review",
+    },
+    {
+      value: "inactive",
+      label: "Inactive",
+      description: "User access is temporarily disabled",
+    },
+    {
+      value: "suspended",
+      label: "Suspended",
+      description: "User account is suspended",
+    },
   ];
 
   return (
@@ -91,18 +123,22 @@ export const ChangeStatusModal = ({
             <Avatar className="w-12 h-12">
               <AvatarImage src={userData.avatar} />
               <AvatarFallback>
-                {userData.name
+                {`${userData.firstName} ${userData.lastName}`
                   .split(" ")
                   .map((n) => n[0])
                   .join("")}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="font-medium">{userData.name}</div>
-              <div className="text-sm text-muted-foreground">{userData.email}</div>
+              <div className="font-medium">{`${userData.firstName} ${userData.lastName}`}</div>
+              <div className="text-sm text-muted-foreground">
+                {userData.email}
+              </div>
               <div className="mt-1">
-                <Badge className={getStatusColor(userData.status)}>
-                  Current: {userData.status.charAt(0).toUpperCase() + userData.status.slice(1)}
+                <Badge className={getStatusColor(userData.status || "pending")}>
+                  Current:{" "}
+                  {(userData.status || "pending").charAt(0).toUpperCase() +
+                    (userData.status || "pending").slice(1)}
                 </Badge>
               </div>
             </div>
@@ -117,10 +153,10 @@ export const ChangeStatusModal = ({
               </SelectTrigger>
               <SelectContent>
                 {statusOptions.map((option) => (
-                  <SelectItem 
-                    key={option.value} 
+                  <SelectItem
+                    key={option.value}
                     value={option.value}
-                    disabled={option.value === userData.status}
+                    disabled={option.value === (userData.status || "pending")}
                   >
                     <div className="flex flex-col">
                       <span>{option.label}</span>
@@ -148,13 +184,16 @@ export const ChangeStatusModal = ({
             </div>
           )}
 
-          {newStatus && newStatus !== userData.status && (
+          {newStatus && newStatus !== (userData.status || "pending") && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="text-sm">
                 <strong>Status Change Preview:</strong>
                 <div className="mt-1 flex items-center space-x-2">
-                  <Badge className={getStatusColor(userData.status)}>
-                    {userData.status.charAt(0).toUpperCase() + userData.status.slice(1)}
+                  <Badge
+                    className={getStatusColor(userData.status || "pending")}
+                  >
+                    {(userData.status || "pending").charAt(0).toUpperCase() +
+                      (userData.status || "pending").slice(1)}
                   </Badge>
                   <span>→</span>
                   <Badge className={getStatusColor(newStatus)}>
@@ -167,12 +206,20 @@ export const ChangeStatusModal = ({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSubmit}
-            disabled={!newStatus || newStatus === userData.status}
+            disabled={
+              !newStatus || newStatus === (userData.status || "pending")
+            }
+            className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
           >
             Update Status
           </Button>

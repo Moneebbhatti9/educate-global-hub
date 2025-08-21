@@ -29,7 +29,7 @@ import {
   Truck,
   Check,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { signupSchema } from "@/helpers/validation";
@@ -50,7 +50,7 @@ interface SignupFormData {
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+
   const { handleError, showSuccess } = useErrorHandler();
   const { signup, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -104,8 +104,7 @@ const SignUp = () => {
       name: "Recruiter",
       description: "Coming Soon",
       icon: UserCheck,
-      color:
-        "border-muted bg-muted/5 hover:bg-muted/10",
+      color: "border-muted bg-muted/5 hover:bg-muted/10",
       available: false,
     },
     {
@@ -113,8 +112,7 @@ const SignUp = () => {
       name: "Supplier",
       description: "Coming Soon",
       icon: Truck,
-      color:
-        "border-muted bg-muted/5 hover:bg-muted/10",
+      color: "border-muted bg-muted/5 hover:bg-muted/10",
       available: false,
     },
   ];
@@ -130,9 +128,12 @@ const SignUp = () => {
     receiveUpdates?: boolean;
   }) => {
     // Check if selected role is available
-    const selectedRole = roles.find(r => r.id === data.role);
+    const selectedRole = roles.find((r) => r.id === data.role);
     if (!selectedRole?.available) {
-      handleError(new Error("Selected role is not available"), "Invalid role selection");
+      handleError(
+        new Error("Selected role is not available"),
+        "Invalid role selection"
+      );
       return;
     }
 
@@ -346,7 +347,9 @@ const SignUp = () => {
                       return (
                         <div
                           key={role.id}
-                          onClick={() => role.available && setValue("role", role.id)}
+                          onClick={() =>
+                            role.available && setValue("role", role.id)
+                          }
                           className={`relative p-4 border-2 rounded-lg transition-all duration-200 ${
                             !role.available
                               ? "border-muted bg-muted/20 cursor-not-allowed opacity-60"

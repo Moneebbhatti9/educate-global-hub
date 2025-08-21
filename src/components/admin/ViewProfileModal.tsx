@@ -8,28 +8,28 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Building, 
-  GraduationCap, 
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Building,
+  GraduationCap,
   Calendar,
   Globe,
   Users,
-  Award
+  Award,
 } from "lucide-react";
 
 interface UserData {
-  id: number;
-  name: string;
+  id: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
   status: string;
-  location: string;
-  joinDate: string;
-  lastActive: string;
-  avatar: string;
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
   // Additional fields based on role
   phoneNumber?: string;
   country?: string;
@@ -101,7 +101,8 @@ export const ViewProfileModal = ({
         <DialogHeader>
           <DialogTitle>User Profile Details</DialogTitle>
           <DialogDescription>
-            Complete profile information for {userData.name}
+            Complete profile information for{" "}
+            {`${userData.firstName} ${userData.lastName}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -113,24 +114,28 @@ export const ViewProfileModal = ({
                 <Avatar className="w-16 h-16">
                   <AvatarImage src={userData.avatar} />
                   <AvatarFallback>
-                    {userData.name
+                    {`${userData.firstName} ${userData.lastName}`
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold">{userData.name}</h3>
+                  <h3 className="text-xl font-semibold">{`${userData.firstName} ${userData.lastName}`}</h3>
                   <div className="flex items-center space-x-2 mt-1">
                     <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{userData.email}</span>
+                    <span className="text-muted-foreground">
+                      {userData.email}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-3 mt-2">
                     <Badge className={getRoleColor(userData.role)}>
-                      {userData.role.charAt(0).toUpperCase() + userData.role.slice(1)}
+                      {userData.role.charAt(0).toUpperCase() +
+                        userData.role.slice(1)}
                     </Badge>
                     <Badge className={getStatusColor(userData.status)}>
-                      {userData.status.charAt(0).toUpperCase() + userData.status.slice(1)}
+                      {userData.status.charAt(0).toUpperCase() +
+                        userData.status.slice(1)}
                     </Badge>
                   </div>
                 </div>
@@ -232,7 +237,8 @@ export const ViewProfileModal = ({
                   )}
                   {userData.yearsOfTeachingExperience !== undefined && (
                     <div>
-                      <strong>Experience:</strong> {userData.yearsOfTeachingExperience} years
+                      <strong>Experience:</strong>{" "}
+                      {userData.yearsOfTeachingExperience} years
                     </div>
                   )}
                   {userData.pgce !== undefined && (
@@ -242,7 +248,8 @@ export const ViewProfileModal = ({
                   )}
                   {userData.professionalBio && (
                     <div className="md:col-span-2">
-                      <strong>Professional Bio:</strong> {userData.professionalBio}
+                      <strong>Professional Bio:</strong>{" "}
+                      {userData.professionalBio}
                     </div>
                   )}
                 </CardContent>
@@ -273,7 +280,8 @@ export const ViewProfileModal = ({
                   )}
                   {userData.schoolContactNumber && (
                     <div>
-                      <strong>Contact Number:</strong> {userData.schoolContactNumber}
+                      <strong>Contact Number:</strong>{" "}
+                      {userData.schoolContactNumber}
                     </div>
                   )}
                   {userData.schoolWebsite && (
@@ -281,9 +289,9 @@ export const ViewProfileModal = ({
                       <Globe className="w-4 h-4" />
                       <span>
                         <strong>Website:</strong>{" "}
-                        <a 
-                          href={userData.schoolWebsite} 
-                          target="_blank" 
+                        <a
+                          href={userData.schoolWebsite}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
                         >

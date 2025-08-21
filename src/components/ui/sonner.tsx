@@ -26,18 +26,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-// Custom toast variants with proper styling
+// Custom toast variants with proper colored backgrounds and white text
 export const customToast = {
   success: (title: string, description?: string) => {
     return toast.success(title, {
       description,
       classNames: {
-        toast:
-          "!bg-green-50 !border-green-200 !text-green-800 dark:!bg-green-900/20 dark:!border-green-800 dark:!text-green-200",
-        title: "!text-green-800 dark:!text-green-200",
-        description: "!text-green-700 dark:!text-green-300",
-        actionButton: "!bg-green-600 !text-white hover:!bg-green-700",
-        cancelButton: "!bg-green-100 !text-green-800 hover:!bg-green-200",
+        toast: "!bg-green-600 !border-green-600 !text-white shadow-lg",
+        title: "!text-white font-semibold",
+        description: "!text-green-100",
+        actionButton:
+          "!bg-white !text-green-600 hover:!bg-green-50 font-medium",
+        cancelButton: "!bg-green-700 !text-white hover:!bg-green-800",
       },
       duration: 5000,
     });
@@ -46,12 +46,11 @@ export const customToast = {
     return toast.error(title, {
       description,
       classNames: {
-        toast:
-          "!bg-red-50 !border-red-200 !text-red-800 dark:!bg-red-900/20 dark:!border-red-800 dark:!text-red-200",
-        title: "!text-red-800 dark:!text-red-200",
-        description: "!text-red-700 dark:!text-red-300",
-        actionButton: "!bg-red-600 !text-white hover:!bg-red-700",
-        cancelButton: "!bg-red-100 !text-red-800 hover:!bg-red-200",
+        toast: "!bg-red-600 !border-red-600 !text-white shadow-lg",
+        title: "!text-white font-semibold",
+        description: "!text-red-100",
+        actionButton: "!bg-white !text-red-600 hover:!bg-red-50 font-medium",
+        cancelButton: "!bg-red-700 !text-white hover:!bg-red-800",
       },
       duration: 5000,
     });
@@ -60,12 +59,12 @@ export const customToast = {
     return toast.warning(title, {
       description,
       classNames: {
-        toast:
-          "!bg-yellow-50 !border-yellow-200 !text-yellow-800 dark:!bg-yellow-900/20 dark:!border-yellow-800 dark:!text-yellow-200",
-        title: "!text-yellow-800 dark:!text-yellow-200",
-        description: "!text-yellow-700 dark:!text-yellow-300",
-        actionButton: "!bg-yellow-600 !text-white hover:!bg-yellow-700",
-        cancelButton: "!bg-yellow-100 !text-yellow-800 hover:!bg-yellow-200",
+        toast: "!bg-amber-600 !border-amber-600 !text-white shadow-lg",
+        title: "!text-white font-semibold",
+        description: "!text-amber-100",
+        actionButton:
+          "!bg-white !text-amber-600 hover:!bg-amber-50 font-medium",
+        cancelButton: "!bg-amber-700 !text-white hover:!bg-amber-800",
       },
       duration: 5000,
     });
@@ -74,12 +73,11 @@ export const customToast = {
     return toast.info(title, {
       description,
       classNames: {
-        toast:
-          "!bg-blue-50 !border-blue-200 !text-blue-800 dark:!bg-blue-900/20 dark:!border-blue-800 dark:!text-blue-200",
-        title: "!text-blue-800 dark:!text-blue-200",
-        description: "!text-blue-700 dark:!text-blue-300",
-        actionButton: "!bg-blue-600 !text-white hover:!bg-blue-700",
-        cancelButton: "!bg-blue-100 !text-blue-800 hover:!bg-blue-200",
+        toast: "!bg-blue-600 !border-blue-600 !text-white shadow-lg",
+        title: "!text-white font-semibold",
+        description: "!text-blue-100",
+        actionButton: "!bg-white !text-blue-600 hover:!bg-blue-50 font-medium",
+        cancelButton: "!bg-blue-700 !text-white hover:!bg-blue-800",
       },
       duration: 5000,
     });

@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import OTPVerification from "@/components/custom/OTPVerification";
 import { UserRole } from "@/pages/SignUp";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { customToast } from "@/components/ui/sonner";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 interface LocationState {
@@ -18,7 +18,7 @@ const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { verifyOTP, sendOTP } = useAuth();
-  const { toast } = useToast();
+
   const { handleError, showSuccess } = useErrorHandler();
   const state = location.state as LocationState;
 

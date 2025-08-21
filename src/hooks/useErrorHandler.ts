@@ -1,9 +1,8 @@
-import { useToast } from "./use-toast";
+import { customToast } from "@/components/ui/sonner";
 import { errorHandler, AppError } from "../utils/errorHandler";
 import { AxiosError } from "axios";
 
 export const useErrorHandler = () => {
-  const { toast } = useToast();
 
   const handleError = (
     error: unknown,
@@ -27,11 +26,7 @@ export const useErrorHandler = () => {
 
     // Show toast notification if requested
     if (showToast) {
-      toast({
-        title: title || "Error",
-        description: appError.message,
-        variant: "destructive",
-      });
+      customToast.error(title || "Error", appError.message);
     }
 
     return appError;
@@ -51,18 +46,11 @@ export const useErrorHandler = () => {
   };
 
   const showSuccess = (title: string, description?: string) => {
-    toast({
-      title,
-      description,
-    });
+    customToast.success(title, description);
   };
 
   const showError = (title: string, description?: string) => {
-    toast({
-      title,
-      description,
-      variant: "destructive",
-    });
+    customToast.error(title, description);
   };
 
   return {

@@ -12,20 +12,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertTriangle } from "lucide-react";
 
 interface UserData {
-  id: number;
-  name: string;
+  id?: string;
+  _id?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
-  status: string;
-  avatar: string;
-  joinDate: string;
+  status?: string;
+  avatar?: string;
+  createdAt: string;
 }
 
 interface DeleteUserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userData: UserData | null;
-  onDelete: (userId: number) => void;
+  onDelete: (userId: string) => void;
 }
 
 export const DeleteUserModal = ({
@@ -37,8 +39,15 @@ export const DeleteUserModal = ({
   if (!userData) return null;
 
   const handleDelete = () => {
-    onDelete(userData.id);
-    onOpenChange(false);
+    const userId = userData.id || userData._id;
+    console.log("DeleteUserModal - userData:", userData);
+    console.log("DeleteUserModal - extracted userId:", userId);
+    if (userId) {
+      onDelete(userId);
+      onOpenChange(false);
+    } else {
+      console.error("DeleteUserModal - No valid userId found:", userData);
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -78,7 +87,8 @@ export const DeleteUserModal = ({
             <span>Delete User Account</span>
           </DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete the user account and remove all associated data.
+            This action cannot be undone. This will permanently delete the user
+            account and remove all associated data.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,25 +98,30 @@ export const DeleteUserModal = ({
             <Avatar className="w-12 h-12">
               <AvatarImage src={userData.avatar} />
               <AvatarFallback>
-                {userData.name
+                {`${userData.firstName} ${userData.lastName}`
                   .split(" ")
                   .map((n) => n[0])
                   .join("")}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="font-medium">{userData.name}</div>
-              <div className="text-sm text-muted-foreground">{userData.email}</div>
+              <div className="font-medium">{`${userData.firstName} ${userData.lastName}`}</div>
+              <div className="text-sm text-muted-foreground">
+                {userData.email}
+              </div>
               <div className="flex items-center space-x-2 mt-1">
                 <Badge className={getRoleColor(userData.role)}>
-                  {userData.role.charAt(0).toUpperCase() + userData.role.slice(1)}
+                  {userData.role.charAt(0).toUpperCase() +
+                    userData.role.slice(1)}
                 </Badge>
-                <Badge className={getStatusColor(userData.status)}>
-                  {userData.status.charAt(0).toUpperCase() + userData.status.slice(1)}
+                <Badge className={getStatusColor(userData.status || "pending")}>
+                  {(userData.status || "pending").charAt(0).toUpperCase() +
+                    (userData.status || "pending").slice(1)}
                 </Badge>
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Member since: {userData.joinDate}
+                Member since:{" "}
+                {new Date(userData.createdAt).toLocaleDateString()}
               </div>
             </div>
           </div>
@@ -135,20 +150,26 @@ export const DeleteUserModal = ({
           {/* Confirmation Text */}
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-sm">
-              To confirm deletion, please verify that you want to permanently delete the account for{" "}
-              <strong>{userData.name}</strong> ({userData.email}).
+              To confirm deletion, please verify that you want to permanently
+              delete the account for{" "}
+              <strong>{`${userData.firstName} ${userData.lastName}`}</strong> (
+              {userData.email}).
             </p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
             Cancel
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 text-white border-red-600"
           >
             Delete User
           </Button>
