@@ -60,7 +60,6 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
   const users = [
     {
@@ -164,11 +163,13 @@ const UserManagement = () => {
   };
 
   const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    
+    const matchesStatus =
+      statusFilter === "all" || user.status === statusFilter;
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -185,59 +186,6 @@ const UserManagement = () => {
               Manage platform users and their account settings.
             </p>
           </div>
-
-          <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-brand-primary hover:bg-brand-primary/90">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-                <DialogDescription>
-                  Create a new user account for the platform.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="Enter full name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" placeholder="Enter email address" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      <SelectItem value="school">School</SelectItem>
-                      <SelectItem value="recruiter">Recruiter</SelectItem>
-                      <SelectItem value="supplier">Supplier</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input id="location" placeholder="Enter location" />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>
-                  Cancel
-                </Button>
-                <Button className="bg-brand-primary hover:bg-brand-primary/90">
-                  Create User
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Filters */}
@@ -326,7 +274,10 @@ const UserManagement = () => {
                         <Avatar className="w-10 h-10">
                           <AvatarImage src={user.avatar} />
                           <AvatarFallback>
-                            {user.name.split(' ').map(n => n[0]).join('')}
+                            {user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -338,14 +289,19 @@ const UserManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${getRoleColor(user.role)} flex items-center space-x-1 w-fit`}>
+                      <Badge
+                        className={`${getRoleColor(
+                          user.role
+                        )} flex items-center space-x-1 w-fit`}
+                      >
                         {getRoleIcon(user.role)}
                         <span className="capitalize">{user.role}</span>
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(user.status)}>
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                        {user.status.charAt(0).toUpperCase() +
+                          user.status.slice(1)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
