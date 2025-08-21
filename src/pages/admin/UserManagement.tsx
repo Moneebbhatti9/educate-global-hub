@@ -1,5 +1,9 @@
 import { useState } from "react";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { AddUserModal } from "@/components/admin/AddUserModal";
+import { ViewProfileModal } from "@/components/admin/ViewProfileModal";
+import { ChangeStatusModal } from "@/components/admin/ChangeStatusModal";
+import { DeleteUserModal } from "@/components/admin/DeleteUserModal";
 import {
   Card,
   CardContent,
@@ -60,6 +64,14 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  
+  // Modal states
+  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [viewProfileOpen, setViewProfileOpen] = useState(false);
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [changeStatusOpen, setChangeStatusOpen] = useState(false);
+  const [deleteUserOpen, setDeleteUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const users = [
     {
@@ -173,6 +185,47 @@ const UserManagement = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  // Modal handlers
+  const handleAddUser = (userData: any) => {
+    console.log("Adding user:", userData);
+    // TODO: Implement API call to add user
+  };
+
+  const handleEditUser = (userData: any) => {
+    console.log("Editing user:", userData);
+    // TODO: Implement API call to edit user
+  };
+
+  const handleStatusChange = (userId: number, newStatus: string, reason?: string) => {
+    console.log("Changing status:", { userId, newStatus, reason });
+    // TODO: Implement API call to change status
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    console.log("Deleting user:", userId);
+    // TODO: Implement API call to delete user
+  };
+
+  const openViewProfile = (user: any) => {
+    setSelectedUser(user);
+    setViewProfileOpen(true);
+  };
+
+  const openEditUser = (user: any) => {
+    setSelectedUser(user);
+    setEditUserOpen(true);
+  };
+
+  const openChangeStatus = (user: any) => {
+    setSelectedUser(user);
+    setChangeStatusOpen(true);
+  };
+
+  const openDeleteUser = (user: any) => {
+    setSelectedUser(user);
+    setDeleteUserOpen(true);
+  };
+
   return (
     <DashboardLayout role="admin">
       <div className="space-y-6">
@@ -186,6 +239,10 @@ const UserManagement = () => {
               Manage platform users and their account settings.
             </p>
           </div>
+          <Button onClick={() => setAddUserOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
         </div>
 
         {/* Filters */}
@@ -321,15 +378,22 @@ const UserManagement = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openViewProfile(user)}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Profile
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditUser(user)}>
                             <Edit className="w-4 h-4 mr-2" />
                             Edit User
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem onClick={() => openChangeStatus(user)}>
+                            <UserCheck className="w-4 h-4 mr-2" />
+                            Change Status
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => openDeleteUser(user)}
+                          >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Delete User
                           </DropdownMenuItem>
@@ -342,6 +406,42 @@ const UserManagement = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Modals */}
+        <AddUserModal
+          open={addUserOpen}
+          onOpenChange={setAddUserOpen}
+          onSave={handleAddUser}
+          mode="add"
+        />
+
+        <AddUserModal
+          open={editUserOpen}
+          onOpenChange={setEditUserOpen}
+          onSave={handleEditUser}
+          initialData={selectedUser}
+          mode="edit"
+        />
+
+        <ViewProfileModal
+          open={viewProfileOpen}
+          onOpenChange={setViewProfileOpen}
+          userData={selectedUser}
+        />
+
+        <ChangeStatusModal
+          open={changeStatusOpen}
+          onOpenChange={setChangeStatusOpen}
+          userData={selectedUser}
+          onStatusChange={handleStatusChange}
+        />
+
+        <DeleteUserModal
+          open={deleteUserOpen}
+          onOpenChange={setDeleteUserOpen}
+          userData={selectedUser}
+          onDelete={handleDeleteUser}
+        />
       </div>
     </DashboardLayout>
   );
