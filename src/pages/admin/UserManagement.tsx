@@ -6,6 +6,7 @@ import { ViewProfileModal } from "@/components/admin/ViewProfileModal";
 import { ChangeStatusModal } from "@/components/admin/ChangeStatusModal";
 import { DeleteUserModal } from "@/components/admin/DeleteUserModal";
 import { useAdmin } from "@/hooks/useAdmin";
+import { UserManagementSkeleton } from "@/components/skeletons/user-management-skeleton";
 import {
   AdminUser,
   AdminCreateUserRequest,
@@ -367,6 +368,15 @@ const UserManagement = () => {
     setDeleteUserOpen(true);
   };
 
+  // Show skeleton loader while loading or when no users are loaded yet
+  if (isLoading || users.length === 0) {
+    return (
+      <DashboardLayout role="admin">
+        <UserManagementSkeleton />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="admin">
       <div className="space-y-6">
@@ -380,7 +390,7 @@ const UserManagement = () => {
               Manage platform users and their account settings.
             </p>
           </div>
-          <Button onClick={() => setAddUserOpen(true)}>
+          <Button onClick={() => setAddUserOpen(true)} disabled={isLoading}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add User
           </Button>
@@ -401,10 +411,20 @@ const UserManagement = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
+                    disabled={isLoading}
                   />
+                  {isLoading && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
                 </div>
               </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <Select
+                value={roleFilter}
+                onValueChange={setRoleFilter}
+                disabled={isLoading}
+              >
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
@@ -416,7 +436,11 @@ const UserManagement = () => {
                   <SelectItem value="supplier">Suppliers</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                disabled={isLoading}
+              >
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -465,90 +489,127 @@ const UserManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id || user._id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>
-                            {`${user.firstName} ${user.lastName}`
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{`${user.firstName} ${user.lastName}`}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email}
+                {isLoading
+                  ? // Show skeleton rows while loading
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <TableRow key={`skeleton-${index}`}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+                            <div className="space-y-2">
+                              <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                              <div className="h-3 w-40 bg-muted rounded animate-pulse" />
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`${getRoleColor(
-                          user.role
-                        )} flex items-center space-x-1 w-fit`}
-                      >
-                        {getRoleIcon(user.role)}
-                        <span className="capitalize">{user.role}</span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={getStatusColor(user.status || "pending")}
-                      >
-                        {(user.status || "pending").charAt(0).toUpperCase() +
-                          (user.status || "pending").slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {user.location ? `${user.location}` : "N/A"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(user.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateTime(user.lastActive || user.updatedAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => openViewProfile(user)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-6 w-20 bg-muted rounded-full animate-pulse" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-6 w-16 bg-muted rounded-full animate-pulse" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-3 w-24 bg-muted rounded animate-pulse" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-3 w-24 bg-muted rounded animate-pulse" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-3 w-32 bg-muted rounded animate-pulse" />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  : filteredUsers.map((user) => (
+                      <TableRow key={user.id || user._id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={user.avatar} />
+                              <AvatarFallback>
+                                {`${user.firstName} ${user.lastName}`
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{`${user.firstName} ${user.lastName}`}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={`${getRoleColor(
+                              user.role
+                            )} flex items-center space-x-1 w-fit`}
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEditUser(user)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => openChangeStatus(user)}
+                            {getRoleIcon(user.role)}
+                            <span className="capitalize">{user.role}</span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={getStatusColor(user.status || "pending")}
                           >
-                            <UserCheck className="w-4 h-4 mr-2" />
-                            Change Status
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => openDeleteUser(user)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                            {(user.status || "pending")
+                              .charAt(0)
+                              .toUpperCase() +
+                              (user.status || "pending").slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {user.location ? `${user.location}` : "N/A"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatDate(user.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatDateTime(user.lastActive || user.updatedAt)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => openViewProfile(user)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => openEditUser(user)}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit User
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => openChangeStatus(user)}
+                              >
+                                <UserCheck className="w-4 h-4 mr-2" />
+                                Change Status
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => openDeleteUser(user)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
               </TableBody>
             </Table>
 
