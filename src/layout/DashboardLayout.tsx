@@ -79,7 +79,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           href: `/dashboard/teacher/applications`,
           icon: FileText,
         },
-        { name: "Profile", href: `/dashboard/teacher/profile`, icon: User },
+        {
+          name: "Profile",
+          href: `/dashboard/teacher/teacher-profile`,
+          icon: User,
+        },
       ],
     },
     school: {
