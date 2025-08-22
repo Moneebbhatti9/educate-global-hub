@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Globe, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { loginSchema } from "@/helpers/validation";
@@ -29,7 +29,7 @@ interface LoginFormData {
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+
   const { handleError, showSuccess } = useErrorHandler();
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);

@@ -21,7 +21,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import OTPVerification from "@/components/custom/OTPVerification";
-import { useToast } from "@/hooks/use-toast";
+import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import {
@@ -43,7 +43,7 @@ interface PasswordResetFormData {
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+
   const { handleError, showSuccess } = useErrorHandler();
   const { passwordReset, passwordResetConfirm, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState<"email" | "otp" | "reset">(
