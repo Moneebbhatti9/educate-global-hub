@@ -136,3 +136,99 @@ export const JobPostingsSkeleton = () => (
     </div>
   </div>
 );
+
+// Admin Job Management Table Skeleton
+export const AdminJobManagementSkeleton = () => (
+  <div className="space-y-6">
+    {/* Header */}
+    <div>
+      <Skeleton className="h-9 w-48 mb-2" />
+      <Skeleton className="h-4 w-80" />
+    </div>
+
+    {/* Stats Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-3 w-16 mb-2" />
+              <Skeleton className="h-8 w-12" />
+            </div>
+            <Skeleton className="h-8 w-8 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Filters */}
+    <div className="border rounded-lg p-6">
+      <Skeleton className="h-6 w-32 mb-4" />
+      <div className="flex flex-col md:flex-row gap-4">
+        <Skeleton className="h-10 w-full md:w-80" />
+        <Skeleton className="h-10 w-full md:w-48" />
+        <Skeleton className="h-10 w-full md:w-48" />
+      </div>
+    </div>
+
+    {/* Jobs Table */}
+    <div className="border rounded-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <Skeleton className="h-6 w-40 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+      </div>
+
+      {/* Table Skeleton */}
+      <div className="space-y-4">
+        {/* Table Header */}
+        <div className="grid grid-cols-8 gap-4 pb-2 border-b">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-16 ml-auto" />
+        </div>
+
+        {/* Table Rows */}
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-8 gap-4 py-4 border-b last:border-b-0"
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-16" />
+            <div className="ml-auto">
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination Skeleton */}
+      <div className="flex items-center justify-between mt-6 pt-4 border-t">
+        <Skeleton className="h-4 w-48" />
+        <div className="flex space-x-2">
+          <Skeleton className="h-8 w-20 rounded" />
+          <Skeleton className="h-8 w-20 rounded" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
