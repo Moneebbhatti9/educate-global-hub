@@ -16,6 +16,7 @@ export {
   JobCardSkeleton,
   JobListingsSkeleton,
   PaginationSkeleton,
+  AdminJobManagementSkeleton,
 } from "./job-postings-skeleton";
 
 // Form Skeletons

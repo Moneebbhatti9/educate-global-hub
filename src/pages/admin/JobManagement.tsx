@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { AdminJobManagementSkeleton } from "@/components/skeletons";
 import {
   Card,
   CardContent,
@@ -240,6 +241,14 @@ const JobManagement = () => {
     );
   }
 
+  if (isLoadingJobs || isLoadingStats) {
+    return (
+      <DashboardLayout role="admin">
+        <AdminJobManagementSkeleton />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="admin">
       <div className="space-y-6">
@@ -260,9 +269,7 @@ const JobManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Jobs</p>
-                  <p className="text-2xl font-bold">
-                    {isLoadingStats ? "..." : stats?.totalJobs || 0}
-                  </p>
+                  <p className="text-2xl font-bold">{stats?.totalJobs || 0}</p>
                 </div>
                 <Briefcase className="w-8 h-8 text-brand-primary" />
               </div>
@@ -274,7 +281,7 @@ const JobManagement = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Active</p>
                   <p className="text-2xl font-bold text-brand-accent-green">
-                    {isLoadingStats ? "..." : stats?.activeJobs || 0}
+                    {stats?.activeJobs || 0}
                   </p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-brand-accent-green" />
@@ -287,7 +294,7 @@ const JobManagement = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Draft</p>
                   <p className="text-2xl font-bold text-brand-accent-orange">
-                    {isLoadingStats ? "..." : stats?.pendingJobs || 0}
+                    {stats?.pendingJobs || 0}
                   </p>
                 </div>
                 <Clock className="w-8 h-8 text-brand-accent-orange" />
@@ -300,7 +307,7 @@ const JobManagement = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Closed</p>
                   <p className="text-2xl font-bold text-gray-500">
-                    {isLoadingStats ? "..." : stats?.suspendedJobs || 0}
+                    {stats?.suspendedJobs || 0}
                   </p>
                 </div>
                 <Archive className="w-8 h-8 text-gray-500" />
@@ -313,7 +320,7 @@ const JobManagement = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Expired</p>
                   <p className="text-2xl font-bold text-red-500">
-                    {isLoadingStats ? "..." : stats?.expiredJobs || 0}
+                    {stats?.expiredJobs || 0}
                   </p>
                 </div>
                 <AlertTriangle className="w-8 h-8 text-red-500" />
@@ -381,14 +388,7 @@ const JobManagement = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoadingJobs ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-muted-foreground">Loading jobs...</p>
-                </div>
-              </div>
-            ) : jobs.length === 0 ? (
+            {jobs.length === 0 ? (
               <div className="text-center py-8">
                 <Briefcase className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
