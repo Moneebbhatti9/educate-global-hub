@@ -488,26 +488,6 @@ const TeacherProfile = () => {
                       {getDisplayValue(profile.bio, "No bio available")}
                     </p>
                   </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Detailed Summary</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {getDisplayValue(
-                        profile.professionalSummary,
-                        "No detailed summary available"
-                      )}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Career Objectives</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {getDisplayValue(
-                        profile.careerObjectives,
-                        "No career objectives specified"
-                      )}
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
 

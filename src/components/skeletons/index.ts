@@ -37,10 +37,10 @@ export {
 export {
   CandidatesSkeleton,
   CandidateCardSkeleton,
-  CandidateListSkeleton,
+  CandidatesStatsSkeleton,
   CandidateFiltersSkeleton,
   CandidateTabsSkeleton,
-  CandidateDetailsSkeleton,
+  ApplicationsLoadingSkeleton,
 } from "./candidates-skeleton";
 
 // Teacher Profile Skeletons

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
@@ -51,12 +51,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchoolJobs } from "@/hooks/useJobs";
+import { applicationsAPI } from "@/apis/applications";
 import { customToast } from "@/components/ui/sonner";
 import type { ApplicationStatus } from "@/types/job";
-import { CandidatesSkeleton } from "@/components/skeletons/candidates-skeleton";
+import { CandidatesSkeleton, ApplicationsLoadingSkeleton } from "@/components/skeletons/candidates-skeleton";
 
 const Candidates = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const selectedJob = searchParams.get("job");
@@ -66,6 +68,18 @@ const Candidates = () => {
   );
   const [experienceFilter, setExperienceFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [applicationsData, setApplicationsData] = useState<any>(null);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false);
+
+  // Get job data from navigation state if available
+  const jobFromState = location.state as { jobId?: string; jobTitle?: string } | null;
+  const effectiveJobId = jobFromState?.jobId || selectedJob;
+
+  // Debug logging
+  console.log("Navigation state:", location.state);
+  console.log("Job from state:", jobFromState);
+  console.log("Effective job ID:", effectiveJobId);
+  console.log("Selected job from URL:", selectedJob);
 
   // API hooks
   const { data: jobsData, isLoading: jobsLoading } = useSchoolJobs(
@@ -73,134 +87,100 @@ const Candidates = () => {
     { page: 1, limit: 100 } // Get all jobs for filtering
   );
 
-  // Mock candidates data - in real implementation, this would come from the applications API
-  // For now, using mock data to demonstrate the UI
-  const candidates = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah.johnson@email.com",
-      avatar: "/api/placeholder/60/60",
-      jobId: "1",
-      jobTitle: "Mathematics Teacher - Secondary",
-      experience: "8 years",
-      education: "MSc Mathematics, University of Oxford",
-      location: "London, UK",
-      currentPosition: "Senior Mathematics Teacher",
-      rating: 4.8,
-      status: "pending" as ApplicationStatus,
-      applicationDate: "March 15, 2024",
-      resumeUrl: "#",
-      skills: ["Advanced Mathematics", "IB Curriculum", "Student Mentoring"],
-      languages: ["English (Native)", "French (Intermediate)"],
-      certifications: ["PGCE", "IB Mathematics Certificate"],
-      salaryExpectation: "$4,500 - $6,000",
-      availableFrom: "June 2024",
-      notes:
-        "Excellent experience with IB curriculum and proven track record in student achievement.",
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      email: "michael.chen@email.com",
-      avatar: "/api/placeholder/60/60",
-      jobId: "2",
-      jobTitle: "English Language Teacher - Primary",
-      experience: "5 years",
-      education: "BA English Literature, Cambridge University",
-      location: "Singapore",
-      currentPosition: "Primary English Teacher",
-      rating: 4.6,
-      status: "reviewing" as ApplicationStatus,
-      applicationDate: "March 14, 2024",
-      resumeUrl: "#",
-      skills: ["Phonics", "Reading Comprehension", "Creative Writing"],
-      languages: ["English (Native)", "Mandarin (Native)", "Spanish (Basic)"],
-      certifications: ["TESOL", "Cambridge CELTA"],
-      salaryExpectation: "$3,500 - $5,000",
-      availableFrom: "August 2024",
-      notes:
-        "Strong background in primary education with multicultural experience.",
-    },
-    {
-      id: 3,
-      name: "Emily Rodriguez",
-      email: "emily.rodriguez@email.com",
-      avatar: "/api/placeholder/60/60",
-      jobId: "3",
-      jobTitle: "Science Lab Coordinator",
-      experience: "12 years",
-      education: "PhD Chemistry, MIT",
-      location: "Dubai, UAE",
-      currentPosition: "Science Department Head",
-      rating: 4.9,
-      status: "pending" as ApplicationStatus,
-      applicationDate: "March 13, 2024",
-      resumeUrl: "#",
-      skills: [
-        "Laboratory Management",
-        "Safety Protocols",
-        "Equipment Maintenance",
-      ],
-      languages: [
-        "English (Native)",
-        "Spanish (Native)",
-        "Arabic (Conversational)",
-      ],
-      certifications: ["Lab Safety Certification", "Advanced Chemistry"],
-      salaryExpectation: "$3,000 - $4,500",
-      availableFrom: "Immediately",
-      notes: "Extensive lab management experience with strong safety record.",
-    },
-    {
-      id: 4,
-      name: "David Kim",
-      email: "david.kim@email.com",
-      avatar: "/api/placeholder/60/60",
-      jobId: "1",
-      jobTitle: "Mathematics Teacher - Secondary",
-      experience: "6 years",
-      education: "MEd Mathematics Education, Harvard",
-      location: "Seoul, South Korea",
-      currentPosition: "Mathematics Teacher",
-      rating: 4.7,
-      status: "shortlisted" as ApplicationStatus,
-      applicationDate: "March 12, 2024",
-      resumeUrl: "#",
-      skills: ["Calculus", "Statistics", "Educational Technology"],
-      languages: [
-        "English (Fluent)",
-        "Korean (Native)",
-        "Japanese (Intermediate)",
-      ],
-      certifications: ["Teaching License", "EdTech Certification"],
-      salaryExpectation: "$4,000 - $5,500",
-      availableFrom: "July 2024",
-      notes: "Technology-forward approach to mathematics education.",
-    },
-    {
-      id: 5,
-      name: "Lisa Thompson",
-      email: "lisa.thompson@email.com",
-      avatar: "/api/placeholder/60/60",
-      jobId: "4",
-      jobTitle: "Art & Design Teacher",
-      experience: "10 years",
-      education: "MFA Fine Arts, Royal College of Art",
-      location: "Manchester, UK",
-      currentPosition: "Head of Art Department",
-      rating: 4.8,
-      status: "rejected" as ApplicationStatus,
-      applicationDate: "March 10, 2024",
-      resumeUrl: "#",
-      skills: ["Digital Art", "Traditional Media", "Portfolio Development"],
-      languages: ["English (Native)", "Italian (Intermediate)"],
-      certifications: ["Art Education Certificate", "Digital Design"],
-      salaryExpectation: "$3,200 - $4,800",
-      availableFrom: "September 2024",
-      notes: "Award-winning art educator with exhibition experience.",
-    },
-  ];
+  // Fetch applications by job when effectiveJobId changes
+  useEffect(() => {
+    const fetchApplications = async () => {
+      if (effectiveJobId) {
+        // Fetch applications for a specific job
+        setIsLoadingApplications(true);
+        try {
+          const response = await applicationsAPI.getApplicationsByJob(effectiveJobId, {
+            page: currentPage,
+            limit: 20,
+            status: statusFilter === "all" ? undefined : statusFilter,
+            search: searchTerm || undefined,
+          });
+          
+          console.log("Applications by job response:", response);
+          
+          // Store the API response data
+          setApplicationsData(response.data);
+          
+        } catch (error) {
+          console.error("Error fetching applications by job:", error);
+          customToast.error("Failed to fetch applications. Please try again.");
+        } finally {
+          setIsLoadingApplications(false);
+        }
+      } else {
+        // Fetch all school applications when no specific job is selected
+        setIsLoadingApplications(true);
+        try {
+          const response = await applicationsAPI.getAllSchoolApplications({
+            page: currentPage,
+            limit: 20,
+            status: statusFilter === "all" ? undefined : statusFilter,
+            querySearch: searchTerm || undefined,
+          });
+          
+          console.log("All school applications response:", response);
+          
+          // Store the API response data
+          setApplicationsData(response.data);
+          
+        } catch (error) {
+          console.error("Error fetching all school applications:", error);
+          customToast.error("Failed to fetch all applications. Please try again.");
+        } finally {
+          setIsLoadingApplications(false);
+        }
+      }
+    };
+
+    fetchApplications();
+  }, [effectiveJobId, currentPage, statusFilter, searchTerm]);
+
+  // Map API response to candidates format
+  const mapApplicationsToCandidates = (applications: any[]) => {
+    return applications.map((app, index) => ({
+      id: app._id || index + 1,
+      name: app.teacher?.fullName || "Not Provided",
+      email: "Not Provided", // Email not in API response
+      avatar: "/api/placeholder/60/60", // Default avatar
+      jobId: app.job?._id || app.jobId || "Not Provided",
+      jobTitle: app.job?.title || jobFromState?.jobTitle || "Not Provided",
+      experience: "Not Provided", // Experience not in API response
+      education: "Not Provided", // Education not in API response
+      location: app.teacher?.city && app.teacher?.country 
+        ? `${app.teacher.city}, ${app.teacher.country}`
+        : "Not Provided",
+      currentPosition: "Not Provided", // Current position not in API response
+      rating: 0, // Rating not in API response
+      status: app.status || "pending",
+      applicationDate: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Not Provided",
+      resumeUrl: app.resumeUrl || "#",
+      skills: ["Not Provided"], // Skills not in API response
+      languages: ["Not Provided"], // Languages not in API response
+      certifications: ["Not Provided"], // Certifications not in API response
+      salaryExpectation: app.expectedSalary ? `$${app.expectedSalary}` : "Not Provided",
+      availableFrom: app.availableFrom ? new Date(app.availableFrom).toLocaleDateString() : "Not Provided",
+      notes: app.coverLetter || app.reasonForApplying || "Not Provided",
+      // Additional fields from API
+      coverLetter: app.coverLetter || "Not Provided",
+      reasonForApplying: app.reasonForApplying || "Not Provided",
+      screeningAnswers: app.screeningAnswers || {},
+      documents: app.documents || [],
+      isWithdrawn: app.isWithdrawn || false,
+      // New fields from the updated API response
+      job: app.job || {},
+      teacher: app.teacher || {},
+    }));
+  };
+
+  // Get candidates from API response or fallback to empty array
+  const candidates = applicationsData?.applications 
+    ? mapApplicationsToCandidates(applicationsData.applications)
+    : [];
 
   const getStatusColor = (status: ApplicationStatus) => {
     switch (status) {
@@ -254,7 +234,7 @@ const Candidates = () => {
 
     const matchesStatus =
       statusFilter === "all" || candidate.status === statusFilter;
-    const matchesJob = !selectedJob || candidate.jobId === selectedJob;
+    const matchesJob = !effectiveJobId || candidate.jobId === effectiveJobId;
 
     const candidateYears = parseInt(candidate.experience);
     const matchesExperience =
@@ -271,18 +251,26 @@ const Candidates = () => {
     return matchesSearch && matchesStatus && matchesJob && matchesExperience;
   });
 
-  const groupedCandidates = (jobsData?.data?.data || []).map((job) => ({
-    ...job,
-    candidates: filteredCandidates.filter(
-      (candidate) => candidate.jobId === job._id
-    ),
-  }));
+  const groupedCandidates = effectiveJobId && applicationsData?.applications ? [
+    {
+      _id: effectiveJobId,
+      title: jobFromState?.jobTitle || "Selected Job",
+      candidates: candidates
+    }
+  ] : applicationsData?.applications ? [
+    // When viewing all applications, create a single group
+    {
+      _id: "all",
+      title: "All Applications",
+      candidates: candidates
+    }
+  ] : [];
 
   const stats = {
-    total: candidates.length,
-    new: candidates.filter((c) => c.status === "pending").length,
-    reviewing: candidates.filter((c) => c.status === "reviewing").length,
-    shortlisted: candidates.filter((c) => c.status === "shortlisted").length,
+    total: applicationsData?.summary?.totalApplications || applicationsData?.applications?.length || 0,
+    new: applicationsData?.applications?.filter((app: any) => app.status === "pending").length || 0,
+    reviewing: applicationsData?.applications?.filter((app: any) => app.status === "reviewing").length || 0,
+    shortlisted: applicationsData?.applications?.filter((app: any) => app.status === "shortlisted").length || 0,
   };
 
   const handleStatusChange = async (
@@ -311,11 +299,21 @@ const Candidates = () => {
   };
 
   const handleDownloadResume = (resumeUrl: string) => {
-    customToast.info("Downloading resume...");
-    // TODO: Implement resume download
+    if (resumeUrl && resumeUrl !== "#") {
+      // Create a temporary link to download the resume
+      const link = document.createElement('a');
+      link.href = resumeUrl;
+      link.download = 'resume.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      customToast.success("Resume download started");
+    } else {
+      customToast.error("Resume not available for download");
+    }
   };
 
-  if (jobsLoading) {
+  if (jobsLoading || isLoadingApplications) {
     return (
       <DashboardLayout role="school">
         <CandidatesSkeleton />
@@ -395,7 +393,9 @@ const Candidates = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Candidate Applications</CardTitle>
+              <CardTitle>
+                {jobFromState?.jobTitle ? `Candidates for ${jobFromState.jobTitle}` : "All Candidates"}
+              </CardTitle>
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -447,142 +447,217 @@ const Candidates = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="grouped" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              {/* <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="grouped">Grouped by Job</TabsTrigger>
                 <TabsTrigger value="all">All Candidates</TabsTrigger>
-              </TabsList>
+              </TabsList> */}
 
               <TabsContent value="grouped" className="space-y-6 mt-6">
-                {groupedCandidates.map((job) => (
-                  <div key={job._id}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-heading font-semibold text-lg">
-                        {job.title}
-                      </h3>
-                      <Badge variant="outline">
-                        {job.candidates.length} candidates
-                      </Badge>
-                    </div>
+                {isLoadingApplications ? (
+                  <ApplicationsLoadingSkeleton />
+                ) : groupedCandidates.length === 0 ? (
+                  <Card className="p-8 text-center text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p>
+                      {effectiveJobId 
+                        ? "No candidates found for this position." 
+                        : "Please select a job to view candidates."
+                      }
+                    </p>
+                  </Card>
+                ) : (
+                  groupedCandidates.map((job) => (
+                    <div key={job._id}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-heading font-semibold text-lg">
+                          {job.title}
+                        </h3>
+                        <Badge variant="outline">
+                          {job.candidates.length} candidates
+                        </Badge>
+                      </div>
 
-                    {job.candidates.length === 0 ? (
-                      <Card className="p-8 text-center text-muted-foreground">
-                        <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                        <p>
-                          No candidates match the current filters for this
-                          position.
-                        </p>
-                      </Card>
-                    ) : (
-                      <div className="space-y-4">
-                        {job.candidates.map((candidate) => (
-                          <Card
-                            key={candidate.id}
-                            className="hover:shadow-card-hover transition-all"
-                          >
-                            <CardContent className="p-6">
-                              <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-start space-x-4">
-                                  <Avatar className="w-16 h-16">
-                                    <AvatarImage src={candidate.avatar} />
-                                    <AvatarFallback className="text-lg">
-                                      {candidate.name
-                                        .split(" ")
-                                        .map((n) => n[0])
-                                        .join("")}
-                                    </AvatarFallback>
-                                  </Avatar>
+                      {job.candidates.length === 0 ? (
+                        <Card className="p-8 text-center text-muted-foreground">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                          <p>
+                            No candidates match the current filters for this
+                            position.
+                          </p>
+                        </Card>
+                      ) : (
+                        <div className="space-y-4">
+                          {job.candidates.map((candidate) => (
+                            <Card
+                              key={candidate.id}
+                              className="hover:shadow-card-hover transition-all"
+                            >
+                              <CardContent className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex items-start space-x-4">
+                                    <Avatar className="w-16 h-16">
+                                      <AvatarImage src={candidate.avatar} />
+                                      <AvatarFallback className="text-lg">
+                                        {candidate.name
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")}
+                                      </AvatarFallback>
+                                    </Avatar>
 
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                      <h4 className="font-heading font-semibold text-lg">
-                                        {candidate.name}
-                                      </h4>
-                                      <Badge
-                                        className={getStatusColor(
-                                          candidate.status
-                                        )}
-                                      >
-                                        {getStatusLabel(candidate.status)}
-                                      </Badge>
-                                    </div>
-
-                                    <p className="text-muted-foreground mb-2">
-                                      {candidate.currentPosition}
-                                    </p>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                      <div className="flex items-center space-x-2">
-                                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                                        <span>{candidate.location}</span>
+                                    <div className="flex-1">
+                                      <div className="flex items-center space-x-3 mb-2">
+                                        <h4 className="font-heading font-semibold text-lg">
+                                          {candidate.name}
+                                        </h4>
+                                        <Badge
+                                          className={getStatusColor(
+                                            candidate.status
+                                          )}
+                                        >
+                                          {getStatusLabel(candidate.status)}
+                                        </Badge>
                                       </div>
-                                      <div className="flex items-center space-x-2">
-                                        <BookOpen className="w-4 h-4 text-muted-foreground" />
-                                        <span>{candidate.experience}</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                        <span>{candidate.rating}</span>
+
+                                      <p className="text-muted-foreground mb-2">
+                                        {candidate.currentPosition}
+                                      </p>
+
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                        <div className="flex items-center space-x-2">
+                                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                                          <span>{candidate.location}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <BookOpen className="w-4 h-4 text-muted-foreground" />
+                                          <span>{candidate.experience}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                                          <span>{candidate.rating}</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
+
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          navigate(
+                                            `/dashboard/school/candidate-profile/${candidate.id}`
+                                          )
+                                        }
+                                      >
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        View Full Profile
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          handleDownloadResume(
+                                            candidate.resumeUrl
+                                          )
+                                        }
+                                      >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        Download Resume
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          handleSendMessage(candidate.email)
+                                        }
+                                      >
+                                        <MessageCircle className="w-4 h-4 mr-2" />
+                                        Send Message
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          handleScheduleInterview(candidate.email)
+                                        }
+                                      >
+                                        <Calendar className="w-4 h-4 mr-2" />
+                                        Schedule Interview
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          handleStatusChange(
+                                            candidate.id.toString(),
+                                            "shortlisted"
+                                          )
+                                        }
+                                      >
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        Shortlist
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          handleStatusChange(
+                                            candidate.id.toString(),
+                                            "rejected"
+                                          )
+                                        }
+                                      >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Reject
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </div>
 
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        navigate(
-                                          `/dashboard/school/candidate-profile/${candidate.id}`
-                                        )
-                                      }
-                                    >
-                                      <Eye className="w-4 h-4 mr-2" />
-                                      View Full Profile
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleDownloadResume(
-                                          candidate.resumeUrl
-                                        )
-                                      }
-                                    >
-                                      <Download className="w-4 h-4 mr-2" />
-                                      Download Resume
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleSendMessage(candidate.email)
-                                      }
-                                    >
-                                      <MessageCircle className="w-4 h-4 mr-2" />
-                                      Send Message
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleScheduleInterview(candidate.email)
-                                      }
-                                    >
-                                      <Calendar className="w-4 h-4 mr-2" />
-                                      Schedule Interview
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleStatusChange(
-                                          candidate.id.toString(),
-                                          "shortlisted"
-                                        )
-                                      }
-                                    >
-                                      <CheckCircle className="w-4 h-4 mr-2" />
-                                      Shortlist
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
+                                <div className="mb-4">
+                                  <p className="text-sm mb-2">
+                                    <span className="font-medium">
+                                      Education:
+                                    </span>{" "}
+                                    {candidate.education}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {candidate.notes}
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {candidate.skills
+                                    .slice(0, 3)
+                                    .map((skill, index) => (
+                                      <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {skill}
+                                      </Badge>
+                                    ))}
+                                  {candidate.skills.length > 3 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{candidate.skills.length - 3} more
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                  <div className="flex items-center space-x-4">
+                                    <span>
+                                      Applied: {candidate.applicationDate}
+                                    </span>
+                                    <span>
+                                      Available: {candidate.availableFrom}
+                                    </span>
+                                    <span>
+                                      Salary: {candidate.salaryExpectation}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       onClick={() =>
                                         handleStatusChange(
                                           candidate.id.toString(),
@@ -590,96 +665,35 @@ const Candidates = () => {
                                         )
                                       }
                                     >
-                                      <XCircle className="w-4 h-4 mr-2" />
+                                      <XCircle className="w-4 h-4 mr-1" />
                                       Reject
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-
-                              <div className="mb-4">
-                                <p className="text-sm mb-2">
-                                  <span className="font-medium">
-                                    Education:
-                                  </span>{" "}
-                                  {candidate.education}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {candidate.notes}
-                                </p>
-                              </div>
-
-                              <div className="flex flex-wrap gap-2 mb-4">
-                                {candidate.skills
-                                  .slice(0, 3)
-                                  .map((skill, index) => (
-                                    <Badge
-                                      key={index}
-                                      variant="secondary"
-                                      className="text-xs"
+                                    </Button>
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleStatusChange(
+                                          candidate.id.toString(),
+                                          "shortlisted"
+                                        )
+                                      }
                                     >
-                                      {skill}
-                                    </Badge>
-                                  ))}
-                                {candidate.skills.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{candidate.skills.length - 3} more
-                                  </Badge>
-                                )}
-                              </div>
-
-                              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-4">
-                                  <span>
-                                    Applied: {candidate.applicationDate}
-                                  </span>
-                                  <span>
-                                    Available: {candidate.availableFrom}
-                                  </span>
-                                  <span>
-                                    Salary: {candidate.salaryExpectation}
-                                  </span>
+                                      <CheckCircle className="w-4 h-4 mr-1" />
+                                      Shortlist
+                                    </Button>
+                                  </div>
                                 </div>
-
-                                <div className="flex space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleStatusChange(
-                                        candidate.id.toString(),
-                                        "rejected"
-                                      )
-                                    }
-                                  >
-                                    <XCircle className="w-4 h-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleStatusChange(
-                                        candidate.id.toString(),
-                                        "shortlisted"
-                                      )
-                                    }
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    Shortlist
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </TabsContent>
 
-              <TabsContent value="all" className="space-y-4 mt-6">
+              {/* <TabsContent value="all" className="space-y-4 mt-6">
                 {filteredCandidates.length === 0 ? (
                   <Card className="p-8 text-center text-muted-foreground">
                     <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
@@ -853,7 +867,7 @@ const Candidates = () => {
                                 )
                               }
                             >
-                              <XCircle className="w-4 h-4 mr-1" />
+                              <XCircle className="w-4 h-4 ml-1" />
                               Reject
                             </Button>
                             <Button
@@ -866,7 +880,7 @@ const Candidates = () => {
                                 )
                               }
                             >
-                              <CheckCircle className="w-4 h-4 mr-1" />
+                              <CheckCircle className="w-4 h-4 ml-1" />
                               Shortlist
                             </Button>
                           </div>
@@ -875,7 +889,7 @@ const Candidates = () => {
                     </Card>
                   ))
                 )}
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </CardContent>
         </Card>

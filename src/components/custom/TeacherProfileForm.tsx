@@ -233,7 +233,7 @@ const TeacherProfileForm = ({
 
       // Call the onComplete callback
       onComplete(data);
-
+      console.log(user?.role);
       // Navigate to teacher dashboard
       if (user?.role) {
         navigate(`/dashboard/${user.role.toLowerCase()}`);
@@ -469,9 +469,6 @@ const TeacherProfileForm = ({
                   {...register("address")}
                   className={isFieldInvalid("address") ? "border-red-500" : ""}
                 />
-                <p className="text-sm text-muted-foreground">
-                  Address must be at least 5 characters long
-                </p>
                 {getFieldError("address") && (
                   <p className="text-sm text-red-500">
                     {getFieldError("address")}
