@@ -54,7 +54,7 @@ import { useSchoolJobs } from "@/hooks/useJobs";
 import { applicationsAPI } from "@/apis/applications";
 import { customToast } from "@/components/ui/sonner";
 import type { ApplicationStatus } from "@/types/job";
-import { CandidatesSkeleton, ApplicationsLoadingSkeleton } from "@/components/skeletons/candidates-skeleton";
+import { CandidatesSkeleton } from "@/components/skeletons/candidates-skeleton";
 
 const Candidates = () => {
   const navigate = useNavigate();
@@ -313,7 +313,7 @@ const Candidates = () => {
     }
   };
 
-  if (jobsLoading || isLoadingApplications) {
+  if (jobsLoading) {
     return (
       <DashboardLayout role="school">
         <CandidatesSkeleton />
@@ -332,6 +332,19 @@ const Candidates = () => {
           <p className="text-muted-foreground">
             Review and manage applications for your job postings
           </p>
+          {jobFromState?.jobTitle ? (
+            <div className="mt-3 p-3 bg-muted rounded-lg">
+              <p className="text-sm font-medium text-foreground">
+                Currently viewing candidates for: <span className="text-brand-primary">{jobFromState.jobTitle}</span>
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3 p-3 bg-muted rounded-lg">
+              <p className="text-sm font-medium text-foreground">
+                Viewing all applications across all jobs
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -454,7 +467,10 @@ const Candidates = () => {
 
               <TabsContent value="grouped" className="space-y-6 mt-6">
                 {isLoadingApplications ? (
-                  <ApplicationsLoadingSkeleton />
+                  <Card className="p-8 text-center text-muted-foreground">
+                    <Loader2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50 animate-spin" />
+                    <p>Loading candidates...</p>
+                  </Card>
                 ) : groupedCandidates.length === 0 ? (
                   <Card className="p-8 text-center text-muted-foreground">
                     <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />

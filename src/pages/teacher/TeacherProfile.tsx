@@ -47,6 +47,7 @@ import {
   FileText,
   Building,
   AlertCircle,
+  Edit,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { AddLanguageModal } from "@/components/Modals/add-language-modal";
@@ -97,6 +98,7 @@ const TeacherProfile = () => {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch teacher profile data when component mounts
   useEffect(() => {
@@ -430,6 +432,7 @@ const TeacherProfile = () => {
                     <Download className="w-4 h-4 mr-2" />
                     Download CV
                   </Button>
+
                 </div>
               </div>
             </CardContent>
@@ -480,6 +483,15 @@ const TeacherProfile = () => {
                     <FileText className="w-5 h-5 mr-2" />
                     Professional Summary
                   </CardTitle>
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="outline" 
+                      // onClick={() => setIsEditing(!isEditing)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                       Edit Summary
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -659,6 +671,15 @@ const TeacherProfile = () => {
                     <User className="w-5 h-5 mr-2" />
                     Personal Details & Contact Information
                   </CardTitle>
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsEditing(!isEditing)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      {isEditing ? 'Exit Edit Mode' : 'Edit profile'}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -669,7 +690,7 @@ const TeacherProfile = () => {
                           id="firstName"
                           value={profile.personalInfo.firstName}
                           placeholder="Enter first name"
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -678,7 +699,7 @@ const TeacherProfile = () => {
                           id="lastName"
                           value={profile.personalInfo.lastName}
                           placeholder="Enter last name"
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -687,7 +708,7 @@ const TeacherProfile = () => {
                           id="title"
                           value={profile.personalInfo.title}
                           placeholder="Enter professional title"
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -711,7 +732,7 @@ const TeacherProfile = () => {
                             }
                           }}
                           placeholder="Select date of birth"
-                          disabled={true}
+                          disabled={!isEditing}
                           max={new Date()}
                         />
                       </div>
@@ -720,12 +741,12 @@ const TeacherProfile = () => {
                         <Input
                           id="placeOfBirth"
                           value={profile.personalInfo.placeOfBirth}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
                         <Label htmlFor="nationality">Nationality</Label>
-                        <Select disabled={true}>
+                        <Select disabled={!isEditing}>
                           <SelectTrigger>
                             <SelectValue
                               placeholder={profile.personalInfo.nationality}
@@ -746,7 +767,7 @@ const TeacherProfile = () => {
                         <Input
                           id="phone"
                           value={profile.personalInfo.phone}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -754,7 +775,7 @@ const TeacherProfile = () => {
                         <Input
                           id="alternatePhone"
                           value={profile.personalInfo.alternatePhone}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -763,7 +784,7 @@ const TeacherProfile = () => {
                           id="email"
                           type="email"
                           value={profile.personalInfo.email}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -771,12 +792,12 @@ const TeacherProfile = () => {
                         <Input
                           id="passportNo"
                           value={profile.personalInfo.passportNo}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
                         <Label htmlFor="gender">Gender</Label>
-                        <Select disabled={true}>
+                        <Select disabled={!isEditing}>
                           <SelectTrigger>
                             <SelectValue
                               placeholder={profile.personalInfo.gender}
@@ -794,7 +815,7 @@ const TeacherProfile = () => {
                       </div>
                       <div>
                         <Label htmlFor="maritalStatus">Marital Status</Label>
-                        <Select disabled={true}>
+                        <Select disabled={!isEditing}>
                           <SelectTrigger>
                             <SelectValue
                               placeholder={profile.personalInfo.maritalStatus}
@@ -824,7 +845,7 @@ const TeacherProfile = () => {
                         <Input
                           id="street"
                           value={profile.personalInfo.address.street}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -832,7 +853,7 @@ const TeacherProfile = () => {
                         <Input
                           id="city"
                           value={profile.personalInfo.address.city}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -840,12 +861,12 @@ const TeacherProfile = () => {
                         <Input
                           id="state"
                           value={profile.personalInfo.address.state}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
                         <Label htmlFor="country">Country</Label>
-                        <Select disabled={true}>
+                        <Select disabled={!isEditing}>
                           <SelectTrigger>
                             <SelectValue
                               placeholder={profile.personalInfo.address.country}
@@ -863,7 +884,7 @@ const TeacherProfile = () => {
                         <Input
                           id="postalCode"
                           value={profile.personalInfo.address.postalCode}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                       <div>
@@ -871,7 +892,7 @@ const TeacherProfile = () => {
                         <Input
                           id="linkedin"
                           value={profile.personalInfo.linkedIn}
-                          readOnly={true}
+                          readOnly={!isEditing}
                         />
                       </div>
                     </div>
