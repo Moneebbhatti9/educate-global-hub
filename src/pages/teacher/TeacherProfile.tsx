@@ -96,6 +96,7 @@ const TeacherProfile = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -484,12 +485,12 @@ const TeacherProfile = () => {
                     Professional Summary
                   </CardTitle>
                   <div className="flex justify-end">
-                    <Button 
-                      variant="outline" 
-                      // onClick={() => setIsEditing(!isEditing)}
+                    <Button
+                      variant="outline"
+                    // onClick={() => setIsEditing(!isEditing)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
-                       Edit Summary
+                      Edit Summary
                     </Button>
                   </div>
                 </CardHeader>
@@ -672,8 +673,8 @@ const TeacherProfile = () => {
                     Personal Details & Contact Information
                   </CardTitle>
                   <div className="flex justify-end">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsEditing(!isEditing)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
@@ -1116,10 +1117,20 @@ const TeacherProfile = () => {
             <TabsContent value="development" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Professional Development
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <FileText className="w-5 h-5 mr-2" />
+                      Professional Summary
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSummaryModal(true)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Summary
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
@@ -1222,22 +1233,33 @@ const TeacherProfile = () => {
           <AddQualificationModal
             open={showQualificationModal}
             onOpenChange={setShowQualificationModal}
-            onSave={() => {}}
+            onSave={() => { }}
             editingQualification={editingItem}
           />
 
           <AddEducationModal
             open={showEducationModal}
             onOpenChange={setShowEducationModal}
-            onSave={() => {}}
+            onSave={() => { }}
             editingEducation={editingItem}
           />
 
           <AddRefereeModal
             open={showRefereeModal}
             onOpenChange={setShowRefereeModal}
-            onSave={() => {}}
+            onSave={() => { }}
             editingReferee={editingItem}
+          />
+
+          <ProfileSummaryModal
+            open={showSummaryModal}
+            onOpenChange={setShowSummaryModal}
+            onSave={handleProfileSummaryUpdate}
+            initialData={{
+              bio: profile.bio,
+              professionalSummary: profile.professionalSummary,
+              careerObjectives: profile.careerObjectives,
+            }}
           />
         </div>
       )}
