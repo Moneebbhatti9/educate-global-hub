@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,18 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Award } from "lucide-react";
-
-interface Qualification {
-  id: string;
-  title: string;
-  institution: string;
-  subject: string;
-  certificationId: string;
-  issueDate: string;
-  expiryDate: string;
-  ageRanges: string[];
-  description?: string;
-}
+import { useCreateTeacherQualification, useUpdateTeacherQualification, Qualification, QualificationRequest } from "@/apis/profiles";
+import { toast } from "sonner";
 
 interface AddQualificationModalProps {
   open: boolean;
@@ -39,7 +29,11 @@ export const AddQualificationModal = ({
   onSave,
   editingQualification,
 }: AddQualificationModalProps) => {
-  const [formData, setFormData] = useState<Omit<Qualification, "id">>({
+  const createQualification = useCreateTeacherQualification();
+  const updateQualification = useUpdateTeacherQualification();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [formData, setFormData] = useState<QualificationRequest>({
     title: editingQualification?.title || "",
     institution: editingQualification?.institution || "",
     subject: editingQualification?.subject || "",
@@ -50,29 +44,74 @@ export const AddQualificationModal = ({
     description: editingQualification?.description || "",
   });
 
-  const handleSave = () => {
+  // Update form data when editingQualification changes
+  useEffect(() => {
+    if (editingQualification) {
+      setFormData({
+        title: editingQualification.title || "",
+        institution: editingQualification.institution || "",
+        subject: editingQualification.subject || "",
+        certificationId: editingQualification.certificationId || "",
+        issueDate: editingQualification.issueDate || "",
+        expiryDate: editingQualification.expiryDate || "",
+        ageRanges: editingQualification.ageRanges || [],
+        description: editingQualification.description || "",
+      });
+    }
+  }, [editingQualification]);
+
+  const handleSave = async () => {
     if (!formData.title.trim() || !formData.institution.trim()) return;
 
-    const newQualification: Qualification = {
-      id: editingQualification?.id || Date.now().toString(),
-      ...formData,
-    };
+    setIsLoading(true);
+    try {
+      let response;
+      
+      if (editingQualification && editingQualification._id) {
+        // Update existing qualification
+        response = await updateQualification.mutateAsync({
+          qualificationId: editingQualification._id,
+          data: formData
+        });
+      } else {
+        // Create new qualification
+        response = await createQualification.mutateAsync(formData);
+      }
 
-    onSave(newQualification);
-    onOpenChange(false);
+      if (response.success && response.data) {
+        toast.success(
+          editingQualification 
+            ? "Qualification updated successfully!" 
+            : "Qualification added successfully!"
+        );
+        
+        // Call the onSave callback with the response data
+        onSave(response.data);
+        onOpenChange(false);
 
-    // Reset form if not editing
-    if (!editingQualification) {
-      setFormData({
-        title: "",
-        institution: "",
-        subject: "",
-        certificationId: "",
-        issueDate: "",
-        expiryDate: "",
-        ageRanges: [],
-        description: "",
-      });
+        // Reset form if not editing
+        if (!editingQualification) {
+          setFormData({
+            title: "",
+            institution: "",
+            subject: "",
+            certificationId: "",
+            issueDate: "",
+            expiryDate: "",
+            ageRanges: [],
+            description: "",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save qualification:", error);
+      toast.error(
+        editingQualification 
+          ? "Failed to update qualification. Please try again." 
+          : "Failed to add qualification. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -213,9 +252,9 @@ export const AddQualificationModal = ({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!formData.title.trim() || !formData.institution.trim()}
+            disabled={!formData.title.trim() || !formData.institution.trim() || isLoading}
           >
-            {editingQualification ? "Update" : "Add"} Qualification
+            {isLoading ? "Saving..." : editingQualification ? "Update" : "Add"} Qualification
           </Button>
         </DialogFooter>
       </DialogContent>

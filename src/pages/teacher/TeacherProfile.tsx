@@ -48,6 +48,7 @@ import {
   Building,
   AlertCircle,
   Edit,
+  CloudCog,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { AddLanguageModal } from "@/components/Modals/add-language-modal";
@@ -56,32 +57,25 @@ import { AddQualificationModal } from "@/components/Modals/add-qualification-mod
 import { AddEducationModal } from "@/components/Modals/add-education-modal";
 import { AddRefereeModal } from "@/components/Modals/add-referee-modal";
 import { useAuth } from "@/contexts/AuthContext";
-import { teacherProfileAPI } from "@/apis/profiles";
+import { teacherProfileAPI, useCreateTeacherExperience, useUpdateTeacherExperience, useDeleteTeacherExperience, useCreateTeacherEducation, useUpdateTeacherEducation, useDeleteTeacherEducation, useCreateTeacherQualification, useUpdateTeacherQualification, useDeleteTeacherQualification, Experience, Qualification } from "@/apis/profiles";
 import { TeacherProfile as TeacherProfileType } from "@/types/profiles";
 import { TeacherProfileSkeleton } from "@/components/skeletons";
+import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
 
-interface Experience {
-  id: string;
-  title: string;
-  employer: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  responsibilities: string;
-  contactPerson?: string;
-}
+
 
 interface Education {
-  id: string;
-  degree: string;
+  id?: string;
+  _id?: string;
   institution: string;
+  degree: string;
   field: string;
-  gpa?: string;
   startDate: string;
   endDate: string;
+  gpa?: number;
   thesis?: string;
   honors?: string;
+  type?: "University" | "School" | "Professional";
 }
 
 interface Language {
@@ -92,14 +86,25 @@ interface Language {
 
 const TeacherProfile = () => {
   const { user } = useAuth();
+  const createExperience = useCreateTeacherExperience();
+  const updateExperience = useUpdateTeacherExperience();
+  const deleteExperience = useDeleteTeacherExperience();
+  const createEducation = useCreateTeacherEducation();
+  const updateEducation = useUpdateTeacherEducation();
+  const deleteEducation = useDeleteTeacherEducation();
+  const createQualification = useCreateTeacherQualification();
+  const updateQualification = useUpdateTeacherQualification();
+  const deleteQualification = useDeleteTeacherQualification();
   const [activeTab, setActiveTab] = useState("overview");
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
+  const [qualifications, setQualifications] = useState<Qualification[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [originalProfile, setOriginalProfile] = useState<ProfileData | null>(null);
 
   // Fetch teacher profile data when component mounts
   useEffect(() => {
@@ -148,7 +153,7 @@ const TeacherProfile = () => {
             bio: fetchedProfile.professionalBio || "",
             subjects: fetchedProfile.subject ? [fetchedProfile.subject] : [],
             yearsOfExperience: fetchedProfile.yearsOfTeachingExperience || 0,
-            qualifications: fetchedProfile.additionalQualifications || [],
+            qualifications: fetchedProfile.qualifications || [],
             profileCompletion: fetchedProfile.profileCompletion || 0,
             isProfileComplete: fetchedProfile.isProfileComplete || false,
             pgce: fetchedProfile.pgce || false,
@@ -160,6 +165,12 @@ const TeacherProfile = () => {
             development: fetchedProfile.development || [],
             memberships: fetchedProfile.memberships || [],
           }));
+          
+          // Update local state with fetched data
+          setEducations(fetchedProfile.education || []);
+          setExperiences(fetchedProfile.employment || []);
+          // Initialize qualifications as empty array for now - will be populated via API calls
+          setQualifications([]);
         } else {
           console.log("API response not successful:", response);
         }
@@ -181,6 +192,13 @@ const TeacherProfile = () => {
   const [showEducationModal, setShowEducationModal] = useState(false);
   const [showRefereeModal, setShowRefereeModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+
+  // Reset editingItem when qualification modal is closed
+  useEffect(() => {
+    if (!showQualificationModal) {
+      setEditingItem(null);
+    }
+  }, [showQualificationModal]);
 
   // Define profile type based on API response
   type ProfileData = {
@@ -211,7 +229,7 @@ const TeacherProfile = () => {
     careerObjectives: string;
     subjects: string[];
     yearsOfExperience: number;
-    qualifications: string[];
+    qualifications: Qualification[];
     profileCompletion: number;
     isProfileComplete: boolean;
     pgce: boolean;
@@ -253,7 +271,7 @@ const TeacherProfile = () => {
     careerObjectives: "",
     subjects: [],
     yearsOfExperience: 0,
-    qualifications: [],
+    qualifications: [] as Qualification[],
     profileCompletion: 0,
     isProfileComplete: false,
     pgce: false,
@@ -266,26 +284,10 @@ const TeacherProfile = () => {
     memberships: [],
   });
 
-  const addExperience = () => {
-    const newExperience: Experience = {
-      id: Date.now().toString(),
-      title: "",
-      employer: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      current: false,
-      responsibilities: "",
-      contactPerson: "",
-    };
-    setExperiences([...experiences, newExperience]);
-  };
 
-  const removeExperience = (id: string) => {
-    setExperiences(experiences.filter((exp) => exp.id !== id));
-  };
 
-  // Modal handlers
+
+
   const handleSaveLanguage = (language: Language) => {
     if (editingItem) {
       setLanguages(languages.map((l) => (l.id === language.id ? language : l)));
@@ -295,15 +297,126 @@ const TeacherProfile = () => {
     setEditingItem(null);
   };
 
-  const handleSaveExperience = (experience: Experience) => {
-    if (editingItem) {
-      setExperiences(
-        experiences.map((e) => (e.id === experience.id ? experience : e))
-      );
-    } else {
-      setExperiences([...experiences, experience]);
+  const handleSaveExperience = async (experience: Experience) => {
+    try {
+      // Update local state with the new experience
+      if (editingItem) {
+        setExperiences(
+          experiences.map((e) => (e.id === experience.id ? experience : e))
+        );
+      } else {
+        setExperiences([...experiences, experience]);
+      }
+      setEditingItem(null);
+
+      // You can add a success toast here
+      console.log("Experience saved successfully:", experience);
+    } catch (error) {
+      console.error("Failed to save experience:", error);
+      // You can add an error toast here
     }
-    setEditingItem(null);
+  };
+
+  const handleDeleteEmployment = async (employmentId: string) => {
+    try {
+      const response = await deleteExperience.mutateAsync(employmentId);
+
+      if (response.success) {
+        // You can add a success toast here
+        console.log("Employment deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete employment:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleSaveEducation = async (education: Education) => {
+    try {
+      let response;
+      
+      if (editingItem && (education._id || education.id)) {
+        // Update existing education
+        const educationId = education._id || education.id;
+        if (educationId) {
+          response = await updateEducation.mutateAsync({
+            educationId,
+            data: education
+          });
+        }
+      } else {
+        // Create new education
+        response = await createEducation.mutateAsync(education);
+      }
+
+      if (response.success && response.data) {
+        // Update local state with the new education
+        if (editingItem) {
+          setEducations(
+            educations.map((e) => (e.id === education.id || e._id === education._id ? education : e))
+          );
+        } else {
+          setEducations([...educations, education]);
+        }
+        setEditingItem(null);
+
+        // You can add a success toast here
+        console.log("Education saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save education:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleDeleteEducation = async (educationId: string) => {
+    try {
+      const response = await deleteEducation.mutateAsync(educationId);
+
+      if (response.success) {
+        // You can add a success toast here
+        console.log("Education deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete education:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleSaveQualification = async (qualification: Qualification) => {
+    try {
+      // Update local state with the new qualification
+      if (editingItem) {
+        setQualifications(
+          qualifications.map((q) => (q.id === qualification.id || q._id === qualification._id ? qualification : q))
+        );
+      } else {
+        setQualifications([...qualifications, qualification]);
+      }
+      setEditingItem(null);
+
+      // You can add a success toast here
+      console.log("Qualification saved successfully:", qualification);
+    } catch (error) {
+      console.error("Failed to save qualification:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleDeleteQualification = async (qualificationId: string) => {
+    try {
+      const response = await deleteQualification.mutateAsync(qualificationId);
+
+      if (response.success) {
+        // Remove from local state
+        setQualifications(qualifications.filter(q => q._id !== qualificationId && q.id !== qualificationId));
+        // You can add a success toast here
+        console.log("Qualification deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete qualification:", error);
+      // You can add an error toast here
+    }
   };
 
   // Helper function to handle undefined/null values
@@ -314,6 +427,38 @@ const TeacherProfile = () => {
     return value;
   };
 
+  const handleProfileSummaryUpdate = (data: {
+    bio: string;
+    professionalSummary: string;
+    careerObjectives: string;
+  }) => {
+    setProfile((prev) => ({
+      ...prev,
+      bio: data.bio,
+      professionalSummary: data.professionalSummary,
+      careerObjectives: data.careerObjectives,
+    }));
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+ 
+
+      // Clear the original profile since changes are saved
+      setOriginalProfile(null);
+      setIsEditing(false);
+      // You can add a success toast here
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      // You can add an error toast here
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  console.log("profile", profile);
   return (
     <DashboardLayout role="teacher">
       {/* Loading State */}
@@ -480,14 +625,15 @@ const TeacherProfile = () => {
               {/* Profile Summary Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <FileText className="w-5 h-5 mr-2" />
-                    Professional Summary
-                  </CardTitle>
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <FileText className="w-5 h-5 mr-2" />
+                      Professional Summary
+                    </CardTitle>
                     <Button
                       variant="outline"
-                    // onClick={() => setIsEditing(!isEditing)}
+                      size="sm"
+                      onClick={() => setShowSummaryModal(true)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit Summary
@@ -534,8 +680,8 @@ const TeacherProfile = () => {
                         Qualifications
                       </span>
                       <span className="font-semibold">
-                        {profile.qualifications.length > 0
-                          ? profile.qualifications.length
+                        {qualifications.length > 0
+                          ? qualifications.length
                           : "None"}
                       </span>
                     </div>
@@ -668,22 +814,56 @@ const TeacherProfile = () => {
             <TabsContent value="personal" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    Personal Details & Contact Information
-                  </CardTitle>
-                  <div className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditing(!isEditing)}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      {isEditing ? 'Exit Edit Mode' : 'Edit profile'}
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <User className="w-5 h-5 mr-2" />
+                      Personal Details & Contact Information
+                    </CardTitle>
+                    <div className="flex space-x-2">
+                      {isEditing && (
+                        <>
+                          <Button
+                            variant="hero"
+                            size="sm"
+                            onClick={handleSaveProfile}
+                          >
+                            Save Changes
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!isEditing) {
+                            setOriginalProfile(JSON.parse(JSON.stringify(profile)));
+                            setIsEditing(true);
+                          } else {
+                            if (originalProfile) {
+                              setProfile(originalProfile);
+                            }
+                            setIsEditing(false);
+                          }
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        {isEditing ? 'Cancel' : 'Edit profile'}
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {isEditing && (
+                      <div className="col-span-full mb-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-sm text-blue-700">
+                            <Edit className="w-4 h-4 inline mr-2" />
+                            You are now editing your personal information. Click "Save Changes" to save or "Cancel" to discard changes.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="firstName">First Name *</Label>
@@ -692,6 +872,16 @@ const TeacherProfile = () => {
                           value={profile.personalInfo.firstName}
                           placeholder="Enter first name"
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                firstName: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -701,6 +891,16 @@ const TeacherProfile = () => {
                           value={profile.personalInfo.lastName}
                           placeholder="Enter last name"
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                lastName: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -710,6 +910,16 @@ const TeacherProfile = () => {
                           value={profile.personalInfo.title}
                           placeholder="Enter professional title"
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                title: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -743,12 +953,34 @@ const TeacherProfile = () => {
                           id="placeOfBirth"
                           value={profile.personalInfo.placeOfBirth}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                placeOfBirth: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
                         <Label htmlFor="nationality">Nationality</Label>
-                        <Select disabled={!isEditing}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.nationality}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                nationality: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger className={!isEditing ? "bg-muted cursor-not-allowed" : ""}>
                             <SelectValue
                               placeholder={profile.personalInfo.nationality}
                             />
@@ -769,6 +1001,16 @@ const TeacherProfile = () => {
                           id="phone"
                           value={profile.personalInfo.phone}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                phone: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -777,6 +1019,16 @@ const TeacherProfile = () => {
                           id="alternatePhone"
                           value={profile.personalInfo.alternatePhone}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                alternatePhone: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -785,7 +1037,8 @@ const TeacherProfile = () => {
                           id="email"
                           type="email"
                           value={profile.personalInfo.email}
-                          readOnly={!isEditing}
+                          readOnly={true}
+                          className="bg-muted cursor-not-allowed"
                         />
                       </div>
                       <div>
@@ -794,12 +1047,34 @@ const TeacherProfile = () => {
                           id="passportNo"
                           value={profile.personalInfo.passportNo}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                passportNo: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
                         <Label htmlFor="gender">Gender</Label>
-                        <Select disabled={!isEditing}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.gender}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                gender: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger className={!isEditing ? "bg-muted cursor-not-allowed" : ""}>
                             <SelectValue
                               placeholder={profile.personalInfo.gender}
                             />
@@ -816,8 +1091,20 @@ const TeacherProfile = () => {
                       </div>
                       <div>
                         <Label htmlFor="maritalStatus">Marital Status</Label>
-                        <Select disabled={!isEditing}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.maritalStatus}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                maritalStatus: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger className={!isEditing ? "bg-muted cursor-not-allowed" : ""}>
                             <SelectValue
                               placeholder={profile.personalInfo.maritalStatus}
                             />
@@ -847,6 +1134,19 @@ const TeacherProfile = () => {
                           id="street"
                           value={profile.personalInfo.address.street}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  street: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -855,6 +1155,19 @@ const TeacherProfile = () => {
                           id="city"
                           value={profile.personalInfo.address.city}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  city: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -863,12 +1176,40 @@ const TeacherProfile = () => {
                           id="state"
                           value={profile.personalInfo.address.state}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  state: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
                         <Label htmlFor="country">Country</Label>
-                        <Select disabled={!isEditing}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.address.country}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  country: value,
+                                },
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger className={!isEditing ? "bg-muted cursor-not-allowed" : ""}>
                             <SelectValue
                               placeholder={profile.personalInfo.address.country}
                             />
@@ -886,6 +1227,19 @@ const TeacherProfile = () => {
                           id="postalCode"
                           value={profile.personalInfo.address.postalCode}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  postalCode: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -894,6 +1248,16 @@ const TeacherProfile = () => {
                           id="linkedin"
                           value={profile.personalInfo.linkedIn}
                           readOnly={!isEditing}
+                          className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                linkedIn: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -967,101 +1331,48 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Sample Employment Entry */}
-                  <div className="border rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          Mathematics Teacher
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Lincoln High School
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Boston, MA • Sep 2019 - Present
-                        </p>
+                  {profile.employment?.map((job: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {job.title || job.position}
+                          </h3>
+                          <p className="text-muted-foreground">
+                            {job.employer || job.company}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {job.startDate?.split('T')[0]} - {job.endDate?.split('T')[0] || "Present"}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleDeleteEmployment(job._id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Job Description</Label>
+                          <Textarea
+                            value={job.responsibilities || job.description}
+                            rows={4}
+                            readOnly={true}
+                          />
+                        </div>
                       </div>
                     </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Key Responsibilities</Label>
-                        <Textarea
-                          value="• Teach Algebra I and II to 9th and 10th grade students\n• Develop engaging curriculum aligned with state standards\n• Implement differentiated instruction strategies\n• Mentor new teachers in mathematics department"
-                          rows={4}
-                          readOnly={true}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Contact Person</Label>
-                        <Input
-                          value="Dr. Maria Rodriguez, Principal - mrodriguez@lincolnhs.edu"
-                          readOnly={true}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Add more employment entries as needed */}
-                  <div className="border rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          Mathematics Tutor
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Academic Success Center
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Boston, MA • Jun 2018 - Aug 2019
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Key Responsibilities</Label>
-                        <Textarea
-                          value="• Provided one-on-one tutoring in algebra and geometry\n• Assisted students in developing study skills and confidence\n• Tracked student progress and communicated with parents"
-                          rows={3}
-                          readOnly={true}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Contact Person</Label>
-                        <Input
-                          value="James Wilson, Center Director - jwilson@academicsuccess.com"
-                          readOnly={true}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
+
               </Card>
             </TabsContent>
-
-            {/* Additional tabs would follow similar pattern... */}
-            {/* For brevity, I'll add placeholder content for the remaining tabs */}
 
             <TabsContent value="education" className="space-y-6">
               <Card>
@@ -1081,15 +1392,76 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Educational background section with university and school
-                    education details...
-                  </p>
+                  {educations.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No education details added yet. Click "Add Education" to get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {educations.map((education: Education, index: number) => (
+                        <div key={index} className="border rounded-lg p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {education.degree}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                {education.institution}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {education.field && `${education.field} • `}
+                                {education.startDate} - {education.endDate}
+                                {education.gpa && ` • GPA: ${education.gpa}`}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingItem(education);
+                                  setShowEducationModal(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => handleDeleteEducation(education._id || education.id || "")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {(education.thesis || education.honors) && (
+                            <div className="space-y-3">
+                              {education.thesis && (
+                                <div>
+                                  <Label className="text-sm font-medium">Thesis/Project</Label>
+                                  <p className="text-sm text-muted-foreground">{education.thesis}</p>
+                                </div>
+                              )}
+                              {education.honors && (
+                                <div>
+                                  <Label className="text-sm font-medium">Honors & Awards</Label>
+                                  <p className="text-sm text-muted-foreground">{education.honors}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="qualifications" className="space-y-6">
+              
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1107,9 +1479,85 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Qualifications, certifications, and licenses section...
-                  </p>
+                  {profile.qualifications.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No qualifications added yet. Click "Add Qualification" to get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {profile.qualifications.map((qualification) => {
+                        console.log(qualification);
+                        return(
+                        <div
+                          key={qualification._id || qualification.id}
+                          className="border rounded-lg p-4 space-y-3"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium">{qualification.title}</h4>
+                                {qualification.certificationId && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    ID: {qualification.certificationId}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {qualification.institution}
+                              </p>
+                              {qualification.subject && (
+                                <p className="text-sm text-muted-foreground">
+                                  Subject: {qualification.subject}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                {qualification.issueDate && (
+                                  <span>Issued: {qualification.issueDate}</span>
+                                )}
+                                {qualification.expiryDate && (
+                                  <span>Expires: {qualification.expiryDate}</span>
+                                )}
+                              </div>
+                              {qualification.ageRanges && qualification.ageRanges.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {qualification.ageRanges.map((range, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs">
+                                      {range}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                              {qualification.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {qualification.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingItem(qualification);
+                                  setShowQualificationModal(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => handleDeleteQualification(qualification._id || qualification.id || "")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )})}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1233,14 +1681,14 @@ const TeacherProfile = () => {
           <AddQualificationModal
             open={showQualificationModal}
             onOpenChange={setShowQualificationModal}
-            onSave={() => { }}
+            onSave={handleSaveQualification}
             editingQualification={editingItem}
           />
 
           <AddEducationModal
             open={showEducationModal}
             onOpenChange={setShowEducationModal}
-            onSave={() => { }}
+            onSave={handleSaveEducation}
             editingEducation={editingItem}
           />
 

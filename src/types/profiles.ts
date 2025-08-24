@@ -48,11 +48,37 @@ export interface TeacherProfile extends BaseProfile {
   additionalQualifications?: string[];
   profileCompletion?: number;
   employment?: any[];
-  education?: any[];
+  education?: Education[];
   qualifications?: any[];
   referees?: any[];
   development?: any[];
   memberships?: any[];
+}
+
+// Education Types
+export interface Education {
+  id?: string;
+  institution: string;
+  degree: string;
+  field: string;
+  startDate: string;
+  endDate: string;
+  gpa?: number;
+  thesis?: string;
+  honors?: string;
+  type?: "University" | "School" | "Professional";
+}
+
+export interface EducationRequest {
+  institution: string;
+  degree: string;
+  field: string;
+  startDate: string;
+  endDate: string;
+  gpa?: number;
+  thesis?: string;
+  honors?: string;
+  type?: "University" | "School" | "Professional";
 }
 
 export interface TeacherProfileRequest {

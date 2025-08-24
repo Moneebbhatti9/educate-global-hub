@@ -79,7 +79,7 @@ export const ProfileSummaryModal = ({
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="professionalSummary">Professional Summary</Label>
             <Textarea
               id="professionalSummary"
@@ -93,9 +93,9 @@ export const ProfileSummaryModal = ({
               <span>Detailed overview of your experience and achievements</span>
               <span>{getWordCount(formData.professionalSummary)} words</span>
             </div>
-          </div>
+          </div> */}
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="careerObjectives">Career Objectives</Label>
             <Textarea
               id="careerObjectives"
@@ -109,7 +109,7 @@ export const ProfileSummaryModal = ({
               <span>Your career aspirations and teaching goals</span>
               <span>{getWordCount(formData.careerObjectives)} words</span>
             </div>
-          </div>
+          </div> */}
 
           <div className="p-4 bg-muted/30 rounded-lg">
             <h4 className="font-semibold text-sm mb-2">Tips for a Great Profile Summary:</h4>
