@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,35 +44,95 @@ import {
   Check,
   X,
   AlertTriangle,
+  Loader2,
+  Edit,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { useUserSettings } from "@/apis/userSettings";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  updateProfileSchema,
+  changePasswordSchema,
+} from "@/helpers/validation";
+import { customToast } from "@/components/ui/sonner";
+import { PhoneInput } from "@/components/ui/phone-input";
+
+// Types for form data
+type ProfileFormData = z.infer<typeof updateProfileSchema>;
+type PasswordFormData = z.infer<typeof changePasswordSchema>;
+
+// API response type for profile
+interface ProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      status: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: string;
+      isEmailVerified: boolean;
+      isProfileComplete: boolean;
+      avatarUrl: string;
+      phone: string | null;
+      createdAt: string;
+      updatedAt: string;
+      lastActive: string;
+      id: string;
+    };
+  };
+}
 
 const SchoolSettings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [showPassword, setShowPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
+    null
+  );
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Mock settings data
-  const [settings, setSettings] = useState({
-    profile: {
-      firstName: user?.firstName || "John",
-      lastName: user?.lastName || "Doe",
-      email: user?.email || "john.doe@email.com",
-      phone: "+1 (555) 123-4567",
-      bio: "Passionate educator with 10+ years of experience in mathematics education.",
-      role: user?.role || "teacher",
-      avatar: "/api/placeholder/120/120",
+  // API hooks
+  const {
+    getProfile,
+    updateProfile,
+    changePassword,
+    updateAvatar,
+    uploadAvatar,
+    deleteAccount,
+  } = useUserSettings();
+
+  // Profile form
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
     },
-    security: {
+  });
+
+  // Password form
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
-      twoFactorEnabled: false,
-      loginAlerts: true,
     },
+  });
+
+  // Mock settings data for notifications (will be implemented later)
+  const [settings, setSettings] = useState({
     notifications: {
       emailNotifications: true,
       pushNotifications: true,
@@ -94,21 +153,275 @@ const SchoolSettings = () => {
     },
   });
 
-  const handleSave = async (section: string) => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    // Show success message
+  // Load profile data when component mounts or profile data changes
+  useEffect(() => {
+    if ((getProfile?.data as ProfileResponse)?.data?.user) {
+      const profileData = (getProfile?.data as ProfileResponse)?.data?.user;
+      profileForm.reset({
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+      });
+    }
+  }, [getProfile.data, profileForm]);
+
+  // Handle profile photo selection
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedAvatarFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handlePasswordChange = async () => {
-    if (settings.security.newPassword !== settings.security.confirmPassword) {
-      // Show error
-      return;
+  // Handle profile update
+  const handleProfileUpdate = async (data: ProfileFormData) => {
+    try {
+      const result = await updateProfile.mutateAsync(data);
+      if (result.success) {
+        customToast.success("Profile updated successfully!");
+        // Update local user context
+        if (user) {
+          updateUser({
+            ...user,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone,
+          });
+        }
+        // Refresh profile data to get latest avatar
+        getProfile.refetch();
+        setIsEditing(false);
+      }
+    } catch (error: unknown) {
+      // Try to extract error message and errors from different possible response structures
+      let errorTitle = "Profile Update Failed";
+      let errorDescription = "Failed to update profile. Please try again.";
+
+      if (error && typeof error === "object") {
+        // Check for axios error response structure
+        if (
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object"
+        ) {
+          if (
+            "data" in error.response &&
+            error.response.data &&
+            typeof error.response.data === "object"
+          ) {
+            // Extract message for title
+            if (
+              "message" in error.response.data &&
+              typeof error.response.data.message === "string"
+            ) {
+              errorTitle = error.response.data.message;
+            }
+            // Extract errors for description
+            if (
+              "errors" in error.response.data &&
+              typeof error.response.data.errors === "string"
+            ) {
+              errorDescription = error.response.data.errors;
+            } else if (
+              "message" in error.response.data &&
+              typeof error.response.data.message === "string"
+            ) {
+              // If no errors field, use message as description
+              errorDescription = error.response.data.message;
+            }
+          }
+        }
+        // Check for direct error object structure
+        else if ("message" in error && typeof error.message === "string") {
+          errorDescription = error.message;
+        }
+      }
+
+      customToast.error(errorTitle, errorDescription);
+      console.error("Profile update error:", error);
     }
-    await handleSave("security");
   };
+
+  // Handle avatar upload and update
+  const handleAvatarUpload = async () => {
+    if (!selectedAvatarFile) return;
+
+    try {
+      // Upload the file and get the URL
+      const uploadResult = await uploadAvatar.mutateAsync(selectedAvatarFile);
+      if (uploadResult.success && uploadResult.data?.url) {
+        // Update the user's profile with the new avatar URL
+        const updateResult = await updateProfile.mutateAsync({
+          firstName: currentProfileData?.firstName || "",
+          lastName: currentProfileData?.lastName || "",
+          email: currentProfileData?.email || "",
+          phone: currentProfileData?.phone || "",
+          avatarUrl: uploadResult.data.url,
+        });
+
+        if (updateResult.success) {
+          customToast.success("Profile photo updated successfully!");
+          setSelectedAvatarFile(null);
+          setAvatarPreview(null);
+          // Refresh profile data
+          getProfile.refetch();
+          // Also update the local user context if available
+          if (user) {
+            updateUser({
+              ...user,
+              avatarUrl: uploadResult.data.url,
+            });
+          }
+        }
+      }
+    } catch (error: unknown) {
+      // Try to extract error message and errors from different possible response structures
+      let errorTitle = "Avatar Update Failed";
+      let errorDescription =
+        "Failed to update profile photo. Please try again.";
+
+      if (error && typeof error === "object") {
+        // Check for axios error response structure
+        if (
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object"
+        ) {
+          if (
+            "data" in error.response &&
+            error.response.data &&
+            typeof error.response.data === "object"
+          ) {
+            // Extract message for title
+            if (
+              "message" in error.response.data &&
+              typeof error.response.data.message === "string"
+            ) {
+              errorTitle = error.response.data.message;
+            }
+            // Extract errors for description
+            if (
+              "errors" in error.response.data &&
+              typeof error.response.data.errors === "string"
+            ) {
+              errorDescription = error.response.data.errors;
+            } else if (
+              "message" in error.response.data &&
+              typeof error.response.data.message === "string"
+            ) {
+              // If no errors field, use message as description
+              errorDescription = error.response.data.message;
+            }
+          }
+        }
+        // Check for direct error object structure
+        else if ("message" in error && typeof error.message === "string") {
+          errorDescription = error.message;
+        }
+      }
+
+      customToast.error(errorTitle, errorDescription);
+      console.error("Avatar update error:", error);
+    }
+  };
+
+  // Handle password change
+  const handlePasswordChange = async (data: PasswordFormData) => {
+    try {
+      const result = await changePassword.mutateAsync(data);
+      if (result.success) {
+        customToast.success("Password changed successfully!");
+        passwordForm.reset();
+      }
+    } catch (error: unknown) {
+      const err: any = error; // 👈 cast to any (or use AxiosError type if preferred)
+      customToast.error(
+        err?.response?.data?.message,
+        err?.response?.data?.errors
+      );
+      console.error("Password change error:", err);
+    }
+  };
+
+  // Handle account deletion
+  // const handleDeleteAccount = async () => {
+  //   if (
+  //     window.confirm(
+  //       "Are you sure you want to delete your account? This action cannot be undone."
+  //     )
+  //   ) {
+  //     try {
+  //       const result = await deleteAccount.mutateAsync();
+  //       if (result.success) {
+  //         customToast.success("Account deleted successfully");
+  //         // Redirect will be handled by the API hook
+  //       }
+  //     } catch (error: unknown) {
+  //       // Try to extract error message and errors from different possible response structures
+  //       let errorTitle = "Account Deletion Failed";
+  //       let errorDescription = "Failed to delete account. Please try again.";
+
+  //       if (error && typeof error === "object") {
+  //         // Check for axios error response structure
+  //         if (
+  //           "response" in error &&
+  //           error.response &&
+  //           typeof error.response === "object"
+  //         ) {
+  //           if (
+  //             "data" in error.response &&
+  //             error.response.data &&
+  //             typeof error.response.data === "object"
+  //           ) {
+  //             // Extract message for title
+  //             if (
+  //               "message" in error.response.data &&
+  //               typeof error.response.data.message === "string"
+  //             ) {
+  //               errorTitle = error.response.data.message;
+  //             }
+  //             // Extract errors for description
+  //             if (
+  //               "errors" in error.response.data &&
+  //               typeof error.response.data.errors === "string"
+  //             ) {
+  //               errorDescription = error.response.data.errors;
+  //             } else if (
+  //               "message" in error.response.data &&
+  //               typeof error.response.data.message === "string"
+  //             ) {
+  //               // If no errors field, use message as description
+  //               errorDescription = error.response.data.message;
+  //             }
+  //           }
+  //         }
+  //         // Check for direct error object structure
+  //         else if ("message" in error && typeof error.message === "string") {
+  //           errorDescription = error.message;
+  //         }
+  //       }
+
+  //       customToast.error(errorTitle, errorDescription);
+  //       console.error("Account deletion error:", error);
+  //     }
+  //   }
+  // };
+
+  // Get current profile data
+  const currentProfileData = (getProfile?.data as ProfileResponse)?.data?.user;
+
+  // Loading states
+  const isProfileLoading = getProfile.isLoading || updateProfile.isPending;
+  const isPasswordLoading = changePassword.isPending;
+  const isAvatarLoading = uploadAvatar.isPending || updateProfile.isPending;
+  const isDeleteLoading = deleteAccount.isPending;
 
   return (
     <DashboardLayout role="school">
@@ -129,24 +442,24 @@ const SchoolSettings = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted rounded-lg">
             <TabsTrigger
               value="profile"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
             >
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
             >
               <Lock className="w-4 h-4" />
               <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
             >
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Notifications</span>
@@ -157,9 +470,21 @@ const SchoolSettings = () => {
           <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Profile Information
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <User className="w-5 h-5 mr-2" />
+                    Profile Information
+                  </div>
+                  {!isEditing && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                      disabled={isProfileLoading}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Update your personal information and profile photo
@@ -169,17 +494,55 @@ const SchoolSettings = () => {
                 {/* Profile Photo */}
                 <div className="flex items-center space-x-6">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={settings.profile.avatar} />
+                    <AvatarImage
+                      src={
+                        avatarPreview ||
+                        currentProfileData?.avatarUrl ||
+                        user?.avatarUrl ||
+                        "/api/placeholder/120/120"
+                      }
+                    />
                     <AvatarFallback className="text-2xl">
-                      {settings.profile.firstName[0]}
-                      {settings.profile.lastName[0]}
+                      {currentProfileData?.firstName?.[0] ||
+                        user?.firstName?.[0] ||
+                        "U"}
+                      {currentProfileData?.lastName?.[0] ||
+                        user?.lastName?.[0] ||
+                        "S"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
-                    <Button variant="outline">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Change Photo
-                    </Button>
+                    <div className="flex space-x-2">
+                      <input
+                        type="file"
+                        id="avatar-upload"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                      <label htmlFor="avatar-upload">
+                        <Button variant="outline" asChild>
+                          <span>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Change Photo
+                          </span>
+                        </Button>
+                      </label>
+                      {selectedAvatarFile && (
+                        <Button
+                          onClick={handleAvatarUpload}
+                          disabled={isAvatarLoading}
+                          size="sm"
+                        >
+                          {isAvatarLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                          )}
+                          Save
+                        </Button>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       JPG, GIF or PNG. Max size of 2MB.
                     </p>
@@ -188,120 +551,137 @@ const SchoolSettings = () => {
 
                 <Separator />
 
-                {/* Personal Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Personal Information Form */}
+                <form
+                  onSubmit={profileForm.handleSubmit(handleProfileUpdate)}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        {...profileForm.register("firstName")}
+                        disabled={!isEditing}
+                        className={
+                          profileForm.formState.errors.firstName
+                            ? "border-destructive"
+                            : ""
+                        }
+                      />
+                      {profileForm.formState.errors.firstName && (
+                        <p className="text-sm text-destructive mt-1">
+                          {profileForm.formState.errors.firstName.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        {...profileForm.register("lastName")}
+                        disabled={!isEditing}
+                        className={
+                          profileForm.formState.errors.lastName
+                            ? "border-destructive"
+                            : ""
+                        }
+                      />
+                      {profileForm.formState.errors.lastName && (
+                        <p className="text-sm text-destructive mt-1">
+                          {profileForm.formState.errors.lastName.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="email">Email Address</Label>
                     <Input
-                      id="firstName"
-                      value={settings.profile.firstName}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          profile: {
-                            ...settings.profile,
-                            firstName: e.target.value,
-                          },
-                        })
+                      id="email"
+                      type="email"
+                      {...profileForm.register("email")}
+                      disabled={true}
+                      className="bg-muted cursor-not-allowed"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Email address cannot be changed
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <PhoneInput
+                      id="phone"
+                      value={profileForm.watch("phone") || ""}
+                      onChange={(value) => profileForm.setValue("phone", value)}
+                      disabled={!isEditing}
+                      className={
+                        profileForm.formState.errors.phone
+                          ? "border-destructive"
+                          : ""
                       }
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      value={settings.profile.lastName}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          profile: {
-                            ...settings.profile,
-                            lastName: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={settings.profile.email}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: {
-                          ...settings.profile,
-                          email: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={settings.profile.phone}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: {
-                          ...settings.profile,
-                          phone: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    rows={3}
-                    value={settings.profile.bio}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        profile: { ...settings.profile, bio: e.target.value },
-                      })
-                    }
-                    placeholder="Tell us about yourself..."
-                  />
-                </div>
-
-                <div>
-                  <Label>Account Role</Label>
-                  <div className="mt-2">
-                    <Badge variant="secondary" className="capitalize">
-                      {settings.profile.role}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Contact support to change your account role
-                  </p>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => handleSave("profile")}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <>Saving...</>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </>
+                    {profileForm.formState.errors.phone && (
+                      <p className="text-sm text-destructive mt-1">
+                        {profileForm.formState.errors.phone.message}
+                      </p>
                     )}
-                  </Button>
-                </div>
+                  </div>
+
+                  <div>
+                    <Label>Account Role</Label>
+                    <div className="mt-2">
+                      <Badge variant="secondary" className="capitalize">
+                        {currentProfileData?.role || user?.role || "school"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Contact support to change your account role
+                    </p>
+                  </div>
+
+                  {isEditing && (
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditing(false);
+                          // Reset form to original values
+                          if (currentProfileData) {
+                            profileForm.reset({
+                              firstName: currentProfileData.firstName || "",
+                              lastName: currentProfileData.lastName || "",
+                              email: currentProfileData.email || "",
+                              phone: currentProfileData.phone || "",
+                            });
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          isProfileLoading || !profileForm.formState.isDirty
+                        }
+                      >
+                        {isProfileLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Changes
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
@@ -319,8 +699,11 @@ const SchoolSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Change Password */}
-                <div className="space-y-4">
+                {/* Change Password Form */}
+                <form
+                  onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
+                  className="space-y-4"
+                >
                   <h4 className="font-semibold">Change Password</h4>
 
                   <div>
@@ -329,15 +712,11 @@ const SchoolSettings = () => {
                       <Input
                         id="currentPassword"
                         type={showCurrentPassword ? "text" : "password"}
-                        value={settings.security.currentPassword}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            security: {
-                              ...settings.security,
-                              currentPassword: e.target.value,
-                            },
-                          })
+                        {...passwordForm.register("currentPassword")}
+                        className={
+                          passwordForm.formState.errors.currentPassword
+                            ? "border-destructive"
+                            : ""
                         }
                       />
                       <Button
@@ -356,6 +735,11 @@ const SchoolSettings = () => {
                         )}
                       </Button>
                     </div>
+                    {passwordForm.formState.errors.currentPassword && (
+                      <p className="text-sm text-destructive mt-1">
+                        {passwordForm.formState.errors.currentPassword.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -363,16 +747,12 @@ const SchoolSettings = () => {
                     <div className="relative">
                       <Input
                         id="newPassword"
-                        type={showPassword ? "text" : "password"}
-                        value={settings.security.newPassword}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            security: {
-                              ...settings.security,
-                              newPassword: e.target.value,
-                            },
-                          })
+                        type={showNewPassword ? "text" : "password"}
+                        {...passwordForm.register("newPassword")}
+                        className={
+                          passwordForm.formState.errors.newPassword
+                            ? "border-destructive"
+                            : ""
                         }
                       />
                       <Button
@@ -380,15 +760,20 @@ const SchoolSettings = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowNewPassword(!showNewPassword)}
                       >
-                        {showPassword ? (
+                        {showNewPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
                           <Eye className="h-4 w-4" />
                         )}
                       </Button>
                     </div>
+                    {passwordForm.formState.errors.newPassword && (
+                      <p className="text-sm text-destructive mt-1">
+                        {passwordForm.formState.errors.newPassword.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -397,38 +782,44 @@ const SchoolSettings = () => {
                     </Label>
                     <Input
                       id="confirmPassword"
-                      type="password"
-                      value={settings.security.confirmPassword}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          security: {
-                            ...settings.security,
-                            confirmPassword: e.target.value,
-                          },
-                        })
+                      type={showConfirmPassword ? "text" : "password"}
+                      {...passwordForm.register("confirmPassword")}
+                      className={
+                        passwordForm.formState.errors.confirmPassword
+                          ? "border-destructive"
+                          : ""
                       }
                     />
+                    {passwordForm.formState.errors.confirmPassword && (
+                      <p className="text-sm text-destructive mt-1">
+                        {passwordForm.formState.errors.confirmPassword.message}
+                      </p>
+                    )}
                   </div>
 
-                  <Button onClick={handlePasswordChange}>
-                    Update Password
+                  <Button
+                    type="submit"
+                    disabled={
+                      isPasswordLoading || !passwordForm.formState.isDirty
+                    }
+                  >
+                    {isPasswordLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Updating Password...
+                      </>
+                    ) : (
+                      "Update Password"
+                    )}
                   </Button>
-                </div>
+                </form>
 
                 <Separator />
-
-                <div className="flex justify-end">
-                  <Button onClick={() => handleSave("security")}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Security Settings
-                  </Button>
-                </div>
               </CardContent>
             </Card>
 
             {/* Account Actions */}
-            <Card className="border-destructive/20">
+            {/* <Card className="border-destructive/20">
               <CardHeader>
                 <CardTitle className="flex items-center text-destructive">
                   <AlertTriangle className="w-5 h-5 mr-2" />
@@ -453,12 +844,24 @@ const SchoolSettings = () => {
                       Permanently delete your account and all associated data
                     </p>
                   </div>
-                  <Button variant="destructive" size="sm">
-                    Delete Account
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleteLoading}
+                  >
+                    {isDeleteLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete Account"
+                    )}
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </TabsContent>
 
           {/* Notifications Tab */}
@@ -668,7 +1071,7 @@ const SchoolSettings = () => {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={() => handleSave("notifications")}>
+                  <Button onClick={() => setActiveTab("profile")}>
                     <Save className="w-4 h-4 mr-2" />
                     Save Notification Settings
                   </Button>

@@ -71,7 +71,8 @@ const TeacherProfileForm = ({
     schema: teacherProfileFormSchema,
     mode: "onTouched",
     defaultValues: {
-      fullName: initialData?.fullName || "",
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
       phoneNumber: initialData?.phoneNumber || "",
       country: initialData?.country || "",
       city: initialData?.city || "",
@@ -93,10 +94,9 @@ const TeacherProfileForm = ({
   useEffect(() => {
     if (initialData) {
       // Pre-fill basic information that was collected during signup
-      if (initialData.fullName) {
-        setValue("fullName", initialData.fullName);
+      if (initialData.firstName) {
+        setValue("firstName", initialData.firstName);
       }
-      
     }
   }, [initialData, setValue]);
 
@@ -176,7 +176,8 @@ const TeacherProfileForm = ({
 
     // Validate step 1 fields
     if (
-      !currentFormData.fullName ||
+      !currentFormData.firstName ||
+      !currentFormData.lastName ||
       !currentFormData.phoneNumber ||
       !currentFormData.country ||
       !currentFormData.city ||
@@ -236,9 +237,9 @@ const TeacherProfileForm = ({
 
       // Navigate to teacher dashboard
       if (user?.role) {
-        navigate(`/dashboard/${user.role.toLowerCase()}`);
+        navigate(`/dashboard/${user.role}`);
       } else {
-        navigate("/dashboard/teacher");
+        navigate("/login");
       }
     } catch (error) {
       console.error("Error creating teacher profile:", error);
@@ -324,15 +325,16 @@ const TeacherProfileForm = ({
       {/* Form */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl text-center">
-            Complete Your Teacher Profile
-          </CardTitle>
           <CardDescription className="text-center">
-            {initialData?.fullName ? (
+            {initialData?.firstName && initialData.lastName ? (
               <div className="space-y-2">
-                <p>Welcome, {initialData.fullName}! Let's complete your profile.</p>
+                <p>
+                  Welcome, {initialData.firstName} {initialData.lastName} !
+                  Let's complete your profile.
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  Some fields have been pre-filled based on your signup information.
+                  Some fields have been pre-filled based on your signup
+                  information.
                 </p>
               </div>
             ) : (
@@ -341,37 +343,45 @@ const TeacherProfileForm = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>Step {currentStep} of 3</span>
-              <span>{Math.round((currentStep / 3) * 100)}% Complete</span>
-            </div>
-            <Progress value={(currentStep / 3) * 100} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Basic Info</span>
-              <span>Professional</span>
-              <span>Review</span>
-            </div>
-          </div>
-          
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  placeholder="Enter your full name"
-                  {...register("fullName")}
-                  className={isFieldInvalid("fullName") ? "border-red-500" : ""}
-                  readOnly
-                />
-                {getFieldError("fullName") && (
-                  <p className="text-sm text-red-500">
-                    {getFieldError("fullName")}
-                  </p>
-                )}
+              <div className="flex justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Enter your first name"
+                    {...register("firstName")}
+                    className={
+                      isFieldInvalid("firstName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("firstName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("firstName")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Enter your first name"
+                    {...register("lastName")}
+                    className={
+                      isFieldInvalid("lastName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("lastName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("lastName")}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -634,7 +644,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addAchievement}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -672,7 +682,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addCertification}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -712,7 +722,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addQualification}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -730,7 +740,7 @@ const TeacherProfileForm = ({
                 <div className="space-y-3 text-sm">
                   <div>
                     <span className="font-medium">Name:</span>{" "}
-                    {formData.fullName}
+                    {formData.firstName} {formData.lastName}
                   </div>
                   <div>
                     <span className="font-medium">Phone:</span>{" "}
