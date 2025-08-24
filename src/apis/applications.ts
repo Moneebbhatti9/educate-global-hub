@@ -66,6 +66,8 @@ const APPLICATION_ENDPOINTS = {
 
   // Export Applications
   EXPORT_APPLICATIONS: "/jobs/applications",
+
+  GET_MY_APPLICATIONS: "/jobs/applications/my-applications",
 } as const;
 
 // Applications API functions
@@ -180,6 +182,12 @@ export const applicationsAPI = {
   getRecentApplications: async (): Promise<ApiResponse<JobApplication[]>> => {
     return apiHelpers.get<ApiResponse<JobApplication[]>>(
       APPLICATION_ENDPOINTS.GET_RECENT_APPLICATIONS
+    );
+  },
+
+  getMyApplications: async (): Promise<ApiResponse<JobApplication[]>> => {
+    return apiHelpers.get<ApiResponse<JobApplication[]>>(
+      APPLICATION_ENDPOINTS.GET_MY_APPLICATIONS
     );
   },
 

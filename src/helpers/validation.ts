@@ -325,8 +325,20 @@ export const jobApplicationFormSchema = z.object({
   coverLetter: z
     .string()
     .min(1, "Cover letter is required")
-    .min(200, "Cover letter must be at least 200 characters")
-    .max(2000, "Cover letter cannot exceed 2000 characters"),
+    .refine((val) => {
+      const wordCount = val
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      return wordCount >= 30;
+    }, "Cover letter must be at least 30 words")
+    .refine((val) => {
+      const wordCount = val
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      return wordCount <= 300;
+    }, "Cover letter cannot exceed 300 words"),
   expectedSalary: z.string().optional(),
   availableFrom: z.date({
     required_error: "Available from date is required",
@@ -335,7 +347,13 @@ export const jobApplicationFormSchema = z.object({
   reasonForApplying: z
     .string()
     .min(1, "Reason for applying is required")
-    .min(50, "Reason must be at least 50 characters"),
+    .refine((val) => {
+      const wordCount = val
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      return wordCount >= 10;
+    }, "Reason must be at least 10 words"),
   additionalComments: z.string().optional(),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",

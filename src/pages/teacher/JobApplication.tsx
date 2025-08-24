@@ -26,6 +26,7 @@ import { CountryDropdown } from "@/components/ui/country-dropdown";
 import { CurrencySelect } from "@/components/ui/currency-select";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   Upload,
@@ -51,7 +52,16 @@ import { Country } from "@/components/ui/country-dropdown";
 import { useJob } from "@/hooks/useJobs";
 import { useSubmitApplication } from "@/hooks/useApplications";
 import { customToast } from "@/components/ui/sonner";
+import { apiHelpers } from "@/apis/client";
 import type { Job } from "@/types/job";
+
+// Utility function to count words
+const countWords = (text: string): number => {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
+};
 
 const JobApplication = () => {
   const { jobId } = useParams();
@@ -96,10 +106,20 @@ const JobApplication = () => {
     Record<string, string>
   >({});
   const [uploadedFiles, setUploadedFiles] = useState<{
-    resume: File | null;
-    documents: File[];
+    resume: {
+      file: File | null;
+      url: string | null;
+      uploading: boolean;
+      progress: number;
+    };
+    documents: Array<{
+      file: File;
+      url: string | null;
+      uploading: boolean;
+      progress: number;
+    }>;
   }>({
-    resume: null,
+    resume: { file: null, url: null, uploading: false, progress: 0 },
     documents: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,8 +157,36 @@ const JobApplication = () => {
     }
   }, [errors]);
 
+  // Upload document to server
+  const uploadDocument = async (
+    file: File,
+    type: "resume" | "document",
+    index?: number
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append("document", file);
+
+    try {
+      const response = await apiHelpers.upload<{ data: { url: string } }>(
+        "/upload/document",
+        formData
+      );
+
+      if ((response?.data as any)?.documentUrl) {
+        return (response?.data as any)?.documentUrl;
+      } else {
+        throw new Error("Upload failed - no URL returned");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      throw new Error("Failed to upload document");
+    }
+  };
+
   // Handle file upload for resume
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResumeUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -154,12 +202,49 @@ const JobApplication = () => {
         customToast.error("Please upload a PDF, DOC, or DOCX file");
         return;
       }
-      setUploadedFiles((prev) => ({ ...prev, resume: file }));
+
+      // Set uploading state
+      setUploadedFiles((prev) => ({
+        ...prev,
+        resume: { ...prev.resume, file, uploading: true, progress: 0 },
+      }));
+
+      try {
+        // Simulate progress (in real implementation, you'd use axios progress callback)
+        const progressInterval = setInterval(() => {
+          setUploadedFiles((prev) => ({
+            ...prev,
+            resume: {
+              ...prev.resume,
+              progress: Math.min(prev.resume.progress + 10, 90),
+            },
+          }));
+        }, 200);
+
+        const url = await uploadDocument(file, "resume");
+
+        clearInterval(progressInterval);
+
+        setUploadedFiles((prev) => ({
+          ...prev,
+          resume: { ...prev.resume, url, uploading: false, progress: 100 },
+        }));
+
+        customToast.success("Resume uploaded successfully!");
+      } catch (error) {
+        setUploadedFiles((prev) => ({
+          ...prev,
+          resume: { ...prev.resume, uploading: false, progress: 0 },
+        }));
+        customToast.error("Failed to upload resume. Please try again.");
+      }
     }
   };
 
   // Handle file upload for additional documents
-  const handleDocumentUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = Array.from(event.target.files || []);
     const validFiles = files.filter((file) => {
       if (file.size > 5 * 1024 * 1024) {
@@ -186,10 +271,71 @@ const JobApplication = () => {
       return;
     }
 
+    // Add files to state with uploading status
+    const newDocuments = validFiles.map((file) => ({
+      file,
+      url: null,
+      uploading: false,
+      progress: 0,
+    }));
+
     setUploadedFiles((prev) => ({
       ...prev,
-      documents: [...prev.documents, ...validFiles],
+      documents: [...prev.documents, ...newDocuments],
     }));
+
+    // Upload each file
+    for (let i = 0; i < newDocuments.length; i++) {
+      const documentIndex = uploadedFiles.documents.length + i;
+
+      setUploadedFiles((prev) => ({
+        ...prev,
+        documents: prev.documents.map((doc, idx) =>
+          idx === documentIndex ? { ...doc, uploading: true, progress: 0 } : doc
+        ),
+      }));
+
+      try {
+        // Simulate progress
+        const progressInterval = setInterval(() => {
+          setUploadedFiles((prev) => ({
+            ...prev,
+            documents: prev.documents.map((doc, idx) =>
+              idx === documentIndex
+                ? { ...doc, progress: Math.min(doc.progress + 10, 90) }
+                : doc
+            ),
+          }));
+        }, 200);
+
+        const url = await uploadDocument(validFiles[i], "document");
+
+        clearInterval(progressInterval);
+
+        setUploadedFiles((prev) => ({
+          ...prev,
+          documents: prev.documents.map((doc, idx) =>
+            idx === documentIndex
+              ? { ...doc, url, uploading: false, progress: 100 }
+              : doc
+          ),
+        }));
+
+        customToast.success(`${validFiles[i].name} uploaded successfully!`);
+      } catch (error) {
+        setUploadedFiles((prev) => ({
+          ...prev,
+          documents: prev.documents.map((doc, idx) =>
+            idx === documentIndex
+              ? { ...doc, uploading: false, progress: 0 }
+              : doc
+          ),
+        }));
+        customToast.error(
+          `Failed to upload ${validFiles[i].name}. Please try again.`
+        );
+      }
+    }
   };
 
   // Remove document
@@ -202,7 +348,10 @@ const JobApplication = () => {
 
   // Remove resume
   const removeResume = () => {
-    setUploadedFiles((prev) => ({ ...prev, resume: null }));
+    setUploadedFiles((prev) => ({
+      ...prev,
+      resume: { file: null, url: null, uploading: false, progress: 0 },
+    }));
   };
 
   // Handle screening answer
@@ -259,20 +408,24 @@ const JobApplication = () => {
     }
 
     // Validate file uploads
-    if (!uploadedFiles.resume) {
+    if (!uploadedFiles.resume.url) {
       customToast.error("Please upload your CV/Resume");
+      return;
+    }
+
+    // Check if any documents are still uploading
+    if (uploadedFiles.documents.some((doc) => doc.uploading)) {
+      customToast.error("Please wait for all documents to finish uploading");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement file upload to cloud storage (AWS S3, etc.)
-      // For now, we'll simulate the upload and use placeholder URLs
-      const resumeUrl = "https://example.com/resume.pdf"; // This would be the actual uploaded file URL
-      const documentUrls = uploadedFiles.documents.map(
-        () => "https://example.com/document.pdf"
-      ); // These would be actual uploaded file URLs
+      const documentUrls = uploadedFiles.documents
+        .filter((doc) => doc.url)
+        .map((doc) => doc.url!)
+        .filter(Boolean);
 
       const applicationData = {
         coverLetter: data.coverLetter,
@@ -283,7 +436,7 @@ const JobApplication = () => {
         reasonForApplying: data.reasonForApplying,
         additionalComments: data.additionalComments || "",
         screeningAnswers: screeningAnswers,
-        resumeUrl,
+        resumeUrl: uploadedFiles.resume.url,
         documents: documentUrls,
       };
 
@@ -502,8 +655,8 @@ const JobApplication = () => {
                       }
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Minimum 200 characters</span>
-                      <span>{formData.coverLetter.length}/2000</span>
+                      <span>Minimum 30 words</span>
+                      <span>{countWords(formData.coverLetter)}/300 words</span>
                     </div>
                     {isFieldInvalid("coverLetter") && (
                       <p className="text-sm text-red-500">
@@ -567,7 +720,7 @@ const JobApplication = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="reasonForApplying">
-                      Why are you applying for this position? *
+                      What makes you the right candidate for this role? *
                     </Label>
                     <Textarea
                       id="reasonForApplying"
@@ -659,30 +812,47 @@ const JobApplication = () => {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>CV/Resume *</Label>
-                    {uploadedFiles.resume ? (
+                    {uploadedFiles.resume.url ? (
                       <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
                         <div className="flex items-center space-x-2">
                           <FileText className="w-4 h-4 text-brand-primary" />
                           <span className="text-sm font-medium">
-                            {uploadedFiles.resume.name}
+                            {uploadedFiles.resume.file?.name}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             (
-                            {(uploadedFiles.resume.size / 1024 / 1024).toFixed(
-                              2
-                            )}{" "}
+                            {uploadedFiles.resume.file
+                              ? (
+                                  uploadedFiles.resume.file.size /
+                                  1024 /
+                                  1024
+                                ).toFixed(2)
+                              : "0.00"}{" "}
                             MB)
                           </span>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={removeResume}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          {uploadedFiles.resume.uploading && (
+                            <div className="flex items-center space-x-2">
+                              <Progress
+                                value={uploadedFiles.resume.progress}
+                                className="w-24"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                {uploadedFiles.resume.progress}%
+                              </span>
+                            </div>
+                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={removeResume}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">
@@ -700,9 +870,19 @@ const JobApplication = () => {
                           onClick={() =>
                             document.getElementById("resume-upload")?.click()
                           }
+                          disabled={uploadedFiles.resume.uploading}
                         >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload CV
+                          {uploadedFiles.resume.uploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-primary mr-2"></div>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload CV
+                            </>
+                          )}
                         </Button>
                         <span className="text-sm text-muted-foreground">
                           PDF, DOC, DOCX (Max 5MB)
@@ -724,21 +904,38 @@ const JobApplication = () => {
                               <div className="flex items-center space-x-2">
                                 <FileText className="w-4 h-4 text-brand-primary" />
                                 <span className="text-sm font-medium">
-                                  {file.name}
+                                  {file.file?.name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                  (
+                                  {file.file
+                                    ? (file.file.size / 1024 / 1024).toFixed(2)
+                                    : "0.00"}{" "}
+                                  MB)
                                 </span>
                               </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeDocument(index)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center space-x-2">
+                                {file.uploading && (
+                                  <div className="flex items-center space-x-2">
+                                    <Progress
+                                      value={file.progress}
+                                      className="w-24"
+                                    />
+                                    <span className="text-xs text-muted-foreground">
+                                      {file.progress}%
+                                    </span>
+                                  </div>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeDocument(index)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -763,9 +960,23 @@ const JobApplication = () => {
                                 .getElementById("document-upload")
                                 ?.click()
                             }
+                            disabled={uploadedFiles.documents.some(
+                              (doc) => doc.uploading
+                            )}
                           >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Documents
+                            {uploadedFiles.documents.some(
+                              (doc) => doc.uploading
+                            ) ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-primary mr-2"></div>
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload Documents
+                              </>
+                            )}
                           </Button>
                           <span className="text-sm text-muted-foreground">
                             Up to {5 - uploadedFiles.documents.length} more
