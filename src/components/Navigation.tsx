@@ -44,12 +44,12 @@ const Navigation = () => {
             >
               Forum
             </Link>
-            <Link
+            {/* <Link
               to="/suppliers"
               className="text-foreground hover:text-brand-primary font-medium transition-colors"
             >
               Suppliers
-            </Link>
+            </Link> */}
             <div className="flex items-center space-x-3">
               {isAuthenticated && user ? (
                 <>
@@ -109,6 +109,20 @@ const Navigation = () => {
                 onClick={toggleMenu}
               >
                 Forum
+              </Link>
+              <Link
+                to="/about"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                onClick={toggleMenu}
+              >
+                About
+              </Link>
+              <Link
+                to="/contact"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                onClick={toggleMenu}
+              >
+                Contact
               </Link>
               {/* <Link
                 to="/suppliers"

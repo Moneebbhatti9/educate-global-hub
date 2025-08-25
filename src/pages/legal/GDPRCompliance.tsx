@@ -2,7 +2,15 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Shield, Users, FileText, Download, Eye, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Shield,
+  Users,
+  FileText,
+  Download,
+  Eye,
+  Trash2,
+} from "lucide-react";
 
 const GDPRCompliance = () => {
   return (
@@ -19,7 +27,9 @@ const GDPRCompliance = () => {
             </Link>
             <div className="flex items-center space-x-2">
               <Shield className="w-6 h-6 text-brand-primary" />
-              <span className="font-heading font-bold text-xl">Educate Link</span>
+              <span className="font-heading font-bold text-xl">
+                Educate Link
+              </span>
             </div>
           </div>
         </div>
@@ -39,7 +49,8 @@ const GDPRCompliance = () => {
               </h1>
             </div>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              We are committed to protecting your privacy and complying with the General Data Protection Regulation (GDPR).
+              We are committed to protecting your privacy and complying with the
+              General Data Protection Regulation (GDPR).
             </p>
             <p className="text-sm text-muted-foreground">
               Effective from: May 25, 2018 | Last updated: March 15, 2024
@@ -59,7 +70,10 @@ const GDPRCompliance = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  The General Data Protection Regulation (GDPR) is a comprehensive data protection law that came into effect on May 25, 2018. It gives individuals more control over their personal data and requires organizations to:
+                  The General Data Protection Regulation (GDPR) is a
+                  comprehensive data protection law that came into effect on May
+                  25, 2018. It gives individuals more control over their
+                  personal data and requires organizations to:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Obtain clear consent for data processing</li>
@@ -84,7 +98,7 @@ const GDPRCompliance = () => {
                 <p className="text-muted-foreground mb-4">
                   As a data subject, you have the following rights under GDPR:
                 </p>
-                
+
                 <div className="grid gap-4">
                   <div className="p-4 border border-border rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
@@ -93,7 +107,8 @@ const GDPRCompliance = () => {
                       <Badge variant="outline">Article 15</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      You can request a copy of the personal data we hold about you.
+                      You can request a copy of the personal data we hold about
+                      you.
                     </p>
                   </div>
 
@@ -104,7 +119,8 @@ const GDPRCompliance = () => {
                       <Badge variant="outline">Article 16</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      You can request correction of inaccurate or incomplete personal data.
+                      You can request correction of inaccurate or incomplete
+                      personal data.
                     </p>
                   </div>
 
@@ -115,18 +131,22 @@ const GDPRCompliance = () => {
                       <Badge variant="outline">Article 17</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      You can request deletion of your personal data under certain circumstances.
+                      You can request deletion of your personal data under
+                      certain circumstances.
                     </p>
                   </div>
 
                   <div className="p-4 border border-border rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <Download className="w-5 h-5 text-brand-secondary" />
-                      <h4 className="font-semibold">Right to Data Portability</h4>
+                      <h4 className="font-semibold">
+                        Right to Data Portability
+                      </h4>
                       <Badge variant="outline">Article 20</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      You can request your data in a structured, machine-readable format.
+                      You can request your data in a structured,
+                      machine-readable format.
                     </p>
                   </div>
                 </div>
@@ -139,35 +159,48 @@ const GDPRCompliance = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  We have implemented comprehensive measures to ensure GDPR compliance:
+                  We have implemented comprehensive measures to ensure GDPR
+                  compliance:
                 </p>
-                
+
                 <div className="space-y-4">
                   <div className="p-4 bg-brand-primary/5 rounded-lg border">
-                    <h4 className="font-semibold mb-2 text-brand-primary">Legal Basis for Processing</h4>
+                    <h4 className="font-semibold mb-2 text-brand-primary">
+                      Legal Basis for Processing
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      We process personal data based on legitimate interests, consent, contract fulfillment, and legal obligations.
+                      We process personal data based on legitimate interests,
+                      consent, contract fulfillment, and legal obligations.
                     </p>
                   </div>
 
                   <div className="p-4 bg-brand-accent-green/5 rounded-lg border">
-                    <h4 className="font-semibold mb-2 text-brand-accent-green">Data Protection by Design</h4>
+                    <h4 className="font-semibold mb-2 text-brand-accent-green">
+                      Data Protection by Design
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      Privacy considerations are built into our systems and processes from the ground up.
+                      Privacy considerations are built into our systems and
+                      processes from the ground up.
                     </p>
                   </div>
 
                   <div className="p-4 bg-brand-secondary/5 rounded-lg border">
-                    <h4 className="font-semibold mb-2 text-brand-secondary">Regular Audits & Assessments</h4>
+                    <h4 className="font-semibold mb-2 text-brand-secondary">
+                      Regular Audits & Assessments
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      We conduct regular data protection impact assessments and security audits.
+                      We conduct regular data protection impact assessments and
+                      security audits.
                     </p>
                   </div>
 
                   <div className="p-4 bg-brand-accent-orange/5 rounded-lg border">
-                    <h4 className="font-semibold mb-2 text-brand-accent-orange">Staff Training</h4>
+                    <h4 className="font-semibold mb-2 text-brand-accent-orange">
+                      Staff Training
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      All staff receive regular training on GDPR requirements and data protection best practices.
+                      All staff receive regular training on GDPR requirements
+                      and data protection best practices.
                     </p>
                   </div>
                 </div>
@@ -182,12 +215,14 @@ const GDPRCompliance = () => {
                 <p className="text-muted-foreground mb-4">
                   We process personal data for the following purposes:
                 </p>
-                
+
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 border border-border rounded-lg">
                     <div>
                       <h4 className="font-medium">Account Management</h4>
-                      <p className="text-sm text-muted-foreground">Creating and managing user accounts</p>
+                      <p className="text-sm text-muted-foreground">
+                        Creating and managing user accounts
+                      </p>
                     </div>
                     <Badge variant="outline">Consent</Badge>
                   </div>
@@ -195,7 +230,9 @@ const GDPRCompliance = () => {
                   <div className="flex justify-between items-center p-3 border border-border rounded-lg">
                     <div>
                       <h4 className="font-medium">Job Matching</h4>
-                      <p className="text-sm text-muted-foreground">Connecting educators with institutions</p>
+                      <p className="text-sm text-muted-foreground">
+                        Connecting educators with institutions
+                      </p>
                     </div>
                     <Badge variant="outline">Legitimate Interest</Badge>
                   </div>
@@ -203,7 +240,9 @@ const GDPRCompliance = () => {
                   <div className="flex justify-between items-center p-3 border border-border rounded-lg">
                     <div>
                       <h4 className="font-medium">Communication</h4>
-                      <p className="text-sm text-muted-foreground">Sending notifications and updates</p>
+                      <p className="text-sm text-muted-foreground">
+                        Sending notifications and updates
+                      </p>
                     </div>
                     <Badge variant="outline">Contract</Badge>
                   </div>
@@ -211,7 +250,9 @@ const GDPRCompliance = () => {
                   <div className="flex justify-between items-center p-3 border border-border rounded-lg">
                     <div>
                       <h4 className="font-medium">Analytics</h4>
-                      <p className="text-sm text-muted-foreground">Platform improvement and optimization</p>
+                      <p className="text-sm text-muted-foreground">
+                        Platform improvement and optimization
+                      </p>
                     </div>
                     <Badge variant="outline">Legitimate Interest</Badge>
                   </div>
@@ -225,16 +266,21 @@ const GDPRCompliance = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  To exercise your GDPR rights, please contact us using the following methods:
+                  To exercise your GDPR rights, please contact us using the
+                  following methods:
                 </p>
-                
+
                 <div className="space-y-4">
                   <div className="p-4 border border-border rounded-lg">
                     <h4 className="font-semibold mb-2">Online Request Form</h4>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Use our secure online form to submit data protection requests.
+                      Use our secure online form to submit data protection
+                      requests.
                     </p>
-                    <Button size="sm" className="bg-brand-primary hover:bg-brand-primary/90">
+                    <Button
+                      size="sm"
+                      className="bg-brand-primary hover:bg-brand-primary/90"
+                    >
                       Submit Request
                     </Button>
                   </div>
@@ -242,19 +288,27 @@ const GDPRCompliance = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-3 border border-border rounded-lg">
                       <h4 className="font-medium mb-1">Email</h4>
-                      <p className="text-sm text-muted-foreground">gdpr@educatelink.com</p>
+                      <p className="text-sm text-muted-foreground">
+                        gdpr@educatelink.com
+                      </p>
                     </div>
                     <div className="p-3 border border-border rounded-lg">
                       <h4 className="font-medium mb-1">Response Time</h4>
-                      <p className="text-sm text-muted-foreground">Within 30 days</p>
+                      <p className="text-sm text-muted-foreground">
+                        Within 30 days
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h4 className="font-semibold mb-2 text-yellow-800">Important Note</h4>
+                  <h4 className="font-semibold mb-2 text-yellow-800">
+                    Important Note
+                  </h4>
                   <p className="text-sm text-yellow-700">
-                    We may need to verify your identity before processing certain requests. This helps protect your personal data from unauthorized access.
+                    We may need to verify your identity before processing
+                    certain requests. This helps protect your personal data from
+                    unauthorized access.
                   </p>
                 </div>
               </CardContent>
@@ -266,12 +320,20 @@ const GDPRCompliance = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Our Data Protection Officer is available to answer questions about GDPR compliance and data protection:
+                  Our Data Protection Officer is available to answer questions
+                  about GDPR compliance and data protection:
                 </p>
                 <div className="space-y-2 text-muted-foreground">
-                  <p><strong>Email:</strong> dpo@educatelink.com</p>
-                  <p><strong>Address:</strong> Data Protection Officer, 123 Education Street, Knowledge City, KC 12345</p>
-                  <p><strong>Phone:</strong> +1 (555) 123-4567 ext. 101</p>
+                  <p>
+                    <strong>Email:</strong> dpo@educatelink.com
+                  </p>
+                  <p>
+                    <strong>Address:</strong> Data Protection Officer, 123
+                    Education Street, Knowledge City, KC 12345
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> +1 (555) 123-4567 ext. 101
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -280,14 +342,17 @@ const GDPRCompliance = () => {
           {/* Footer Links */}
           <div className="border-t border-border pt-8">
             <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link to="/legal/privacy" className="text-brand-primary hover:underline">
+              <Link
+                to="/privacy"
+                className="text-brand-primary hover:underline"
+              >
                 Privacy Policy
               </Link>
-              <Link to="/legal/terms" className="text-brand-primary hover:underline">
+              <Link to="/terms" className="text-brand-primary hover:underline">
                 Terms & Conditions
               </Link>
-              <Link to="/legal/cookies" className="text-brand-primary hover:underline">
-                Cookie Policy
+              <Link to="/gdpr" className="text-brand-primary hover:underline">
+                GDPR Compliance
               </Link>
             </div>
           </div>

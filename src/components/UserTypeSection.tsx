@@ -1,7 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { ArrowRight, GraduationCap, School, UserCheck, Truck } from "lucide-react";
+import {
+  ArrowRight,
+  GraduationCap,
+  School,
+  UserCheck,
+  Truck,
+} from "lucide-react";
 import teachersIcon from "@/assets/icon-teachers.jpg";
 import schoolsIcon from "@/assets/icon-schools.jpg";
 import recruitersIcon from "@/assets/icon-recruiters.jpg";
@@ -11,7 +23,8 @@ const UserTypeSection = () => {
   const userTypes = [
     {
       title: "Teachers",
-      description: "Find your dream teaching position worldwide. Access thousands of opportunities across all continents.",
+      description:
+        "Find your dream teaching position worldwide. Access thousands of opportunities across all continents.",
       image: teachersIcon,
       icon: GraduationCap,
       variant: "teachers" as const,
@@ -19,14 +32,15 @@ const UserTypeSection = () => {
         "Global job opportunities",
         "Professional development resources",
         "Community networking",
-        "Career advancement tools"
+        "Career advancement tools",
       ],
       cta: "Find Teaching Jobs",
-      link: "/teachers"
+      link: "/jobs",
     },
     {
       title: "Schools",
-      description: "Connect with qualified educators and build your ideal teaching team. Access recruitment tools and resources.",
+      description:
+        "Connect with qualified educators and build your ideal teaching team. Access recruitment tools and resources.",
       image: schoolsIcon,
       icon: School,
       variant: "schools" as const,
@@ -34,14 +48,15 @@ const UserTypeSection = () => {
         "Post job openings",
         "Access qualified candidates",
         "Educational resources",
-        "School management tools"
+        "School management tools",
       ],
       cta: "Post a Job",
-      link: "/schools"
+      link: "/register",
     },
     {
       title: "Recruiters",
-      description: "Bridge the gap between talented educators and leading institutions. Streamline your recruitment process.",
+      description:
+        "Bridge the gap between talented educators and leading institutions. Streamline your recruitment process.",
       image: recruitersIcon,
       icon: UserCheck,
       variant: "recruiters" as const,
@@ -49,14 +64,15 @@ const UserTypeSection = () => {
         "Advanced candidate matching",
         "Recruitment analytics",
         "Global reach",
-        "Professional network"
+        "Professional network",
       ],
       cta: "Start Recruiting",
-      link: "/recruiters"
+      link: "/register",
     },
     {
       title: "Suppliers",
-      description: "Connect with educational institutions seeking quality resources, materials, and infrastructure solutions.",
+      description:
+        "Connect with educational institutions seeking quality resources, materials, and infrastructure solutions.",
       image: suppliersIcon,
       icon: Truck,
       variant: "suppliers" as const,
@@ -64,11 +80,11 @@ const UserTypeSection = () => {
         "Educational marketplace",
         "Direct school connections",
         "Bulk order opportunities",
-        "Partnership programs"
+        "Partnership programs",
       ],
       cta: "Join Marketplace",
-      link: "/suppliers"
-    }
+      link: "/register",
+    },
   ];
 
   return (
@@ -83,8 +99,9 @@ const UserTypeSection = () => {
             </span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Whether you're seeking opportunities, building teams, or providing solutions, 
-            our platform connects you with the global education community.
+            Whether you're seeking opportunities, building teams, or providing
+            solutions, our platform connects you with the global education
+            community.
           </p>
         </div>
 
@@ -93,8 +110,8 @@ const UserTypeSection = () => {
           {userTypes.map((type, index) => {
             const IconComponent = type.icon;
             return (
-              <Card 
-                key={type.title} 
+              <Card
+                key={type.title}
                 className="group relative overflow-hidden border-2 hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card-hover transform hover:scale-105"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
@@ -121,7 +138,10 @@ const UserTypeSection = () => {
                   {/* Features List */}
                   <ul className="space-y-2">
                     {type.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center text-sm text-muted-foreground">
+                      <li
+                        key={idx}
+                        className="flex items-center text-sm text-muted-foreground"
+                      >
                         <div className="w-1.5 h-1.5 rounded-full bg-brand-primary mr-3 flex-shrink-0"></div>
                         {feature}
                       </li>
@@ -129,8 +149,8 @@ const UserTypeSection = () => {
                   </ul>
 
                   {/* CTA Button */}
-                  <Button 
-                    variant={type.variant} 
+                  <Button
+                    variant={type.variant}
                     className="w-full group-hover:shadow-lg transition-all duration-300"
                     asChild
                   >
