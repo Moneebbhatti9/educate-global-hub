@@ -106,10 +106,10 @@ const AppRoutes = () => {
         <Route path="/resources" element={<Resources />} />
 
         {/* Legal Pages */}
-        <Route path="/legal/privacy" element={<PrivacyPolicy />} />
-        <Route path="/legal/terms" element={<TermsConditions />} />
-        <Route path="/legal/cookies" element={<CookiePolicy />} />
-        <Route path="/legal/gdpr" element={<GDPRCompliance />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsConditions />} />
+        <Route path="/cookies" element={<CookiePolicy />} />
+        <Route path="/gdpr" element={<GDPRCompliance />} />
 
         {/* ======================================== */}
         {/* AUTHENTICATION ROUTES - PUBLIC ACCESS */}
