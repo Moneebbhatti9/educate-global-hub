@@ -16,6 +16,7 @@ export {
   JobCardSkeleton,
   JobListingsSkeleton,
   PaginationSkeleton,
+  AdminJobManagementSkeleton,
 } from "./job-postings-skeleton";
 
 // Form Skeletons
@@ -42,3 +43,24 @@ export {
   CandidateTabsSkeleton,
   CandidateDetailsSkeleton,
 } from "./candidates-skeleton";
+
+// Teacher Profile Skeletons
+export {
+  TeacherProfileSkeleton,
+  ProfileHeaderSkeleton,
+  ProfileTabsSkeleton,
+  PersonalInfoFormSkeleton,
+  EmploymentHistorySkeleton,
+} from "./teacher-profile-skeleton";
+
+// User Management Skeletons
+export {
+  UserManagementSkeleton,
+  UserTableSkeleton,
+  UserTableRowSkeleton,
+  UserFiltersSkeleton,
+  UserPaginationSkeleton,
+  UserManagementHeaderSkeleton,
+  UserCardSkeleton,
+  UserGridSkeleton,
+} from "./user-management-skeleton";

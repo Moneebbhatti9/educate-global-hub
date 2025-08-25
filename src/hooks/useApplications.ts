@@ -36,6 +36,16 @@ export const useTeacherApplications = (
   });
 };
 
+export const useMyApplications = (
+  params: Omit<ApplicationSearchParams, "jobId">
+) => {
+  return useQuery({
+    queryKey: ["teacherApplications", params],
+    queryFn: () => applicationsAPI.getMyApplications(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const useApplication = (applicationId: string) => {
   return useQuery({
     queryKey: applicationQueryKeys.detail(applicationId),

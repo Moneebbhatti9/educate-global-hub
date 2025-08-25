@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -71,7 +71,8 @@ const TeacherProfileForm = ({
     schema: teacherProfileFormSchema,
     mode: "onTouched",
     defaultValues: {
-      fullName: initialData?.fullName || "",
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
       phoneNumber: initialData?.phoneNumber || "",
       country: initialData?.country || "",
       city: initialData?.city || "",
@@ -88,6 +89,16 @@ const TeacherProfileForm = ({
       additionalQualifications: initialData?.additionalQualifications || [],
     },
   });
+
+  // Pre-fill form with initial data when component mounts
+  useEffect(() => {
+    if (initialData) {
+      // Pre-fill basic information that was collected during signup
+      if (initialData.firstName) {
+        setValue("firstName", initialData.firstName);
+      }
+    }
+  }, [initialData, setValue]);
 
   const formData = watch();
 
@@ -165,7 +176,8 @@ const TeacherProfileForm = ({
 
     // Validate step 1 fields
     if (
-      !currentFormData.fullName ||
+      !currentFormData.firstName ||
+      !currentFormData.lastName ||
       !currentFormData.phoneNumber ||
       !currentFormData.country ||
       !currentFormData.city ||
@@ -225,9 +237,9 @@ const TeacherProfileForm = ({
 
       // Navigate to teacher dashboard
       if (user?.role) {
-        navigate(`/dashboard/${user.role.toLowerCase()}`);
+        navigate(`/dashboard/${user.role}`);
       } else {
-        navigate("/dashboard/teacher");
+        navigate("/login");
       }
     } catch (error) {
       console.error("Error creating teacher profile:", error);
@@ -313,32 +325,63 @@ const TeacherProfileForm = ({
       {/* Form */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">
-            Step {currentStep} of 3
-          </CardTitle>
-          <CardDescription>
-            {currentStep === 1 && "Let's start with your basic information"}
-            {currentStep === 2 && "Tell us about your professional background"}
-            {currentStep === 3 && "Review your profile information"}
+          <CardDescription className="text-center">
+            {initialData?.firstName && initialData.lastName ? (
+              <div className="space-y-2">
+                <p>
+                  Welcome, {initialData.firstName} {initialData.lastName} !
+                  Let's complete your profile.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Some fields have been pre-filled based on your signup
+                  information.
+                </p>
+              </div>
+            ) : (
+              "Fill in your details to complete your profile"
+            )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  placeholder="Enter your full name"
-                  {...register("fullName")}
-                  className={isFieldInvalid("fullName") ? "border-red-500" : ""}
-                />
-                {getFieldError("fullName") && (
-                  <p className="text-sm text-red-500">
-                    {getFieldError("fullName")}
-                  </p>
-                )}
+            <div className="space-y-6">
+              <div className="flex justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Enter your first name"
+                    {...register("firstName")}
+                    className={
+                      isFieldInvalid("firstName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("firstName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("firstName")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Enter your first name"
+                    {...register("lastName")}
+                    className={
+                      isFieldInvalid("lastName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("lastName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("lastName")}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -436,6 +479,9 @@ const TeacherProfileForm = ({
                   {...register("address")}
                   className={isFieldInvalid("address") ? "border-red-500" : ""}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Address must be at least 5 characters long
+                </p>
                 {getFieldError("address") && (
                   <p className="text-sm text-red-500">
                     {getFieldError("address")}
@@ -544,9 +590,9 @@ const TeacherProfileForm = ({
             </div>
           )}
 
-          {/* Step 2: Professional Information */}
+          {/* Step 2: Professional Background */}
           {currentStep === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="professionalBio">Professional Bio *</Label>
                 <Textarea
@@ -598,7 +644,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addAchievement}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -636,7 +682,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addCertification}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -676,7 +722,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addQualification}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -684,9 +730,9 @@ const TeacherProfileForm = ({
             </div>
           )}
 
-          {/* Step 3: Review */}
+          {/* Step 3: Review and Submit */}
           {currentStep === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-lg mb-4">
                   Review Your Profile
@@ -694,7 +740,7 @@ const TeacherProfileForm = ({
                 <div className="space-y-3 text-sm">
                   <div>
                     <span className="font-medium">Name:</span>{" "}
-                    {formData.fullName}
+                    {formData.firstName} {formData.lastName}
                   </div>
                   <div>
                     <span className="font-medium">Phone:</span>{" "}

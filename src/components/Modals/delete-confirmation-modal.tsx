@@ -56,7 +56,7 @@ const DeleteConfirmationModal = ({
             <div className="flex items-start justify-between">
               <h4 className="font-medium text-foreground">{job.title}</h4>
               <Badge variant="outline" className="text-xs">
-                {job.status}
+                {job.status === "published" ? "Active" : job.status}
               </Badge>
             </div>
 

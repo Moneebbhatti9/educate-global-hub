@@ -10,6 +10,12 @@ interface ProfileCompletionProps {
   onComplete: (profileData: unknown) => void;
   onBack?: () => void;
   useNewForms?: boolean; // Flag to enable new forms
+  initialUserData?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: UserRole;
+  };
 }
 
 const ProfileCompletion = ({
@@ -17,6 +23,7 @@ const ProfileCompletion = ({
   onComplete,
   onBack,
   useNewForms = true, // Default to new forms
+  initialUserData,
 }: ProfileCompletionProps) => {
   const [isNewFormEnabled] = useState(useNewForms);
 
@@ -37,13 +44,32 @@ const ProfileCompletion = ({
         <TeacherProfileForm
           onComplete={handleTeacherComplete}
           onBack={onBack}
+          initialData={{
+            firstName: initialUserData ? `${initialUserData.firstName}` : "",
+            lastName: initialUserData ? `${initialUserData.lastName}` : "",
+            // Pre-fill email-related fields if available
+            // Add other fields that can be intelligently pre-filled
+            // For example, if you have location data from signup, you could pre-fill country/city
+          }}
         />
       );
     }
 
     if (role === "school") {
       return (
-        <SchoolProfileForm onComplete={handleSchoolComplete} onBack={onBack} />
+        <SchoolProfileForm
+          onComplete={handleSchoolComplete}
+          onBack={onBack}
+          initialData={{
+            schoolEmail: initialUserData?.email || "",
+            // Pre-fill school name if it can be derived from user data
+            schoolName: initialUserData
+              ? `${initialUserData.firstName} ${initialUserData.lastName}'s School`
+              : "",
+            // Add other fields that can be intelligently pre-filled
+            // For example, if you have location data from signup, you could pre-fill country/city
+          }}
+        />
       );
     }
   }
