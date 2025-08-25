@@ -19,7 +19,9 @@ const CookiePolicy = () => {
             </Link>
             <div className="flex items-center space-x-2">
               <Cookie className="w-6 h-6 text-brand-primary" />
-              <span className="font-heading font-bold text-xl">Educate Link</span>
+              <span className="font-heading font-bold text-xl">
+                Educate Link
+              </span>
             </div>
           </div>
         </div>
@@ -39,7 +41,8 @@ const CookiePolicy = () => {
               </h1>
             </div>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Learn about how we use cookies and similar technologies to improve your experience on our platform.
+              Learn about how we use cookies and similar technologies to improve
+              your experience on our platform.
             </p>
             <p className="text-sm text-muted-foreground">
               Last updated: March 15, 2024
@@ -59,7 +62,9 @@ const CookiePolicy = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  Cookies are small text files that are stored on your device when you visit our website. They help us provide you with a better experience by:
+                  Cookies are small text files that are stored on your device
+                  when you visit our website. They help us provide you with a
+                  better experience by:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Remembering your preferences and settings</li>
@@ -87,7 +92,8 @@ const CookiePolicy = () => {
                       <Badge variant="destructive">Required</Badge>
                     </div>
                     <p className="text-muted-foreground text-sm mb-2">
-                      These cookies are necessary for the website to function properly and cannot be disabled.
+                      These cookies are necessary for the website to function
+                      properly and cannot be disabled.
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       <li>Authentication and security</li>
@@ -106,7 +112,8 @@ const CookiePolicy = () => {
                       <Badge variant="outline">Optional</Badge>
                     </div>
                     <p className="text-muted-foreground text-sm mb-2">
-                      These cookies enable enhanced functionality and personalization.
+                      These cookies enable enhanced functionality and
+                      personalization.
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       <li>Language and region preferences</li>
@@ -125,7 +132,8 @@ const CookiePolicy = () => {
                       <Badge variant="outline">Optional</Badge>
                     </div>
                     <p className="text-muted-foreground text-sm mb-2">
-                      These cookies help us understand how visitors interact with our website.
+                      These cookies help us understand how visitors interact
+                      with our website.
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       <li>Page views and user journeys</li>
@@ -143,23 +151,29 @@ const CookiePolicy = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  We may also use cookies from trusted third-party services to enhance your experience:
+                  We may also use cookies from trusted third-party services to
+                  enhance your experience:
                 </p>
                 <div className="space-y-3">
                   <div className="p-3 border border-border rounded-lg">
                     <h4 className="font-semibold mb-1">Google Analytics</h4>
                     <p className="text-sm text-muted-foreground">
-                      Helps us understand user behavior and improve our platform performance.
+                      Helps us understand user behavior and improve our platform
+                      performance.
                     </p>
                   </div>
                   <div className="p-3 border border-border rounded-lg">
-                    <h4 className="font-semibold mb-1">Social Media Platforms</h4>
+                    <h4 className="font-semibold mb-1">
+                      Social Media Platforms
+                    </h4>
                     <p className="text-sm text-muted-foreground">
                       Enables social sharing features and login integrations.
                     </p>
                   </div>
                   <div className="p-3 border border-border rounded-lg">
-                    <h4 className="font-semibold mb-1">Content Delivery Networks</h4>
+                    <h4 className="font-semibold mb-1">
+                      Content Delivery Networks
+                    </h4>
                     <p className="text-sm text-muted-foreground">
                       Improves website loading speed and performance globally.
                     </p>
@@ -174,24 +188,32 @@ const CookiePolicy = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  You have control over the cookies we use. Here's how you can manage them:
+                  You have control over the cookies we use. Here's how you can
+                  manage them:
                 </p>
-                
+
                 <div className="space-y-4">
                   <div className="p-4 bg-brand-primary/5 rounded-lg border border-brand-primary/20">
-                    <h4 className="font-semibold mb-2 text-brand-primary">Platform Settings</h4>
+                    <h4 className="font-semibold mb-2 text-brand-primary">
+                      Platform Settings
+                    </h4>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Manage cookie preferences directly through our platform settings.
+                      Manage cookie preferences directly through our platform
+                      settings.
                     </p>
-                    <Button size="sm" className="bg-brand-primary hover:bg-brand-primary/90">
+                    <Button
+                      size="sm"
+                      className="bg-brand-primary hover:bg-brand-primary/90"
+                    >
                       Manage Preferences
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="font-semibold">Browser Settings</h4>
                     <p className="text-muted-foreground text-sm mb-2">
-                      You can also control cookies through your browser settings:
+                      You can also control cookies through your browser
+                      settings:
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       <li>Block all cookies or specific types</li>
@@ -210,7 +232,8 @@ const CookiePolicy = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Please note that disabling certain cookies may affect your experience on our platform:
+                  Please note that disabling certain cookies may affect your
+                  experience on our platform:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>You may need to log in more frequently</li>
@@ -228,12 +251,20 @@ const CookiePolicy = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  If you have questions about our cookie policy or need assistance with cookie settings:
+                  If you have questions about our cookie policy or need
+                  assistance with cookie settings:
                 </p>
                 <div className="space-y-2 text-muted-foreground">
-                  <p><strong>Email:</strong> cookies@educatelink.com</p>
-                  <p><strong>Address:</strong> 123 Education Street, Knowledge City, KC 12345</p>
-                  <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                  <p>
+                    <strong>Email:</strong> cookies@educatelink.com
+                  </p>
+                  <p>
+                    <strong>Address:</strong> 123 Education Street, Knowledge
+                    City, KC 12345
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> +1 (555) 123-4567
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -242,13 +273,16 @@ const CookiePolicy = () => {
           {/* Footer Links */}
           <div className="border-t border-border pt-8">
             <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link to="/legal/privacy" className="text-brand-primary hover:underline">
+              <Link
+                to="/privacy"
+                className="text-brand-primary hover:underline"
+              >
                 Privacy Policy
               </Link>
-              <Link to="/legal/terms" className="text-brand-primary hover:underline">
+              <Link to="/terms" className="text-brand-primary hover:underline">
                 Terms & Conditions
               </Link>
-              <Link to="/legal/gdpr" className="text-brand-primary hover:underline">
+              <Link to="/gdpr" className="text-brand-primary hover:underline">
                 GDPR Compliance
               </Link>
             </div>
