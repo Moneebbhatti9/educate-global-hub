@@ -169,45 +169,72 @@ const TeacherProfileForm = ({
     }
   };
 
+  const isStepComplete = (step: number) => {
+    const currentFormData = watch();
+
+    if (step === 1) {
+      return !!(
+        currentFormData.firstName &&
+        currentFormData.lastName &&
+        currentFormData.phoneNumber &&
+        currentFormData.country &&
+        currentFormData.city &&
+        currentFormData.province &&
+        currentFormData.zipCode &&
+        currentFormData.address &&
+        currentFormData.qualification &&
+        currentFormData.subject &&
+        currentFormData.yearsOfTeachingExperience !== undefined &&
+        currentFormData.yearsOfTeachingExperience >= 0
+      );
+    } else if (step === 2) {
+      return !!(
+        currentFormData.professionalBio &&
+        currentFormData.professionalBio.length >= 50
+      );
+    }
+
+    return true;
+  };
+
   const validateCurrentStep = () => {
     const currentFormData = watch();
-    let hasErrors = false;
-    let firstErrorStep = 1;
 
-    // Validate step 1 fields
-    if (
-      !currentFormData.firstName ||
-      !currentFormData.lastName ||
-      !currentFormData.phoneNumber ||
-      !currentFormData.country ||
-      !currentFormData.city ||
-      !currentFormData.province ||
-      !currentFormData.zipCode ||
-      !currentFormData.address ||
-      !currentFormData.qualification ||
-      !currentFormData.subject
-    ) {
-      hasErrors = true;
-      firstErrorStep = 1;
-    }
-
-    // Validate step 2 fields
-    if (
-      !hasErrors &&
-      (!currentFormData.professionalBio ||
-        currentFormData.professionalBio.length < 50)
-    ) {
-      hasErrors = true;
-      firstErrorStep = 2;
-    }
-
-    if (hasErrors && currentStep !== firstErrorStep) {
-      customToast.error(
-        "Validation Error",
-        `Please complete step ${firstErrorStep} before proceeding.`
-      );
-      setCurrentStep(firstErrorStep);
-      return false;
+    // Validate only the current step
+    if (currentStep === 1) {
+      // Validate step 1 fields
+      if (
+        !currentFormData.firstName ||
+        !currentFormData.lastName ||
+        !currentFormData.phoneNumber ||
+        !currentFormData.country ||
+        !currentFormData.city ||
+        !currentFormData.province ||
+        !currentFormData.zipCode ||
+        !currentFormData.address ||
+        !currentFormData.qualification ||
+        !currentFormData.subject ||
+        currentFormData.yearsOfTeachingExperience === undefined ||
+        currentFormData.yearsOfTeachingExperience < 0
+      ) {
+        customToast.error(
+          "Validation Error",
+          "Please complete all required fields in Step 1 before proceeding."
+        );
+        return false;
+      }
+    } else if (currentStep === 2) {
+      // Validate step 2 fields
+      if (
+        !currentFormData.professionalBio ||
+        currentFormData.professionalBio.length < 50
+      ) {
+        customToast.error(
+          "Validation Error",
+          "Please complete all required fields in Step 2 before proceeding."
+        );
+        return false;
+      }
     }
 
     return true;
@@ -232,15 +259,8 @@ const TeacherProfileForm = ({
         "Your teacher profile has been created. Redirecting to dashboard..."
       );
 
-      // Call the onComplete callback
+      // Call the onComplete callback - navigation will be handled by ProfileCompletionPage
       onComplete(data);
-
-      // Navigate to teacher dashboard
-      if (user?.role) {
-        navigate(`/dashboard/${user.role}`);
-      } else {
-        navigate("/login");
-      }
     } catch (error) {
       console.error("Error creating teacher profile:", error);
       customToast.error(
@@ -293,7 +313,9 @@ const TeacherProfileForm = ({
             <div key={step} className="flex flex-col items-center flex-1">
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step <= currentStep
+                  step < currentStep
+                    ? "bg-green-500 border-green-500 text-white"
+                    : step === currentStep
                     ? "bg-brand-primary border-brand-primary text-white"
                     : "border-muted-foreground text-muted-foreground"
                 }`}
@@ -309,6 +331,12 @@ const TeacherProfileForm = ({
                 {step === 2 && "Professional Info"}
                 {step === 3 && "Review"}
               </div>
+              {/* Show completion status */}
+              {step < currentStep && (
+                <div className="mt-1 text-xs text-green-600 font-medium">
+                  ✓ Complete
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -593,6 +621,21 @@ const TeacherProfileForm = ({
           {/* Step 2: Professional Background */}
           {currentStep === 2 && (
             <div className="space-y-6">
+              {/* Validation Summary */}
+              {!isStepComplete(2) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h4 className="font-medium text-amber-800 mb-2">
+                    ⚠️ Please complete the following required fields:
+                  </h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    {(!formData.professionalBio ||
+                      formData.professionalBio.length < 50) && (
+                      <li>• Professional Bio (minimum 50 characters)</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="professionalBio">Professional Bio *</Label>
                 <Textarea
@@ -782,7 +825,16 @@ const TeacherProfileForm = ({
               {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
             </Button>
 
-            <Button onClick={handleNext} variant="hero" disabled={isLoading}>
+            <Button
+              onClick={handleNext}
+              variant="hero"
+              disabled={isLoading || !isStepComplete(currentStep)}
+              className={
+                !isStepComplete(currentStep)
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }
+            >
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -801,6 +853,16 @@ const TeacherProfileForm = ({
               )}
             </Button>
           </div>
+
+          {/* Help text when Next button is disabled */}
+          {!isStepComplete(currentStep) && currentStep < 3 && (
+            <div className="mt-3 text-center">
+              <p className="text-sm text-amber-600">
+                Please complete all required fields in Step {currentStep} to
+                continue
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
