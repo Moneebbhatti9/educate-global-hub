@@ -55,7 +55,6 @@ interface SchoolProfileFormProps {
 const SchoolProfileForm = ({
   onComplete,
   onBack,
-  initialData,
 }: SchoolProfileFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
