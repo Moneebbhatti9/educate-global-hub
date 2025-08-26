@@ -64,6 +64,164 @@ export interface QualificationRequest {
   description?: string;
 }
 
+// Certification Types
+export interface Certification {
+  _id?: string;
+  id: string;
+  name: string;
+  issuer: string;
+  issueDate: string;
+  expiryDate: string;
+  credentialId: string;
+  credentialUrl: string;
+  description?: string;
+}
+
+export interface CertificationRequest {
+  name: string;
+  issuer: string;
+  issueDate: string;
+  expiryDate: string;
+  credentialId: string;
+  credentialUrl: string;
+  description?: string;
+}
+
+export interface Development {
+  _id?: string;
+  id: string;
+  title: string;
+  provider: string;
+  type: "Course" | "Workshop" | "Conference" | "Seminar" | "Online Training" | "Other";
+  duration: string;
+  completionDate: string;
+  skills: string[];
+  impact: string;
+  certificateUrl?: string;
+}
+
+export interface DevelopmentRequest {
+  title: string;
+  provider: string;
+  type: "Course" | "Workshop" | "Conference" | "Seminar" | "Online Training" | "Other";
+  duration: string;
+  completionDate: string;
+  skills: string[];
+  impact: string;
+  certificateUrl?: string;
+}
+
+export interface Membership {
+  _id?: string;
+  id: string;
+  organizationName: string;
+  membershipType: "Full Member" | "Associate Member" | "Student Member" | "Honorary Member" | "Other";
+  membershipId: string;
+  joinDate: string;
+  expiryDate: string;
+  status: "Active" | "Inactive" | "Pending" | "Expired";
+  benefits: string[];
+  description?: string;
+}
+
+export interface MembershipRequest {
+  organizationName: string;
+  membershipType: "Full Member" | "Associate Member" | "Student Member" | "Honorary Member" | "Other";
+  membershipId: string;
+  joinDate: string;
+  expiryDate: string;
+  status: "Active" | "Inactive" | "Pending" | "Expired";
+  benefits: string[];
+  description?: string;
+}
+
+export interface Dependent {
+  _id?: string;
+  id: string;
+  dependentName: string;
+  relationship: "Spouse" | "Child" | "Parent" | "Sibling" | "Other";
+  age?: number;
+  nationality: string;
+  passportNumber: string;
+  passportExpiry: string;
+  visaRequired: boolean;
+  visaStatus?: "Not Applied" | "Applied" | "Approved" | "Denied";
+  accommodationNeeds: string;
+  medicalNeeds?: string;
+  educationNeeds?: string;
+  notes?: string;
+}
+
+export interface DependentRequest {
+  dependentName: string;
+  relationship: "Spouse" | "Child" | "Parent" | "Sibling" | "Other";
+  age?: number;
+  nationality: string;
+  passportNumber: string;
+  passportExpiry: string;
+  visaRequired: boolean;
+  visaStatus?: "Not Applied" | "Applied" | "Approved" | "Denied";
+  accommodationNeeds: string;
+  medicalNeeds?: string;
+  educationNeeds?: string;
+  notes?: string;
+}
+
+export interface Activity {
+  _id?: string;
+  id: string;
+  name: string;
+  type: "Club" | "Sport" | "Community Service" | "Leadership" | "Hobby" | "Volunteer Work" | "Other";
+  role: string;
+  organization?: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+  achievements: string[];
+  skillsDeveloped: string[];
+  timeCommitment: string;
+}
+
+export interface ActivityRequest {
+  name: string;
+  type: "Club" | "Sport" | "Community Service" | "Leadership" | "Hobby" | "Volunteer Work" | "Other";
+  role: string;
+  organization?: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+  achievements: string[];
+  skillsDeveloped: string[];
+  timeCommitment: string;
+}
+
+// Referee Types
+export interface Referee {
+  _id?: string;
+  id: string;
+  name: string;
+  position: string;
+  organization: string;
+  email: string;
+  phone: string;
+  relationship: string;
+  yearsKnown: number;
+  notes?: string;
+}
+
+export interface RefereeRequest {
+  name: string;
+  position: string;
+  organization: string;
+  email: string;
+  phone: string;
+  relationship: string;
+  yearsKnown: number;
+  notes?: string;
+}
+
 // Legacy TeacherEmployment types for backward compatibility
 export interface TeacherEmployment {
   id?: string;
@@ -91,9 +249,16 @@ const PROFILE_ENDPOINTS = {
   TEACHER_PROFILE_SEARCH: "/teacher-profiles/search",
   SCHOOL_PROFILE_SEARCH: "/school-profiles/search",
   TEACHER_EMPLOYMENT: "/teacher-profiles/me/employment",
+  TEACHER_PROFILE_BY_ID: (id: string) => `/teacher-profiles/${id}`,
+  TEACHER_EXPERIENCE: "/teacher-profiles/me/employment",
   TEACHER_EDUCATION: "/teacher-profiles/me/education",
-  TEACHER_EXPERIENCE: "/teacher-profiles/me/experience",
   TEACHER_QUALIFICATIONS: "/teacher-profiles/me/qualifications",
+  TEACHER_REFEREES: "/teacher-profiles/me/referees",
+  TEACHER_CERTIFICATIONS: "/teacher-profiles/me/certifications",
+  TEACHER_DEVELOPMENT: "/teacher-profiles/me/development",
+  TEACHER_MEMBERSHIPS: "/teacher-profiles/me/memberships",
+  TEACHER_DEPENDENTS: "/teacher-profiles/me/dependents",
+  TEACHER_ACTIVITIES: "/teacher-profiles/me/activities",
 } as const;
 
 // Teacher Profile API functions
@@ -282,6 +447,261 @@ export const teacherProfileAPI = {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.delete<ApiResponse<{ message: string }>>(
       `${PROFILE_ENDPOINTS.TEACHER_QUALIFICATIONS}/${qualificationId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Create Teacher Referee
+  createReferee: async (
+    data: RefereeRequest
+  ): Promise<ApiResponse<Referee>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Referee>>(
+      PROFILE_ENDPOINTS.TEACHER_REFEREES,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Update Teacher Referee
+  updateReferee: async (
+    refereeId: string,
+    data: RefereeRequest
+  ): Promise<ApiResponse<Referee>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Referee>>(
+      `${PROFILE_ENDPOINTS.TEACHER_REFEREES}/${refereeId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Delete Teacher Referee
+  deleteReferee: async (
+    refereeId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      `${PROFILE_ENDPOINTS.TEACHER_REFEREES}/${refereeId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Create Teacher Certification
+  createCertification: async (
+    data: CertificationRequest
+  ): Promise<ApiResponse<Certification>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Certification>>(
+      PROFILE_ENDPOINTS.TEACHER_CERTIFICATIONS,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Update Teacher Certification
+  updateCertification: async (
+    certificationId: string,
+    data: CertificationRequest
+  ): Promise<ApiResponse<Certification>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Certification>>(
+      `${PROFILE_ENDPOINTS.TEACHER_CERTIFICATIONS}/${certificationId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Delete Teacher Certification
+  deleteCertification: async (
+    certificationId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      `${PROFILE_ENDPOINTS.TEACHER_CERTIFICATIONS}/${certificationId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  createDevelopment: async (
+    data: DevelopmentRequest
+  ): Promise<ApiResponse<Development>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Development>>(
+      PROFILE_ENDPOINTS.TEACHER_DEVELOPMENT,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  updateDevelopment: async (
+    developmentId: string,
+    data: DevelopmentRequest
+  ): Promise<ApiResponse<Development>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Development>>(
+      `${PROFILE_ENDPOINTS.TEACHER_DEVELOPMENT}/${developmentId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  deleteDevelopment: async (
+    developmentId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      `${PROFILE_ENDPOINTS.TEACHER_DEVELOPMENT}/${developmentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  createMembership: async (data: MembershipRequest): Promise<ApiResponse<Membership>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Membership>>(
+      PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  updateMembership: async (membershipId: string, data: MembershipRequest): Promise<ApiResponse<Membership>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Membership>>(
+      `${PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS}/${membershipId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  deleteMembership: async (membershipId: string): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      `${PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS}/${membershipId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  createDependent: async (data: DependentRequest): Promise<ApiResponse<Dependent>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Dependent>>(
+      PROFILE_ENDPOINTS.TEACHER_DEPENDENTS,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  updateDependent: async (dependentId: string, data: DependentRequest): Promise<ApiResponse<Dependent>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Dependent>>(
+      `${PROFILE_ENDPOINTS.TEACHER_DEPENDENTS}/${dependentId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  deleteDependent: async (dependentId: string): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      `${PROFILE_ENDPOINTS.TEACHER_DEPENDENTS}/${dependentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  createActivity: async (data: ActivityRequest): Promise<ApiResponse<Activity>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Activity>>(
+      PROFILE_ENDPOINTS.TEACHER_ACTIVITIES,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  updateActivity: async (activityId: string, data: ActivityRequest): Promise<ApiResponse<Activity>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Activity>>(
+      `${PROFILE_ENDPOINTS.TEACHER_ACTIVITIES}/${activityId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  deleteActivity: async (activityId: string): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      `${PROFILE_ENDPOINTS.TEACHER_ACTIVITIES}/${activityId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -543,6 +963,253 @@ export const useTeacherProfileQueries = () => {
     });
   };
 
+  // Create teacher referee mutation
+  const useCreateTeacherReferee = () => {
+    return useMutation({
+      mutationFn: teacherProfileAPI.createReferee,
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate current teacher profile to refresh referee data
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          // Invalidate teacher profile by ID queries
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Create teacher referee error:", error);
+      },
+    });
+  };
+
+  // Update teacher referee mutation
+  const useUpdateTeacherReferee = () => {
+    return useMutation({
+      mutationFn: ({ refereeId, data }: { refereeId: string; data: RefereeRequest }) =>
+        teacherProfileAPI.updateReferee(refereeId, data),
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate current teacher profile to refresh referee data
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          // Invalidate teacher profile by ID queries
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Update teacher referee error:", error);
+      },
+    });
+  };
+
+  // Delete teacher referee mutation
+  const useDeleteTeacherReferee = () => {
+    return useMutation({
+      mutationFn: teacherProfileAPI.deleteReferee,
+      onSuccess: (response) => {
+        if (response.success) {
+          // Invalidate current teacher profile to refresh referee data
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          // Invalidate teacher profile by ID queries
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Delete teacher referee error:", error);
+      },
+    });
+  };
+
+  // Create teacher certification mutation
+  const useCreateTeacherCertification = () => {
+    return useMutation({
+      mutationFn: teacherProfileAPI.createCertification,
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate current teacher profile to refresh certification data
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          // Invalidate teacher profile by ID queries
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Create teacher certification error:", error);
+      },
+    });
+  };
+
+  // Update teacher certification mutation
+  const useUpdateTeacherCertification = () => {
+    return useMutation({
+      mutationFn: ({ certificationId, data }: { certificationId: string; data: CertificationRequest }) =>
+        teacherProfileAPI.updateCertification(certificationId, data),
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate current teacher profile to refresh certification data
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          // Invalidate teacher profile by ID queries
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Update teacher certification error:", error);
+      },
+    });
+  };
+
+  // Delete teacher certification mutation
+  const useDeleteTeacherCertification = () => {
+    return useMutation({
+      mutationFn: teacherProfileAPI.deleteCertification,
+      onSuccess: (response) => {
+        if (response.success) {
+          // Invalidate current teacher profile to refresh certification data
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          // Invalidate teacher profile by ID queries
+          queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Delete teacher certification error:", error);
+      },
+    });
+  };
+
+  // Create teacher development mutation
+  const useCreateTeacherDevelopment = () => {
+    return useMutation({
+      mutationFn: (data: DevelopmentRequest) =>
+        teacherProfileAPI.createDevelopment(data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Update teacher development mutation
+  const useUpdateTeacherDevelopment = () => {
+    return useMutation({
+      mutationFn: ({
+        developmentId,
+        data,
+      }: {
+        developmentId: string;
+        data: DevelopmentRequest;
+      }) => teacherProfileAPI.updateDevelopment(developmentId, data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Delete teacher development mutation
+  const useDeleteTeacherDevelopment = () => {
+    return useMutation({
+      mutationFn: (developmentId: string) =>
+        teacherProfileAPI.deleteDevelopment(developmentId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Create teacher membership mutation
+  const useCreateTeacherMembership = () => {
+    return useMutation({
+      mutationFn: (data: MembershipRequest) =>
+        teacherProfileAPI.createMembership(data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Update teacher membership mutation
+  const useUpdateTeacherMembership = () => {
+    return useMutation({
+      mutationFn: ({ membershipId, data }: { membershipId: string; data: MembershipRequest }) =>
+        teacherProfileAPI.updateMembership(membershipId, data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Delete teacher membership mutation
+  const useDeleteTeacherMembership = () => {
+    return useMutation({
+      mutationFn: (membershipId: string) =>
+        teacherProfileAPI.deleteMembership(membershipId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Create dependent mutation
+  const useCreateDependent = () => {
+    return useMutation({
+      mutationFn: (data: DependentRequest) =>
+        teacherProfileAPI.createDependent(data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Update dependent mutation
+  const useUpdateDependent = () => {
+    return useMutation({
+      mutationFn: ({ dependentId, data }: { dependentId: string; data: DependentRequest }) =>
+        teacherProfileAPI.updateDependent(dependentId, data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Delete dependent mutation
+  const useDeleteDependent = () => {
+    return useMutation({
+      mutationFn: (dependentId: string) =>
+        teacherProfileAPI.deleteDependent(dependentId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Create activity mutation
+  const useCreateActivity = () => {
+    return useMutation({
+      mutationFn: (data: ActivityRequest) =>
+        teacherProfileAPI.createActivity(data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Update activity mutation
+  const useUpdateActivity = () => {
+    return useMutation({
+      mutationFn: ({ activityId, data }: { activityId: string; data: ActivityRequest }) =>
+        teacherProfileAPI.updateActivity(activityId, data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
+  // Delete activity mutation
+  const useDeleteActivity = () => {
+    return useMutation({
+      mutationFn: (activityId: string) =>
+        teacherProfileAPI.deleteActivity(activityId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      },
+    });
+  };
+
   return {
     useCurrentTeacherProfile,
     useTeacherProfileById,
@@ -556,6 +1223,24 @@ export const useTeacherProfileQueries = () => {
     useCreateTeacherQualification,
     useUpdateTeacherQualification,
     useDeleteTeacherQualification,
+    useCreateTeacherReferee,
+    useUpdateTeacherReferee,
+    useDeleteTeacherReferee,
+    useCreateTeacherCertification,
+    useUpdateTeacherCertification,
+    useDeleteTeacherCertification,
+    useCreateTeacherDevelopment,
+    useUpdateTeacherDevelopment,
+    useDeleteTeacherDevelopment,
+    useCreateTeacherMembership,
+    useUpdateTeacherMembership,
+    useDeleteTeacherMembership,
+    useCreateDependent,
+    useUpdateDependent,
+    useDeleteDependent,
+    useCreateActivity,
+    useUpdateActivity,
+    useDeleteActivity,
   };
 };
 
@@ -800,6 +1485,249 @@ export const useDeleteTeacherQualification = () => {
     },
     onError: (error) => {
       console.error("Delete teacher qualification error:", error);
+    },
+  });
+};
+
+// Standalone hooks for Referee API
+export const useCreateTeacherReferee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: teacherProfileAPI.createReferee,
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        // Invalidate current teacher profile to refresh referee data
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        // Invalidate teacher profile by ID queries
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Create teacher referee error:", error);
+    },
+  });
+};
+
+export const useUpdateTeacherReferee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ refereeId, data }: { refereeId: string; data: RefereeRequest }) =>
+      teacherProfileAPI.updateReferee(refereeId, data),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        // Invalidate current teacher profile to refresh referee data
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        // Invalidate teacher profile by ID queries
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Update teacher referee error:", error);
+    },
+  });
+};
+
+export const useDeleteTeacherReferee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: teacherProfileAPI.deleteReferee,
+    onSuccess: (response) => {
+      if (response.success) {
+        // Invalidate current teacher profile to refresh referee data
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        // Invalidate teacher profile by ID queries
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Delete teacher referee error:", error);
+    },
+  });
+};
+
+// Standalone hooks for Certification API
+export const useCreateTeacherCertification = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: teacherProfileAPI.createCertification,
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        // Invalidate current teacher profile to refresh certification data
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        // Invalidate teacher profile by ID queries
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Create teacher certification error:", error);
+    },
+  });
+};
+
+export const useUpdateTeacherCertification = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ certificationId, data }: { certificationId: string; data: CertificationRequest }) =>
+      teacherProfileAPI.updateCertification(certificationId, data),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        // Invalidate current teacher profile to refresh certification data
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        // Invalidate teacher profile by ID queries
+        queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Update teacher certification error:", error);
+    },
+  });
+};
+
+export const useDeleteTeacherCertification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (certificationId: string) =>
+      teacherProfileAPI.deleteCertification(certificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useCreateTeacherDevelopment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DevelopmentRequest) =>
+      teacherProfileAPI.createDevelopment(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useUpdateTeacherDevelopment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      developmentId,
+      data,
+    }: {
+      developmentId: string;
+      data: DevelopmentRequest;
+    }) => teacherProfileAPI.updateDevelopment(developmentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useDeleteTeacherDevelopment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (developmentId: string) =>
+      teacherProfileAPI.deleteDevelopment(developmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useCreateTeacherMembership = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: MembershipRequest) => teacherProfileAPI.createMembership(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useUpdateTeacherMembership = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, data }: { membershipId: string; data: MembershipRequest }) =>
+      teacherProfileAPI.updateMembership(membershipId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useDeleteTeacherMembership = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (membershipId: string) => teacherProfileAPI.deleteMembership(membershipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+// Standalone hooks for Dependent API
+export const useCreateDependent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DependentRequest) => teacherProfileAPI.createDependent(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useUpdateDependent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dependentId, data }: { dependentId: string; data: DependentRequest }) =>
+      teacherProfileAPI.updateDependent(dependentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useDeleteDependent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dependentId: string) => teacherProfileAPI.deleteDependent(dependentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+// Standalone hooks for Activity API
+export const useCreateActivity = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ActivityRequest) => teacherProfileAPI.createActivity(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useUpdateActivity = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ activityId, data }: { activityId: string; data: ActivityRequest }) =>
+      teacherProfileAPI.updateActivity(activityId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+    },
+  });
+};
+
+export const useDeleteActivity = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (activityId: string) => teacherProfileAPI.deleteActivity(activityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
     },
   });
 };

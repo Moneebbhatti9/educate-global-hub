@@ -53,6 +53,8 @@ export interface TeacherProfile extends BaseProfile {
   referees?: any[];
   development?: any[];
   memberships?: any[];
+  dependents?: any[];
+  activities?: any[];
 }
 
 // Education Types

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,33 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BookOpen } from "lucide-react";
-
-interface Development {
-  id: string;
-  title: string;
-  provider: string;
-  type: "Course" | "Workshop" | "Conference" | "Seminar" | "Online Training" | "Other";
-  duration: string;
-  completionDate: string;
-  skills: string[];
-  impact: string;
-  certificateUrl?: string;
-}
+import { Development, DevelopmentRequest } from "@/apis/profiles";
 
 interface AddDevelopmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (development: Development) => void;
-  editingDevelopment?: Development;
+  editingDevelopment?: Development | null;
 }
 
-export const AddDevelopmentModal = ({
+export const AddDevelopmentModal: React.FC<AddDevelopmentModalProps> = ({
   open,
   onOpenChange,
   onSave,
   editingDevelopment,
-}: AddDevelopmentModalProps) => {
-  const [formData, setFormData] = useState<Omit<Development, "id">>({
+}) => {
+  const [formData, setFormData] = useState<DevelopmentRequest>({
     title: editingDevelopment?.title || "",
     provider: editingDevelopment?.provider || "",
     type: editingDevelopment?.type || "Course",
@@ -57,18 +46,32 @@ export const AddDevelopmentModal = ({
     certificateUrl: editingDevelopment?.certificateUrl || "",
   });
 
+  const [skillInput, setSkillInput] = useState("");
+
+  React.useEffect(() => {
+    if (editingDevelopment) {
+      setFormData({
+        title: editingDevelopment.title || "",
+        provider: editingDevelopment.provider || "",
+        type: editingDevelopment.type || "Course",
+        duration: editingDevelopment.duration || "",
+        completionDate: editingDevelopment.completionDate || "",
+        skills: editingDevelopment.skills || [],
+        impact: editingDevelopment.impact || "",
+        certificateUrl: editingDevelopment.certificateUrl || "",
+      });
+    }
+  }, [editingDevelopment]);
+
   const handleSave = () => {
     if (!formData.title.trim() || !formData.provider.trim()) return;
-
     const newDevelopment: Development = {
       id: editingDevelopment?.id || Date.now().toString(),
+      _id: editingDevelopment?._id, // Added _id for API compatibility
       ...formData,
     };
-
     onSave(newDevelopment);
     onOpenChange(false);
-
-    // Reset form if not editing
     if (!editingDevelopment) {
       setFormData({
         title: "",

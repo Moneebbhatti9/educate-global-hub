@@ -13,17 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Award } from "lucide-react";
-
-interface Certification {
-  id: string;
-  name: string;
-  issuer: string;
-  issueDate: string;
-  expiryDate: string;
-  credentialId: string;
-  credentialUrl: string;
-  description?: string;
-}
+import { Certification, CertificationRequest } from "@/apis/profiles";
+import React from "react";
 
 interface AddCertificationModalProps {
   open: boolean;
@@ -38,7 +29,7 @@ export const AddCertificationModal = ({
   onSave,
   editingCertification,
 }: AddCertificationModalProps) => {
-  const [formData, setFormData] = useState<Omit<Certification, "id">>({
+  const [formData, setFormData] = useState<CertificationRequest>({
     name: editingCertification?.name || "",
     issuer: editingCertification?.issuer || "",
     issueDate: editingCertification?.issueDate || "",
@@ -53,6 +44,7 @@ export const AddCertificationModal = ({
 
     const newCertification: Certification = {
       id: editingCertification?.id || Date.now().toString(),
+      _id: editingCertification?._id,
       ...formData,
     };
 
@@ -72,6 +64,21 @@ export const AddCertificationModal = ({
       });
     }
   };
+
+  // Update form data when editingCertification changes
+  React.useEffect(() => {
+    if (editingCertification) {
+      setFormData({
+        name: editingCertification.name || "",
+        issuer: editingCertification.issuer || "",
+        issueDate: editingCertification.issueDate || "",
+        expiryDate: editingCertification.expiryDate || "",
+        credentialId: editingCertification.credentialId || "",
+        credentialUrl: editingCertification.credentialUrl || "",
+        description: editingCertification.description || "",
+      });
+    }
+  }, [editingCertification]);
 
   const updateField = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
