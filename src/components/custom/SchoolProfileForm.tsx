@@ -369,7 +369,6 @@ const SchoolProfileForm = ({
                     className={
                       isFieldInvalid("schoolName") ? "border-red-500" : ""
                     }
-                    readOnly
                   />
                   {getFieldError("schoolName") && (
                     <p className="text-sm text-red-500">
