@@ -74,25 +74,27 @@ const SchoolProfileForm = ({
     isFieldInvalid,
   } = useFormValidation({
     schema: schoolProfileFormSchema,
-    mode: "onTouched",
-    defaultValues: {
-      schoolName: initialData?.schoolName || "",
-      schoolEmail: initialData?.schoolEmail || "",
-      schoolContactNumber: initialData?.schoolContactNumber || "",
-      country: initialData?.country || "",
-      city: initialData?.city || "",
-      province: initialData?.province || "",
-      zipCode: initialData?.zipCode || "",
-      address: initialData?.address || "",
-      curriculum: initialData?.curriculum || [],
-      schoolSize: initialData?.schoolSize || "Medium (501-1000 students)",
-      schoolType: initialData?.schoolType || "Private",
-      genderType: initialData?.genderType || "Mixed",
-      ageGroup: initialData?.ageGroup || [],
-      schoolWebsite: initialData?.schoolWebsite || "",
-      aboutSchool: initialData?.aboutSchool || "",
-    },
+    mode: "onTouched"
+   
   });
+
+ // defaultValues: {
+ //      schoolName: initialData?.schoolName || "",
+ //      schoolEmail: initialData?.schoolEmail || "",
+ //      schoolContactNumber: initialData?.schoolContactNumber || "",
+ //      country: initialData?.country || "",
+ //      city: initialData?.city || "",
+ //      province: initialData?.province || "",
+ //      zipCode: initialData?.zipCode || "",
+ //      address: initialData?.address || "",
+ //      curriculum: initialData?.curriculum || [],
+ //      schoolSize: initialData?.schoolSize || "Medium (501-1000 students)",
+ //      schoolType: initialData?.schoolType || "Private",
+ //      genderType: initialData?.genderType || "Mixed",
+ //      ageGroup: initialData?.ageGroup || [],
+ //      schoolWebsite: initialData?.schoolWebsite || "",
+ //      aboutSchool: initialData?.aboutSchool || "",
+ //    },
 
   const formData = watch();
 
