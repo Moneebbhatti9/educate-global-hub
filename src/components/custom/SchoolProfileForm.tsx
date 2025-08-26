@@ -75,37 +75,29 @@ const SchoolProfileForm = ({
     schema: schoolProfileFormSchema,
     mode: "onTouched",
      defaultValues: {
-      schoolName: initialData?.schoolName || "",
-      schoolEmail: initialData?.schoolEmail || "",
-      schoolContactNumber: initialData?.schoolContactNumber || "",
-      country: initialData?.country || "",
-      city: initialData?.city || "",
-      province: initialData?.province || "",
-      zipCode: initialData?.zipCode || "",
-      address: initialData?.address || "",
-      curriculum: initialData?.curriculum || [],
-      schoolSize: initialData?.schoolSize || "Medium (501-1000 students)",
-      schoolType: initialData?.schoolType || "Private",
-      genderType: initialData?.genderType || "Mixed",
-      ageGroup: initialData?.ageGroup || [],
-      schoolWebsite: initialData?.schoolWebsite || "",
-      aboutSchool: initialData?.aboutSchool || "",
-    },
+        schoolName: "",
+        schoolEmail: "",
+        schoolContactNumber: "",
+        country: "",
+        city: "",
+        province: "",
+        zipCode: "",
+        address: "",
+        curriculum: [],
+        schoolSize: "",
+        schoolType: "",
+        genderType: "",
+        ageGroup: [],
+        schoolWebsite: "",
+        aboutSchool: "",
+      },
   });
 
 
 
   const formData = watch();
 
-  // Pre-fill form with initial data when component mounts
-  useEffect(() => {
-    if (initialData) {
-      // Pre-fill basic information that was collected during signup
-      if (initialData.schoolEmail) {
-        setValue("schoolEmail", initialData.schoolEmail);
-      }
-    }
-  }, [initialData, setValue]);
+ 
 
   const addCurriculum = () => {
     if (
