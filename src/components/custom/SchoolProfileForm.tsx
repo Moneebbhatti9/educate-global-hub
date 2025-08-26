@@ -55,6 +55,7 @@ interface SchoolProfileFormProps {
 const SchoolProfileForm = ({
   onComplete,
   onBack,
+  initialData,
 }: SchoolProfileFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,29 +76,27 @@ const SchoolProfileForm = ({
     schema: schoolProfileFormSchema,
     mode: "onTouched",
      defaultValues: {
-        schoolName: "",
-        schoolEmail: "",
-        schoolContactNumber: "",
-        country: "",
-        city: "",
-        province: "",
-        zipCode: "",
-        address: "",
-        curriculum: [],
-        schoolSize: "",
-        schoolType: "",
-        genderType: "",
-        ageGroup: [],
-        schoolWebsite: "",
-        aboutSchool: "",
-      },
+      schoolName: initialData?.schoolName || "",
+      schoolEmail: initialData?.schoolEmail || "",
+      schoolContactNumber: initialData?.schoolContactNumber || "",
+      country: initialData?.country || "",
+      city: initialData?.city || "",
+      province: initialData?.province || "",
+      zipCode: initialData?.zipCode || "",
+      address: initialData?.address || "",
+      curriculum: initialData?.curriculum || [],
+      schoolSize: initialData?.schoolSize || "Medium (501-1000 students)",
+      schoolType: initialData?.schoolType || "Private",
+      genderType: initialData?.genderType || "Mixed",
+      ageGroup: initialData?.ageGroup || [],
+      schoolWebsite: initialData?.schoolWebsite || "",
+      aboutSchool: initialData?.aboutSchool || "",
+    },
   });
 
 
 
   const formData = watch();
-
- 
 
   const addCurriculum = () => {
     if (
@@ -313,13 +312,13 @@ const SchoolProfileForm = ({
           ))}
         </div>
 
-        {/* Connecting lines */}
+{/*        
         <div className="flex items-center w-full mb-4">
           <div className="flex-1 h-0.5 bg-muted"></div>
           <div className="flex-1 h-0.5 bg-muted"></div>
         </div>
 
-        <Progress value={getProgressPercentage()} className="h-2" />
+        <Progress value={getProgressPercentage()} className="h-2" /> */}
       </div>
 
       {/* Form */}
