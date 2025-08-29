@@ -67,6 +67,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return {
         ...state,
         user: action.payload,
+        isAuthenticated: !!action.payload, // Maintain authentication state
       };
     case "SET_LOADING":
       return {
@@ -471,16 +472,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const response = await authAPI.completeProfile(data);
         if (response.success && response.data) {
           const updatedUser = response.data;
+
+          if (import.meta.env.DEV) {
+            console.log("🔍 completeProfile API response:", {
+              response,
+              updatedUser,
+              isProfileComplete: updatedUser.isProfileComplete,
+              role: updatedUser.role,
+            });
+          }
+
           secureStorage.setItem(STORAGE_KEYS.USER_DATA, updatedUser);
           dispatch({
             type: "UPDATE_USER",
             payload: updatedUser,
           });
 
-          // Add a small delay to allow toast to be visible before navigation
-          setTimeout(() => {
-            navigate(`/dashboard/${updatedUser.role}`);
-          }, 1500);
+          if (import.meta.env.DEV) {
+            console.log("✅ User state updated in AuthContext:", {
+              storageUser: secureStorage.getItem(STORAGE_KEYS.USER_DATA),
+              contextState: state,
+            });
+          }
+
+          // Navigation is now handled manually in ProfileCompletionPage
+          // No automatic navigation here
         } else {
           throw new Error(response.message || "Failed to complete profile");
         }

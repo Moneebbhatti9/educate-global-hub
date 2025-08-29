@@ -468,7 +468,13 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                   className="flex items-center space-x-3 px-3 py-2"
                 >
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src="/api/placeholder/32/32" />
+                    <AvatarImage
+                      src={
+                        user?.avatarUrl ||
+                        user?.avatar ||
+                        "/api/placeholder/32/32"
+                      }
+                    />
                     <AvatarFallback>
                       {displayName
                         .split(" ")

@@ -13,7 +13,8 @@ export interface User {
   role: UserRole;
   isEmailVerified: boolean;
   isProfileComplete: boolean;
-  avatar?: string;
+  avatarUrl?: string;
+  avatar?: string; // Keep for backward compatibility
   phone?: string;
   createdAt: string;
   updatedAt: string;

@@ -18,7 +18,9 @@ const PrivacyPolicy = () => {
             </Link>
             <div className="flex items-center space-x-2">
               <Shield className="w-6 h-6 text-brand-primary" />
-              <span className="font-heading font-bold text-xl">Educate Link</span>
+              <span className="font-heading font-bold text-xl">
+                Educate Link
+              </span>
             </div>
           </div>
         </div>
@@ -38,7 +40,8 @@ const PrivacyPolicy = () => {
               </h1>
             </div>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Your privacy is important to us. This policy explains how we collect, use, and protect your personal information.
+              Your privacy is important to us. This policy explains how we
+              collect, use, and protect your personal information.
             </p>
             <p className="text-sm text-muted-foreground">
               Last updated: March 15, 2024
@@ -58,11 +61,18 @@ const PrivacyPolicy = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  We collect information you provide directly to us, such as when you create an account, update your profile, or contact us.
+                  We collect information you provide directly to us, such as
+                  when you create an account, update your profile, or contact
+                  us.
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Personal information (name, email address, phone number)</li>
-                  <li>Professional information (education, experience, certifications)</li>
+                  <li>
+                    Personal information (name, email address, phone number)
+                  </li>
+                  <li>
+                    Professional information (education, experience,
+                    certifications)
+                  </li>
                   <li>Account preferences and settings</li>
                   <li>Communication records and correspondence</li>
                   <li>Usage data and analytics information</li>
@@ -81,7 +91,8 @@ const PrivacyPolicy = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  We use the information we collect to provide, maintain, and improve our services:
+                  We use the information we collect to provide, maintain, and
+                  improve our services:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Create and manage your account</li>
@@ -105,7 +116,8 @@ const PrivacyPolicy = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  We implement appropriate technical and organizational measures to protect your personal information:
+                  We implement appropriate technical and organizational measures
+                  to protect your personal information:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Encryption of data in transit and at rest</li>
@@ -142,12 +154,20 @@ const PrivacyPolicy = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  If you have any questions about this Privacy Policy or our privacy practices, please contact us:
+                  If you have any questions about this Privacy Policy or our
+                  privacy practices, please contact us:
                 </p>
                 <div className="space-y-2 text-muted-foreground">
-                  <p><strong>Email:</strong> privacy@educatelink.com</p>
-                  <p><strong>Address:</strong> 123 Education Street, Knowledge City, KC 12345</p>
-                  <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                  <p>
+                    <strong>Email:</strong> privacy@educatelink.com
+                  </p>
+                  <p>
+                    <strong>Address:</strong> 123 Education Street, Knowledge
+                    City, KC 12345
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> +1 (555) 123-4567
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -156,13 +176,16 @@ const PrivacyPolicy = () => {
           {/* Footer Links */}
           <div className="border-t border-border pt-8">
             <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link to="/legal/terms" className="text-brand-primary hover:underline">
+              <Link
+                to="/privacy"
+                className="text-brand-primary hover:underline"
+              >
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="text-brand-primary hover:underline">
                 Terms & Conditions
               </Link>
-              <Link to="/legal/cookies" className="text-brand-primary hover:underline">
-                Cookie Policy
-              </Link>
-              <Link to="/legal/gdpr" className="text-brand-primary hover:underline">
+              <Link to="/gdpr" className="text-brand-primary hover:underline">
                 GDPR Compliance
               </Link>
             </div>

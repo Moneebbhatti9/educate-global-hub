@@ -25,7 +25,8 @@ export interface BaseProfile {
 
 // Teacher Profile Types
 export interface TeacherProfile extends BaseProfile {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phoneNumber: string;
   country: string;
   city: string;
@@ -84,7 +85,8 @@ export interface EducationRequest {
 }
 
 export interface TeacherProfileRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phoneNumber: string;
   country: string;
   city: string;

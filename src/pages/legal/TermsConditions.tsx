@@ -18,7 +18,9 @@ const TermsConditions = () => {
             </Link>
             <div className="flex items-center space-x-2">
               <Scale className="w-6 h-6 text-brand-primary" />
-              <span className="font-heading font-bold text-xl">Educate Link</span>
+              <span className="font-heading font-bold text-xl">
+                Educate Link
+              </span>
             </div>
           </div>
         </div>
@@ -38,7 +40,8 @@ const TermsConditions = () => {
               </h1>
             </div>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Please read these terms and conditions carefully before using our platform.
+              Please read these terms and conditions carefully before using our
+              platform.
             </p>
             <p className="text-sm text-muted-foreground">
               Last updated: March 15, 2024
@@ -58,13 +61,18 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  By accessing and using Educate Link, you accept and agree to be bound by the terms and provision of this agreement.
+                  By accessing and using Educate Link, you accept and agree to
+                  be bound by the terms and provision of this agreement.
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>You must be at least 18 years old to use our services</li>
-                  <li>You agree to provide accurate and complete information</li>
+                  <li>
+                    You agree to provide accurate and complete information
+                  </li>
                   <li>You are responsible for maintaining account security</li>
-                  <li>You agree to comply with all applicable laws and regulations</li>
+                  <li>
+                    You agree to comply with all applicable laws and regulations
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -80,12 +88,17 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  When you create an account with us, you must provide accurate and complete information:
+                  When you create an account with us, you must provide accurate
+                  and complete information:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Maintain the confidentiality of your account credentials</li>
+                  <li>
+                    Maintain the confidentiality of your account credentials
+                  </li>
                   <li>Notify us immediately of any unauthorized use</li>
-                  <li>Update your information to keep it current and accurate</li>
+                  <li>
+                    Update your information to keep it current and accurate
+                  </li>
                   <li>Use the platform only for lawful purposes</li>
                   <li>Respect other users and maintain professional conduct</li>
                 </ul>
@@ -103,14 +116,24 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  Our platform is designed to connect educators with educational institutions. Users agree to:
+                  Our platform is designed to connect educators with educational
+                  institutions. Users agree to:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Use the platform for educational and professional purposes only</li>
-                  <li>Provide truthful information in profiles and applications</li>
+                  <li>
+                    Use the platform for educational and professional purposes
+                    only
+                  </li>
+                  <li>
+                    Provide truthful information in profiles and applications
+                  </li>
                   <li>Respect intellectual property rights</li>
-                  <li>Not engage in spam, harassment, or inappropriate behavior</li>
-                  <li>Not circumvent security measures or access restrictions</li>
+                  <li>
+                    Not engage in spam, harassment, or inappropriate behavior
+                  </li>
+                  <li>
+                    Not circumvent security measures or access restrictions
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -126,12 +149,15 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  The following activities are strictly prohibited on our platform:
+                  The following activities are strictly prohibited on our
+                  platform:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Posting false, misleading, or fraudulent information</li>
                   <li>Harassment, discrimination, or inappropriate content</li>
-                  <li>Attempting to hack, breach, or compromise platform security</li>
+                  <li>
+                    Attempting to hack, breach, or compromise platform security
+                  </li>
                   <li>Using automated tools to scrape or collect data</li>
                   <li>Impersonating other users or organizations</li>
                   <li>Violating applicable laws or regulations</li>
@@ -145,16 +171,22 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
                 <p className="text-muted-foreground mb-4">
-                  Educate Link provides the platform "as is" and makes no warranties about:
+                  Educate Link provides the platform "as is" and makes no
+                  warranties about:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>The accuracy or completeness of user-provided information</li>
+                  <li>
+                    The accuracy or completeness of user-provided information
+                  </li>
                   <li>The success of job applications or hiring processes</li>
                   <li>Uninterrupted or error-free platform operation</li>
-                  <li>Third-party content or services linked from our platform</li>
+                  <li>
+                    Third-party content or services linked from our platform
+                  </li>
                 </ul>
                 <p className="text-muted-foreground mt-4">
-                  Our liability is limited to the maximum extent permitted by law.
+                  Our liability is limited to the maximum extent permitted by
+                  law.
                 </p>
               </CardContent>
             </Card>
@@ -165,7 +197,8 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  We reserve the right to modify these terms at any time. We will notify users of significant changes through:
+                  We reserve the right to modify these terms at any time. We
+                  will notify users of significant changes through:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                   <li>Email notifications to registered users</li>
@@ -173,7 +206,8 @@ const TermsConditions = () => {
                   <li>Updates to this terms page with revision dates</li>
                 </ul>
                 <p className="text-muted-foreground mt-4">
-                  Continued use of the platform after changes constitutes acceptance of the new terms.
+                  Continued use of the platform after changes constitutes
+                  acceptance of the new terms.
                 </p>
               </CardContent>
             </Card>
@@ -184,12 +218,20 @@ const TermsConditions = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  For questions about these terms and conditions, please contact us:
+                  For questions about these terms and conditions, please contact
+                  us:
                 </p>
                 <div className="space-y-2 text-muted-foreground">
-                  <p><strong>Email:</strong> legal@educatelink.com</p>
-                  <p><strong>Address:</strong> 123 Education Street, Knowledge City, KC 12345</p>
-                  <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                  <p>
+                    <strong>Email:</strong> legal@educatelink.com
+                  </p>
+                  <p>
+                    <strong>Address:</strong> 123 Education Street, Knowledge
+                    City, KC 12345
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> +1 (555) 123-4567
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -198,13 +240,16 @@ const TermsConditions = () => {
           {/* Footer Links */}
           <div className="border-t border-border pt-8">
             <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link to="/legal/privacy" className="text-brand-primary hover:underline">
+              <Link
+                to="/privacy"
+                className="text-brand-primary hover:underline"
+              >
                 Privacy Policy
               </Link>
-              <Link to="/legal/cookies" className="text-brand-primary hover:underline">
-                Cookie Policy
+              <Link to="/terms" className="text-brand-primary hover:underline">
+                Terms & Conditions
               </Link>
-              <Link to="/legal/gdpr" className="text-brand-primary hover:underline">
+              <Link to="/gdpr" className="text-brand-primary hover:underline">
                 GDPR Compliance
               </Link>
             </div>

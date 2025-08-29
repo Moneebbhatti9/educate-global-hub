@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Globe, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import {
+  Globe,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
 import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
@@ -29,10 +37,11 @@ interface LoginFormData {
 
 const SignIn = () => {
   const navigate = useNavigate();
-
+  const location = useLocation();
   const { handleError, showSuccess } = useErrorHandler();
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isFromProfileCompletion, setIsFromProfileCompletion] = useState(false);
 
   const {
     register,
@@ -53,6 +62,17 @@ const SignIn = () => {
 
   const formData = watch();
 
+  // Check if user is coming from profile completion
+  useEffect(() => {
+    if (location.state?.message && location.state?.email) {
+      setIsFromProfileCompletion(true);
+      setValue("email", location.state.email);
+
+      // Show success message
+      customToast.success("Profile Completed!", location.state.message);
+    }
+  }, [location.state, setValue]);
+
   const handleFormSubmit = async (data: {
     email: string;
     password: string;
@@ -65,7 +85,14 @@ const SignIn = () => {
         rememberMe: data.rememberMe,
       });
 
-      showSuccess("Welcome back!", "Successfully signed in to your account.");
+      if (isFromProfileCompletion) {
+        showSuccess(
+          "Welcome to your dashboard!",
+          "Your profile is now complete and you have full access."
+        );
+      } else {
+        showSuccess("Welcome back!", "Successfully signed in to your account.");
+      }
     } catch (error) {
       handleError(error, "Login failed");
     }
@@ -93,6 +120,24 @@ const SignIn = () => {
             </p>
           </div>
 
+          {/* Profile Completion Success Banner */}
+          {isFromProfileCompletion && (
+            <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <h3 className="font-medium text-green-800">
+                    🎉 Profile Completed Successfully!
+                  </h3>
+                  <p className="text-sm text-green-700 mt-1">
+                    Your profile is now complete. Please sign in to access your
+                    dashboard.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Sign In Form */}
           <Card className="shadow-card">
             <CardHeader>
@@ -100,7 +145,9 @@ const SignIn = () => {
                 Sign In
               </CardTitle>
               <CardDescription className="text-center">
-                Enter your credentials to access your account
+                {isFromProfileCompletion
+                  ? "Your email has been pre-filled. Enter your password to access your dashboard."
+                  : "Enter your credentials to access your account"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -126,6 +173,11 @@ const SignIn = () => {
                   {getFieldError("email") && (
                     <p className="text-sm text-destructive">
                       {getFieldError("email")}
+                    </p>
+                  )}
+                  {isFromProfileCompletion && (
+                    <p className="text-sm text-green-600">
+                      ✓ Email pre-filled from your completed profile
                     </p>
                   )}
                 </div>

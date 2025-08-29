@@ -103,8 +103,6 @@ const SchoolProfileForm = ({
       if (initialData.schoolEmail) {
         setValue("schoolEmail", initialData.schoolEmail);
       }
-      
-
     }
   }, [initialData, setValue]);
 
@@ -149,47 +147,73 @@ const SchoolProfileForm = ({
     }
   };
 
+  const isStepComplete = (step: number) => {
+    const currentFormData = watch();
+
+    if (step === 1) {
+      return !!(
+        currentFormData.schoolName &&
+        currentFormData.schoolEmail &&
+        currentFormData.schoolContactNumber &&
+        currentFormData.country &&
+        currentFormData.city &&
+        currentFormData.province &&
+        currentFormData.zipCode &&
+        currentFormData.address &&
+        currentFormData.curriculum.length > 0 &&
+        currentFormData.schoolSize &&
+        currentFormData.schoolType &&
+        currentFormData.genderType &&
+        currentFormData.ageGroup.length > 0
+      );
+    } else if (step === 2) {
+      return !!(
+        currentFormData.aboutSchool && currentFormData.aboutSchool.length >= 100
+      );
+    }
+
+    return true;
+  };
+
   const validateCurrentStep = () => {
     const currentFormData = watch();
-    let hasErrors = false;
-    let firstErrorStep = 1;
 
-    // Validate step 1 fields
-    if (
-      !currentFormData.schoolName ||
-      !currentFormData.schoolEmail ||
-      !currentFormData.schoolContactNumber ||
-      !currentFormData.country ||
-      !currentFormData.city ||
-      !currentFormData.province ||
-      !currentFormData.zipCode ||
-      !currentFormData.address ||
-      currentFormData.curriculum.length === 0 ||
-      !currentFormData.schoolSize ||
-      !currentFormData.schoolType ||
-      !currentFormData.genderType ||
-      currentFormData.ageGroup.length === 0
-    ) {
-      hasErrors = true;
-      firstErrorStep = 1;
-    }
-
-    // Validate step 2 fields
-    if (
-      !hasErrors &&
-      (!currentFormData.aboutSchool || currentFormData.aboutSchool.length < 100)
-    ) {
-      hasErrors = true;
-      firstErrorStep = 2;
-    }
-
-    if (hasErrors && currentStep !== firstErrorStep) {
-      customToast.error(
-        "Validation Error",
-        `Please complete step ${firstErrorStep} before proceeding.`
-      );
-      setCurrentStep(firstErrorStep);
-      return false;
+    // Validate only the current step
+    if (currentStep === 1) {
+      // Validate step 1 fields
+      if (
+        !currentFormData.schoolName ||
+        !currentFormData.schoolEmail ||
+        !currentFormData.schoolContactNumber ||
+        !currentFormData.country ||
+        !currentFormData.city ||
+        !currentFormData.province ||
+        !currentFormData.zipCode ||
+        !currentFormData.address ||
+        currentFormData.curriculum.length === 0 ||
+        !currentFormData.schoolSize ||
+        !currentFormData.schoolType ||
+        !currentFormData.genderType ||
+        currentFormData.ageGroup.length === 0
+      ) {
+        customToast.error(
+          "Validation Error",
+          "Please complete all required fields in Step 1 before proceeding."
+        );
+        return false;
+      }
+    } else if (currentStep === 2) {
+      // Validate step 2 fields
+      if (
+        !currentFormData.aboutSchool ||
+        currentFormData.aboutSchool.length < 100
+      ) {
+        customToast.error(
+          "Validation Error",
+          "Please complete all required fields in Step 2 before proceeding."
+        );
+        return false;
+      }
     }
 
     return true;
@@ -214,15 +238,8 @@ const SchoolProfileForm = ({
         "Your school profile has been created. Redirecting to dashboard..."
       );
 
-      // Call the onComplete callback
+      // Call the onComplete callback - navigation will be handled by ProfileCompletionPage
       onComplete(data);
-
-      // Navigate to school dashboard
-      if (user?.role) {
-        navigate(`/dashboard/${user.role.toLowerCase()}`);
-      } else {
-        navigate("/dashboard/school");
-      }
     } catch (error) {
       console.error("Error creating school profile:", error);
       customToast.error(
@@ -275,7 +292,9 @@ const SchoolProfileForm = ({
             <div key={step} className="flex flex-col items-center flex-1">
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step <= currentStep
+                  step < currentStep
+                    ? "bg-green-500 border-green-500 text-white"
+                    : step === currentStep
                     ? "bg-brand-primary border-brand-primary text-white"
                     : "border-muted-foreground text-muted-foreground"
                 }`}
@@ -291,6 +310,12 @@ const SchoolProfileForm = ({
                 {step === 2 && "About School"}
                 {step === 3 && "Review"}
               </div>
+              {/* Show completion status */}
+              {step < currentStep && (
+                <div className="mt-1 text-xs text-green-600 font-medium">
+                  ✓ Complete
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -315,7 +340,8 @@ const SchoolProfileForm = ({
               <div className="space-y-2">
                 <p>Welcome! Let's complete your school profile.</p>
                 <p className="text-sm text-muted-foreground">
-                  Some fields have been pre-filled based on your signup information.
+                  Some fields have been pre-filled based on your signup
+                  information.
                 </p>
               </div>
             ) : (
@@ -341,25 +367,25 @@ const SchoolProfileForm = ({
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="schoolName">School Name *</Label>
-                <Input
-                  id="schoolName"
-                  placeholder="Enter your school name"
-                  {...register("schoolName")}
-                  className={
-                    isFieldInvalid("schoolName") ? "border-red-500" : ""
-                  }
-                  readOnly
-                />
-                {getFieldError("schoolName") && (
-                  <p className="text-sm text-red-500">
-                    {getFieldError("schoolName")}
-                  </p>
-                )}
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="schoolName">School Name *</Label>
+                  <Input
+                    id="schoolName"
+                    placeholder="Enter your school name"
+                    {...register("schoolName")}
+                    className={
+                      isFieldInvalid("schoolName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("schoolName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("schoolName")}
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="schoolEmail">School Email *</Label>
                   <Input
@@ -377,7 +403,9 @@ const SchoolProfileForm = ({
                     </p>
                   )}
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="schoolContactNumber">
                     School Contact Number *
@@ -714,9 +742,24 @@ const SchoolProfileForm = ({
             </div>
           )}
 
-          {/* Step 2: School Details */}
+          {/* Step 2: About School */}
           {currentStep === 2 && (
             <div className="space-y-6">
+              {/* Validation Summary */}
+              {!isStepComplete(2) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h4 className="font-medium text-amber-800 mb-2">
+                    ⚠️ Please complete the following required fields:
+                  </h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    {(!formData.aboutSchool ||
+                      formData.aboutSchool.length < 100) && (
+                      <li>• About School (minimum 100 characters)</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="aboutSchool">About School *</Label>
                 <Textarea
@@ -796,7 +839,16 @@ const SchoolProfileForm = ({
               {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
             </Button>
 
-            <Button onClick={handleNext} variant="hero" disabled={isLoading}>
+            <Button
+              onClick={handleNext}
+              variant="hero"
+              disabled={isLoading || !isStepComplete(currentStep)}
+              className={
+                !isStepComplete(currentStep)
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }
+            >
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -815,6 +867,16 @@ const SchoolProfileForm = ({
               )}
             </Button>
           </div>
+
+          {/* Help text when Next button is disabled */}
+          {!isStepComplete(currentStep) && currentStep < 3 && (
+            <div className="mt-3 text-center">
+              <p className="text-sm text-amber-600">
+                Please complete all required fields in Step {currentStep} to
+                continue
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

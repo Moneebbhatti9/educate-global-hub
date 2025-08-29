@@ -114,6 +114,14 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+// Update profile schema
+export const updateProfileSchema = z.object({
+  firstName: nameSchema,
+  lastName: nameSchema,
+  email: emailSchema,
+  phone: phoneSchema.optional(),
+});
+
 // Profile completion schemas
 const addressSchema = z.object({
   street: z.string().min(1, "Street address is required"),
@@ -153,10 +161,14 @@ const supplierProfileSchema = z.object({
 
 // Teacher Profile Form Schema
 export const teacherProfileFormSchema = z.object({
-  fullName: z
+  firstName: z
     .string()
-    .min(1, "Full name is required")
-    .min(2, "Full name must be at least 2 characters"),
+    .min(1, "First name is required")
+    .min(2, "First name must be at least 2 characters"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .min(2, "Last name must be at least 2 characters"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   country: z.string().min(1, "Country is required"),
   city: z.string().min(1, "City is required"),
@@ -313,8 +325,20 @@ export const jobApplicationFormSchema = z.object({
   coverLetter: z
     .string()
     .min(1, "Cover letter is required")
-    .min(200, "Cover letter must be at least 200 characters")
-    .max(2000, "Cover letter cannot exceed 2000 characters"),
+    .refine((val) => {
+      const wordCount = val
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      return wordCount >= 30;
+    }, "Cover letter must be at least 30 words")
+    .refine((val) => {
+      const wordCount = val
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      return wordCount <= 300;
+    }, "Cover letter cannot exceed 300 words"),
   expectedSalary: z.string().optional(),
   availableFrom: z.date({
     required_error: "Available from date is required",
@@ -323,7 +347,13 @@ export const jobApplicationFormSchema = z.object({
   reasonForApplying: z
     .string()
     .min(1, "Reason for applying is required")
-    .min(50, "Reason must be at least 50 characters"),
+    .refine((val) => {
+      const wordCount = val
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+      return wordCount >= 10;
+    }, "Reason must be at least 10 words"),
   additionalComments: z.string().optional(),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
@@ -367,6 +397,7 @@ export const validationHelpers = {
       | "passwordReset"
       | "passwordResetConfirm"
       | "changePassword"
+      | "updateProfile"
       | "profileCompletion"
       | "teacherProfileForm"
       | "schoolProfileForm"
@@ -384,6 +415,8 @@ export const validationHelpers = {
         return passwordResetConfirmSchema;
       case "changePassword":
         return changePasswordSchema;
+      case "updateProfile":
+        return updateProfileSchema;
       case "profileCompletion":
         return profileCompletionSchema;
       case "teacherProfileForm":

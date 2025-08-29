@@ -242,7 +242,7 @@ export interface TeacherEmploymentRequest {
 
 // API endpoints
 const PROFILE_ENDPOINTS = {
-  TEACHER_PROFILES: "/teacher-profiles",
+  TEACHER_PROFILES: "/teacher-profiles/create",
   SCHOOL_PROFILES: "/school-profiles",
   TEACHER_PROFILE_ME: "/teacher-profiles/me",
   SCHOOL_PROFILE_ME: "/school-profiles/me",

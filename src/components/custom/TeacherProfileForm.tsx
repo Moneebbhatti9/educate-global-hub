@@ -71,7 +71,8 @@ const TeacherProfileForm = ({
     schema: teacherProfileFormSchema,
     mode: "onTouched",
     defaultValues: {
-      fullName: initialData?.fullName || "",
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
       phoneNumber: initialData?.phoneNumber || "",
       country: initialData?.country || "",
       city: initialData?.city || "",
@@ -93,10 +94,9 @@ const TeacherProfileForm = ({
   useEffect(() => {
     if (initialData) {
       // Pre-fill basic information that was collected during signup
-      if (initialData.fullName) {
-        setValue("fullName", initialData.fullName);
+      if (initialData.firstName) {
+        setValue("firstName", initialData.firstName);
       }
-      
     }
   }, [initialData, setValue]);
 
@@ -169,44 +169,72 @@ const TeacherProfileForm = ({
     }
   };
 
+  const isStepComplete = (step: number) => {
+    const currentFormData = watch();
+
+    if (step === 1) {
+      return !!(
+        currentFormData.firstName &&
+        currentFormData.lastName &&
+        currentFormData.phoneNumber &&
+        currentFormData.country &&
+        currentFormData.city &&
+        currentFormData.province &&
+        currentFormData.zipCode &&
+        currentFormData.address &&
+        currentFormData.qualification &&
+        currentFormData.subject &&
+        currentFormData.yearsOfTeachingExperience !== undefined &&
+        currentFormData.yearsOfTeachingExperience >= 0
+      );
+    } else if (step === 2) {
+      return !!(
+        currentFormData.professionalBio &&
+        currentFormData.professionalBio.length >= 50
+      );
+    }
+
+    return true;
+  };
+
   const validateCurrentStep = () => {
     const currentFormData = watch();
-    let hasErrors = false;
-    let firstErrorStep = 1;
 
-    // Validate step 1 fields
-    if (
-      !currentFormData.fullName ||
-      !currentFormData.phoneNumber ||
-      !currentFormData.country ||
-      !currentFormData.city ||
-      !currentFormData.province ||
-      !currentFormData.zipCode ||
-      !currentFormData.address ||
-      !currentFormData.qualification ||
-      !currentFormData.subject
-    ) {
-      hasErrors = true;
-      firstErrorStep = 1;
-    }
-
-    // Validate step 2 fields
-    if (
-      !hasErrors &&
-      (!currentFormData.professionalBio ||
-        currentFormData.professionalBio.length < 50)
-    ) {
-      hasErrors = true;
-      firstErrorStep = 2;
-    }
-
-    if (hasErrors && currentStep !== firstErrorStep) {
-      customToast.error(
-        "Validation Error",
-        `Please complete step ${firstErrorStep} before proceeding.`
-      );
-      setCurrentStep(firstErrorStep);
-      return false;
+    // Validate only the current step
+    if (currentStep === 1) {
+      // Validate step 1 fields
+      if (
+        !currentFormData.firstName ||
+        !currentFormData.lastName ||
+        !currentFormData.phoneNumber ||
+        !currentFormData.country ||
+        !currentFormData.city ||
+        !currentFormData.province ||
+        !currentFormData.zipCode ||
+        !currentFormData.address ||
+        !currentFormData.qualification ||
+        !currentFormData.subject ||
+        currentFormData.yearsOfTeachingExperience === undefined ||
+        currentFormData.yearsOfTeachingExperience < 0
+      ) {
+        customToast.error(
+          "Validation Error",
+          "Please complete all required fields in Step 1 before proceeding."
+        );
+        return false;
+      }
+    } else if (currentStep === 2) {
+      // Validate step 2 fields
+      if (
+        !currentFormData.professionalBio ||
+        currentFormData.professionalBio.length < 50
+      ) {
+        customToast.error(
+          "Validation Error",
+          "Please complete all required fields in Step 2 before proceeding."
+        );
+        return false;
+      }
     }
 
     return true;
@@ -231,15 +259,8 @@ const TeacherProfileForm = ({
         "Your teacher profile has been created. Redirecting to dashboard..."
       );
 
-      // Call the onComplete callback
+      // Call the onComplete callback - navigation will be handled by ProfileCompletionPage
       onComplete(data);
-      console.log(user?.role);
-      // Navigate to teacher dashboard
-      if (user?.role) {
-        navigate(`/dashboard/${user.role.toLowerCase()}`);
-      } else {
-        navigate("/dashboard/teacher");
-      }
     } catch (error) {
       console.error("Error creating teacher profile:", error);
       customToast.error(
@@ -292,7 +313,9 @@ const TeacherProfileForm = ({
             <div key={step} className="flex flex-col items-center flex-1">
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step <= currentStep
+                  step < currentStep
+                    ? "bg-green-500 border-green-500 text-white"
+                    : step === currentStep
                     ? "bg-brand-primary border-brand-primary text-white"
                     : "border-muted-foreground text-muted-foreground"
                 }`}
@@ -308,6 +331,12 @@ const TeacherProfileForm = ({
                 {step === 2 && "Professional Info"}
                 {step === 3 && "Review"}
               </div>
+              {/* Show completion status */}
+              {step < currentStep && (
+                <div className="mt-1 text-xs text-green-600 font-medium">
+                  ✓ Complete
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -324,15 +353,16 @@ const TeacherProfileForm = ({
       {/* Form */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl text-center">
-            Complete Your Teacher Profile
-          </CardTitle>
           <CardDescription className="text-center">
-            {initialData?.fullName ? (
+            {initialData?.firstName && initialData.lastName ? (
               <div className="space-y-2">
-                <p>Welcome, {initialData.fullName}! Let's complete your profile.</p>
+                <p>
+                  Welcome, {initialData.firstName} {initialData.lastName} !
+                  Let's complete your profile.
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  Some fields have been pre-filled based on your signup information.
+                  Some fields have been pre-filled based on your signup
+                  information.
                 </p>
               </div>
             ) : (
@@ -341,37 +371,45 @@ const TeacherProfileForm = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>Step {currentStep} of 3</span>
-              <span>{Math.round((currentStep / 3) * 100)}% Complete</span>
-            </div>
-            <Progress value={(currentStep / 3) * 100} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Basic Info</span>
-              <span>Professional</span>
-              <span>Review</span>
-            </div>
-          </div>
-          
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  placeholder="Enter your full name"
-                  {...register("fullName")}
-                  className={isFieldInvalid("fullName") ? "border-red-500" : ""}
-                  readOnly
-                />
-                {getFieldError("fullName") && (
-                  <p className="text-sm text-red-500">
-                    {getFieldError("fullName")}
-                  </p>
-                )}
+              <div className="flex justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Enter your first name"
+                    {...register("firstName")}
+                    className={
+                      isFieldInvalid("firstName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("firstName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("firstName")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Enter your first name"
+                    {...register("lastName")}
+                    className={
+                      isFieldInvalid("lastName") ? "border-red-500" : ""
+                    }
+                    readOnly
+                  />
+                  {getFieldError("lastName") && (
+                    <p className="text-sm text-red-500">
+                      {getFieldError("lastName")}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -580,6 +618,21 @@ const TeacherProfileForm = ({
           {/* Step 2: Professional Background */}
           {currentStep === 2 && (
             <div className="space-y-6">
+              {/* Validation Summary */}
+              {!isStepComplete(2) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h4 className="font-medium text-amber-800 mb-2">
+                    ⚠️ Please complete the following required fields:
+                  </h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    {(!formData.professionalBio ||
+                      formData.professionalBio.length < 50) && (
+                      <li>• Professional Bio (minimum 50 characters)</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="professionalBio">Professional Bio *</Label>
                 <Textarea
@@ -631,7 +684,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addAchievement}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -669,7 +722,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addCertification}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -709,7 +762,7 @@ const TeacherProfileForm = ({
                       variant="outline"
                       onClick={addQualification}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" /> ADD
                     </Button>
                   </div>
                 </div>
@@ -727,7 +780,7 @@ const TeacherProfileForm = ({
                 <div className="space-y-3 text-sm">
                   <div>
                     <span className="font-medium">Name:</span>{" "}
-                    {formData.fullName}
+                    {formData.firstName} {formData.lastName}
                   </div>
                   <div>
                     <span className="font-medium">Phone:</span>{" "}
@@ -769,7 +822,16 @@ const TeacherProfileForm = ({
               {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
             </Button>
 
-            <Button onClick={handleNext} variant="hero" disabled={isLoading}>
+            <Button
+              onClick={handleNext}
+              variant="hero"
+              disabled={isLoading || !isStepComplete(currentStep)}
+              className={
+                !isStepComplete(currentStep)
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }
+            >
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -788,6 +850,16 @@ const TeacherProfileForm = ({
               )}
             </Button>
           </div>
+
+          {/* Help text when Next button is disabled */}
+          {!isStepComplete(currentStep) && currentStep < 3 && (
+            <div className="mt-3 text-center">
+              <p className="text-sm text-amber-600">
+                Please complete all required fields in Step {currentStep} to
+                continue
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

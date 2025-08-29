@@ -20,7 +20,7 @@ interface LocationState {
 const ProfileCompletionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { completeProfile, user } = useAuth();
+  const { completeProfile, logout } = useAuth();
   const { handleError, showSuccess } = useErrorHandler();
   const state = location.state as LocationState;
 
@@ -50,15 +50,30 @@ const ProfileCompletionPage = () => {
         }
       }
 
+      // Call the completeProfile function from AuthContext to update the user data
       await completeProfile(profileData as ProfileCompletionData);
 
       // Show success toast
       customToast.success(
         "Profile completed successfully!",
-        "Welcome to Educate Global Hub. Redirecting to your dashboard..."
+        "Welcome to Educate Global Hub. Please log in again to access your dashboard."
       );
 
-      // Navigation will be handled by the AuthContext completeProfile function
+      // Logout the user and redirect to login
+      setTimeout(() => {
+        // Logout the user
+        logout();
+
+        // Redirect to login page
+        navigate("/login", {
+          state: {
+            message:
+              "Profile completed successfully! Please log in to access your dashboard.",
+            email: state.email,
+            role: state.role,
+          },
+        });
+      }, 1500);
     } catch (error) {
       handleError(error, "Profile completion failed");
       throw error;
