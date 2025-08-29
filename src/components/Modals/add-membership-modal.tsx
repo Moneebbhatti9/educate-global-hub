@@ -143,7 +143,6 @@ export const AddMembershipModal: React.FC<AddMembershipModalProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
                   <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="Expired">Expired</SelectItem>
                 </SelectContent>

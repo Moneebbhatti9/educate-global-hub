@@ -30,8 +30,8 @@ export const AddCertificationModal = ({
   editingCertification,
 }: AddCertificationModalProps) => {
   const [formData, setFormData] = useState<CertificationRequest>({
-    name: editingCertification?.name || "",
-    issuer: editingCertification?.issuer || "",
+    certificationName: editingCertification?.certificationName || "",
+    issuingOrganization: editingCertification?.issuingOrganization || "",
     issueDate: editingCertification?.issueDate || "",
     expiryDate: editingCertification?.expiryDate || "",
     credentialId: editingCertification?.credentialId || "",
@@ -40,7 +40,7 @@ export const AddCertificationModal = ({
   });
 
   const handleSave = () => {
-    if (!formData.name.trim() || !formData.issuer.trim()) return;
+    if (!formData.certificationName.trim() || !formData.issuingOrganization.trim()) return;
 
     const newCertification: Certification = {
       id: editingCertification?.id || Date.now().toString(),
@@ -54,8 +54,8 @@ export const AddCertificationModal = ({
     // Reset form if not editing
     if (!editingCertification) {
       setFormData({
-        name: "",
-        issuer: "",
+        certificationName: "",
+        issuingOrganization: "",
         issueDate: "",
         expiryDate: "",
         credentialId: "",
@@ -69,8 +69,8 @@ export const AddCertificationModal = ({
   React.useEffect(() => {
     if (editingCertification) {
       setFormData({
-        name: editingCertification.name || "",
-        issuer: editingCertification.issuer || "",
+        certificationName: editingCertification.certificationName || "",
+        issuingOrganization: editingCertification.issuingOrganization || "",
         issueDate: editingCertification.issueDate || "",
         expiryDate: editingCertification.expiryDate || "",
         credentialId: editingCertification.credentialId || "",
@@ -102,22 +102,22 @@ export const AddCertificationModal = ({
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Certification Name *</Label>
+              <Label htmlFor="certificationName">Certification Name *</Label>
               <Input
-                id="name"
+                id="certificationName"
                 placeholder="e.g., Certified Teacher"
-                value={formData.name}
-                onChange={(e) => updateField("name", e.target.value)}
+                value={formData.certificationName}
+                onChange={(e) => updateField("certificationName", e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="issuer">Issuing Organization *</Label>
+              <Label htmlFor="issuingOrganization">Issuing Organization *</Label>
               <Input
-                id="issuer"
+                id="issuingOrganization"
                 placeholder="e.g., National Board for Teaching"
-                value={formData.issuer}
-                onChange={(e) => updateField("issuer", e.target.value)}
+                value={formData.issuingOrganization}
+                onChange={(e) => updateField("issuingOrganization", e.target.value)}
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ export const AddCertificationModal = ({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!formData.name.trim() || !formData.issuer.trim()}
+            disabled={!formData.certificationName.trim() || !formData.issuingOrganization.trim()}
           >
             {editingCertification ? "Update" : "Add"} Certification
           </Button>

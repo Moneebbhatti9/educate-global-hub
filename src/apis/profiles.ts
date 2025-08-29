@@ -68,8 +68,8 @@ export interface QualificationRequest {
 export interface Certification {
   _id?: string;
   id: string;
-  name: string;
-  issuer: string;
+  certificationName: string;
+  issuingOrganization: string;
   issueDate: string;
   expiryDate: string;
   credentialId: string;
@@ -78,8 +78,8 @@ export interface Certification {
 }
 
 export interface CertificationRequest {
-  name: string;
-  issuer: string;
+  certificationName: string;
+  issuingOrganization: string;
   issueDate: string;
   expiryDate: string;
   credentialId: string;
@@ -525,7 +525,7 @@ export const teacherProfileAPI = {
     data: CertificationRequest
   ): Promise<ApiResponse<Certification>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
-    return apiHelpers.put<ApiResponse<Certification>>(
+    return apiHelpers.patch<ApiResponse<Certification>>(
       `${PROFILE_ENDPOINTS.TEACHER_CERTIFICATIONS}/${certificationId}`,
       data,
       {
@@ -571,7 +571,7 @@ export const teacherProfileAPI = {
     data: DevelopmentRequest
   ): Promise<ApiResponse<Development>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
-    return apiHelpers.put<ApiResponse<Development>>(
+    return apiHelpers.patch<ApiResponse<Development>>(
       `${PROFILE_ENDPOINTS.TEACHER_DEVELOPMENT}/${developmentId}`,
       data,
       {
@@ -611,7 +611,7 @@ export const teacherProfileAPI = {
 
   updateMembership: async (membershipId: string, data: MembershipRequest): Promise<ApiResponse<Membership>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
-    return apiHelpers.put<ApiResponse<Membership>>(
+    return apiHelpers.patch<ApiResponse<Membership>>(
       `${PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS}/${membershipId}`,
       data,
       {

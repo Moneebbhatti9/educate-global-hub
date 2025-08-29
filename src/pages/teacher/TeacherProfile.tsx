@@ -186,8 +186,8 @@ const TeacherProfile = () => {
             certifications: fetchedProfile.certifications ? fetchedProfile.certifications.map((cert: any) => ({
               _id: cert._id || cert.id || Date.now().toString(),
               id: cert.id || cert._id || Date.now().toString(),
-              name: cert.name || cert.title || "",
-              issuer: cert.issuer || cert.institution || "",
+              certificationName: cert.certificationName || cert.name || cert.title || "",
+              issuingOrganization: cert.issuingOrganization || cert.issuer || cert.institution || "",
               issueDate: cert.issueDate || "",
               expiryDate: cert.expiryDate || "",
               credentialId: cert.credentialId || cert.certificationId || "",
@@ -220,8 +220,8 @@ const TeacherProfile = () => {
           setCertifications(fetchedProfile.certifications ? fetchedProfile.certifications.map((cert: any) => ({
             _id: cert._id || cert.id || Date.now().toString(),
             id: cert.id || cert._id || Date.now().toString(),
-            name: cert.name || cert.title || "",
-            issuer: cert.issuer || cert.institution || "",
+            certificationName: cert.certificationName || cert.name || cert.title || "",
+            issuingOrganization: cert.issuingOrganization || cert.issuer || cert.institution || "",
             issueDate: cert.issueDate || "",
             expiryDate: cert.expiryDate || "",
             credentialId: cert.credentialId || cert.certificationId || "",
@@ -491,9 +491,9 @@ const TeacherProfile = () => {
     try {
       let response;
 
-      if (editingItem && (education._id || education.id)) {
+      if (editingItem && (education._id)) {
         // Update existing education
-        const educationId = education._id || education.id;
+        const educationId = education._id;
         if (educationId) {
           response = await updateEducation.mutateAsync({
             educationId,
@@ -579,9 +579,9 @@ const TeacherProfile = () => {
     try {
       let response;
 
-      if (editingItem && (referee._id || referee.id)) {
+      if (editingItem && (referee._id)) {
         // Update existing referee
-        const refereeId = referee._id || referee.id;
+        const refereeId = referee._id;
         if (refereeId) {
           response = await updateReferee.mutateAsync({
             refereeId,
@@ -635,9 +635,9 @@ const TeacherProfile = () => {
     try {
       let response;
 
-      if (editingItem && (certification._id || certification.id)) {
+      if (editingItem && (certification._id)) {
         // Update existing certification
-        const certificationId = certification._id || certification.id;
+        const certificationId = certification._id;
         if (certificationId) {
           response = await updateCertification.mutateAsync({
             certificationId,
@@ -688,8 +688,8 @@ const TeacherProfile = () => {
   const handleSaveTravelPlan = async (dependent: Dependent) => {
     try {
       let response;
-      if (editingItem && (dependent._id || dependent.id)) {
-        const dependentId = dependent._id || dependent.id;
+      if (editingItem && (dependent._id)) {
+        const dependentId = dependent._id;
         if (dependentId) {
           response = await updateDependent.mutateAsync({
             dependentId,
@@ -718,8 +718,8 @@ const TeacherProfile = () => {
   const handleSaveActivity = async (activity: Activity) => {
     try {
       let response;
-      if (editingItem && (activity._id || activity.id)) {
-        const activityId = activity._id || activity.id;
+      if (editingItem && (activity._id)) {
+        const activityId = activity._id;
         if (activityId) {
           response = await updateActivity.mutateAsync({
             activityId,
@@ -748,9 +748,9 @@ const TeacherProfile = () => {
   const handleSaveDevelopment = async (development: Development) => {
     try {
       let response;
-      if (editingItem && (development._id || development.id)) {
+      if (editingItem && (development._id)) {
         // Update existing development
-        const developmentId = development._id || development.id;
+        const developmentId = development._id;
         if (developmentId) {
           response = await updateDevelopment.mutateAsync({
             developmentId,
@@ -829,8 +829,8 @@ const TeacherProfile = () => {
   const handleSaveMembership = async (membership: Membership) => {
     try {
       let response;
-      if (editingItem && (membership._id || membership.id)) {
-        const membershipId = membership._id || membership.id;
+      if (editingItem && (membership._id )) {
+        const membershipId = membership._id;
         if (membershipId) {
           response = await updateMembership.mutateAsync({
             membershipId,
@@ -854,12 +854,6 @@ const TeacherProfile = () => {
     } catch (error) {
       console.error("Failed to save membership:", error);
     }
-  };
-
-  const handleSaveDevelopmentData = () => {
-    // Save all development data
-    console.log("Saving development data:", { certifications, developments, memberships });
-    setIsEditing(false);
   };
 
   // Helper functions for editing and removing items
@@ -1750,7 +1744,7 @@ const TeacherProfile = () => {
                               size="sm"
                               className="text-destructive"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </div>
                         ))
@@ -1805,7 +1799,7 @@ const TeacherProfile = () => {
                             className="text-destructive"
                             onClick={() => handleDeleteEmployment(job._id)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
@@ -1884,7 +1878,7 @@ const TeacherProfile = () => {
                                 className="text-destructive"
                                 onClick={() => handleDeleteEducation(education._id || education.id || "")}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                           </div>
@@ -2003,7 +1997,7 @@ const TeacherProfile = () => {
                                   className="text-destructive"
                                   onClick={() => handleDeleteQualification(qualification._id || qualification.id || "")}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4 text-destructive" />
                                 </Button>
                               </div>
                             </div>
@@ -2045,8 +2039,8 @@ const TeacherProfile = () => {
                       <div key={cert.id} className="border rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="font-semibold">{cert.name}</h3>
-                            <p className="text-brand-primary text-sm">{cert.issuer}</p>
+                            <h3 className="font-semibold">{cert.certificationName}</h3>
+                            <p className="text-brand-primary text-sm">{cert.issuingOrganization}</p>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
                               <p>Issue Date: {cert.issueDate}</p>
                               <p>Expiry Date: {cert.expiryDate}</p>
@@ -2079,7 +2073,7 @@ const TeacherProfile = () => {
                                 size="sm"
                                 onClick={() => handleDeleteCertification(cert._id || cert.id || "")}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                         </div>
@@ -2146,7 +2140,7 @@ const TeacherProfile = () => {
                                 size="sm"
                                 onClick={() => handleDeleteDevelopment(dev._id || dev.id || "")}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                         </div>
@@ -2218,7 +2212,7 @@ const TeacherProfile = () => {
                                 size="sm"
                                 onClick={() => handleDeleteMembership(membership._id || membership.id || "")}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                         </div>
@@ -2289,7 +2283,7 @@ const TeacherProfile = () => {
                                 className="text-destructive"
                                 onClick={() => handleDeleteReferee(referee._id || referee.id || "")}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                           </div>
@@ -2390,7 +2384,7 @@ const TeacherProfile = () => {
                                  size="sm"
                                  onClick={() => handleDeleteDependent(dependent._id || dependent.id || "")}
                                >
-                                 <Trash2 className="w-4 h-4" />
+                                 <Trash2 className="w-4 h-4 text-destructive" />
                                </Button>
                              </div>
                            </div>
@@ -2483,7 +2477,7 @@ const TeacherProfile = () => {
                                  size="sm"
                                  onClick={() => handleDeleteActivity(activity._id || activity.id || "")}
                                >
-                                 <Trash2 className="w-4 h-4" />
+                                 <Trash2 className="w-4 h-4 text-destructive" />
                                </Button>
                              </div>
                            </div>
