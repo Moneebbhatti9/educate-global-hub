@@ -92,7 +92,13 @@ export interface Development {
   id: string;
   title: string;
   provider: string;
-  type: "Course" | "Workshop" | "Conference" | "Seminar" | "Online Training" | "Other";
+  type:
+    | "Course"
+    | "Workshop"
+    | "Conference"
+    | "Seminar"
+    | "Online Training"
+    | "Other";
   duration: string;
   completionDate: string;
   skills: string[];
@@ -103,7 +109,13 @@ export interface Development {
 export interface DevelopmentRequest {
   title: string;
   provider: string;
-  type: "Course" | "Workshop" | "Conference" | "Seminar" | "Online Training" | "Other";
+  type:
+    | "Course"
+    | "Workshop"
+    | "Conference"
+    | "Seminar"
+    | "Online Training"
+    | "Other";
   duration: string;
   completionDate: string;
   skills: string[];
@@ -115,7 +127,12 @@ export interface Membership {
   _id?: string;
   id: string;
   organizationName: string;
-  membershipType: "Full Member" | "Associate Member" | "Student Member" | "Honorary Member" | "Other";
+  membershipType:
+    | "Full Member"
+    | "Associate Member"
+    | "Student Member"
+    | "Honorary Member"
+    | "Other";
   membershipId: string;
   joinDate: string;
   expiryDate: string;
@@ -126,7 +143,12 @@ export interface Membership {
 
 export interface MembershipRequest {
   organizationName: string;
-  membershipType: "Full Member" | "Associate Member" | "Student Member" | "Honorary Member" | "Other";
+  membershipType:
+    | "Full Member"
+    | "Associate Member"
+    | "Student Member"
+    | "Honorary Member"
+    | "Other";
   membershipId: string;
   joinDate: string;
   expiryDate: string;
@@ -171,7 +193,14 @@ export interface Activity {
   _id?: string;
   id: string;
   name: string;
-  type: "Club" | "Sport" | "Community Service" | "Leadership" | "Hobby" | "Volunteer Work" | "Other";
+  type:
+    | "Club"
+    | "Sport"
+    | "Community Service"
+    | "Leadership"
+    | "Hobby"
+    | "Volunteer Work"
+    | "Other";
   role: string;
   organization?: string;
   startDate: string;
@@ -185,7 +214,14 @@ export interface Activity {
 
 export interface ActivityRequest {
   name: string;
-  type: "Club" | "Sport" | "Community Service" | "Leadership" | "Hobby" | "Volunteer Work" | "Other";
+  type:
+    | "Club"
+    | "Sport"
+    | "Community Service"
+    | "Leadership"
+    | "Hobby"
+    | "Volunteer Work"
+    | "Other";
   role: string;
   organization?: string;
   startDate: string;
@@ -242,7 +278,7 @@ export interface TeacherEmploymentRequest {
 
 // API endpoints
 const PROFILE_ENDPOINTS = {
-  TEACHER_PROFILES: "/teacher-profiles/create",
+  TEACHER_PROFILES: "/teacher-profiles",
   SCHOOL_PROFILES: "/school-profiles",
   TEACHER_PROFILE_ME: "/teacher-profiles/me",
   SCHOOL_PROFILE_ME: "/school-profiles/me",
@@ -349,15 +385,13 @@ export const teacherProfileAPI = {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.delete<ApiResponse<{ message: string }>>(
       `${PROFILE_ENDPOINTS.TEACHER_EMPLOYMENT}/${experienceId}`,
-      { 
+      {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
     );
   },
-
-
 
   // Create Teacher Education
   createEducation: async (
@@ -596,7 +630,9 @@ export const teacherProfileAPI = {
     );
   },
 
-  createMembership: async (data: MembershipRequest): Promise<ApiResponse<Membership>> => {
+  createMembership: async (
+    data: MembershipRequest
+  ): Promise<ApiResponse<Membership>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.post<ApiResponse<Membership>>(
       PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS,
@@ -609,7 +645,10 @@ export const teacherProfileAPI = {
     );
   },
 
-  updateMembership: async (membershipId: string, data: MembershipRequest): Promise<ApiResponse<Membership>> => {
+  updateMembership: async (
+    membershipId: string,
+    data: MembershipRequest
+  ): Promise<ApiResponse<Membership>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.patch<ApiResponse<Membership>>(
       `${PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS}/${membershipId}`,
@@ -622,7 +661,9 @@ export const teacherProfileAPI = {
     );
   },
 
-  deleteMembership: async (membershipId: string): Promise<ApiResponse<{ message: string }>> => {
+  deleteMembership: async (
+    membershipId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.delete<ApiResponse<{ message: string }>>(
       `${PROFILE_ENDPOINTS.TEACHER_MEMBERSHIPS}/${membershipId}`,
@@ -634,7 +675,9 @@ export const teacherProfileAPI = {
     );
   },
 
-  createDependent: async (data: DependentRequest): Promise<ApiResponse<Dependent>> => {
+  createDependent: async (
+    data: DependentRequest
+  ): Promise<ApiResponse<Dependent>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.post<ApiResponse<Dependent>>(
       PROFILE_ENDPOINTS.TEACHER_DEPENDENTS,
@@ -647,7 +690,10 @@ export const teacherProfileAPI = {
     );
   },
 
-  updateDependent: async (dependentId: string, data: DependentRequest): Promise<ApiResponse<Dependent>> => {
+  updateDependent: async (
+    dependentId: string,
+    data: DependentRequest
+  ): Promise<ApiResponse<Dependent>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.put<ApiResponse<Dependent>>(
       `${PROFILE_ENDPOINTS.TEACHER_DEPENDENTS}/${dependentId}`,
@@ -660,7 +706,9 @@ export const teacherProfileAPI = {
     );
   },
 
-  deleteDependent: async (dependentId: string): Promise<ApiResponse<{ message: string }>> => {
+  deleteDependent: async (
+    dependentId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.delete<ApiResponse<{ message: string }>>(
       `${PROFILE_ENDPOINTS.TEACHER_DEPENDENTS}/${dependentId}`,
@@ -672,7 +720,9 @@ export const teacherProfileAPI = {
     );
   },
 
-  createActivity: async (data: ActivityRequest): Promise<ApiResponse<Activity>> => {
+  createActivity: async (
+    data: ActivityRequest
+  ): Promise<ApiResponse<Activity>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.post<ApiResponse<Activity>>(
       PROFILE_ENDPOINTS.TEACHER_ACTIVITIES,
@@ -685,7 +735,10 @@ export const teacherProfileAPI = {
     );
   },
 
-  updateActivity: async (activityId: string, data: ActivityRequest): Promise<ApiResponse<Activity>> => {
+  updateActivity: async (
+    activityId: string,
+    data: ActivityRequest
+  ): Promise<ApiResponse<Activity>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.put<ApiResponse<Activity>>(
       `${PROFILE_ENDPOINTS.TEACHER_ACTIVITIES}/${activityId}`,
@@ -698,7 +751,9 @@ export const teacherProfileAPI = {
     );
   },
 
-  deleteActivity: async (activityId: string): Promise<ApiResponse<{ message: string }>> => {
+  deleteActivity: async (
+    activityId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
     return apiHelpers.delete<ApiResponse<{ message: string }>>(
       `${PROFILE_ENDPOINTS.TEACHER_ACTIVITIES}/${activityId}`,
@@ -822,7 +877,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh experience data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -836,12 +893,19 @@ export const useTeacherProfileQueries = () => {
   // Update teacher experience mutation (new)
   const useUpdateTeacherExperience = () => {
     return useMutation({
-      mutationFn: ({ experienceId, data }: { experienceId: string; data: ExperienceRequest }) =>
-        teacherProfileAPI.updateExperience(experienceId, data),
+      mutationFn: ({
+        experienceId,
+        data,
+      }: {
+        experienceId: string;
+        data: ExperienceRequest;
+      }) => teacherProfileAPI.updateExperience(experienceId, data),
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh experience data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -859,7 +923,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success) {
           // Invalidate current teacher profile to refresh experience data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -870,8 +936,6 @@ export const useTeacherProfileQueries = () => {
     });
   };
 
-
-
   // Create teacher education mutation
   const useCreateTeacherEducation = () => {
     return useMutation({
@@ -879,7 +943,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh education data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -897,7 +963,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success) {
           // Invalidate current teacher profile to refresh education data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -915,7 +983,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh qualification data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -929,12 +999,19 @@ export const useTeacherProfileQueries = () => {
   // Update teacher qualification mutation
   const useUpdateTeacherQualification = () => {
     return useMutation({
-      mutationFn: ({ qualificationId, data }: { qualificationId: string; data: QualificationRequest }) =>
-        teacherProfileAPI.updateQualification(qualificationId, data),
+      mutationFn: ({
+        qualificationId,
+        data,
+      }: {
+        qualificationId: string;
+        data: QualificationRequest;
+      }) => teacherProfileAPI.updateQualification(qualificationId, data),
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh qualification data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -952,7 +1029,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success) {
           // Invalidate current teacher profile to refresh qualification data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -970,7 +1049,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh referee data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -984,12 +1065,19 @@ export const useTeacherProfileQueries = () => {
   // Update teacher referee mutation
   const useUpdateTeacherReferee = () => {
     return useMutation({
-      mutationFn: ({ refereeId, data }: { refereeId: string; data: RefereeRequest }) =>
-        teacherProfileAPI.updateReferee(refereeId, data),
+      mutationFn: ({
+        refereeId,
+        data,
+      }: {
+        refereeId: string;
+        data: RefereeRequest;
+      }) => teacherProfileAPI.updateReferee(refereeId, data),
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh referee data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -1007,7 +1095,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success) {
           // Invalidate current teacher profile to refresh referee data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -1025,7 +1115,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh certification data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -1039,12 +1131,19 @@ export const useTeacherProfileQueries = () => {
   // Update teacher certification mutation
   const useUpdateTeacherCertification = () => {
     return useMutation({
-      mutationFn: ({ certificationId, data }: { certificationId: string; data: CertificationRequest }) =>
-        teacherProfileAPI.updateCertification(certificationId, data),
+      mutationFn: ({
+        certificationId,
+        data,
+      }: {
+        certificationId: string;
+        data: CertificationRequest;
+      }) => teacherProfileAPI.updateCertification(certificationId, data),
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current teacher profile to refresh certification data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -1062,7 +1161,9 @@ export const useTeacherProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success) {
           // Invalidate current teacher profile to refresh certification data
-          queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+          queryClient.invalidateQueries({
+            queryKey: ["teacher-profile", "current"],
+          });
           // Invalidate teacher profile by ID queries
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
@@ -1079,7 +1180,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (data: DevelopmentRequest) =>
         teacherProfileAPI.createDevelopment(data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1095,7 +1198,9 @@ export const useTeacherProfileQueries = () => {
         data: DevelopmentRequest;
       }) => teacherProfileAPI.updateDevelopment(developmentId, data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1106,7 +1211,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (developmentId: string) =>
         teacherProfileAPI.deleteDevelopment(developmentId),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1117,7 +1224,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (data: MembershipRequest) =>
         teacherProfileAPI.createMembership(data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1125,10 +1234,17 @@ export const useTeacherProfileQueries = () => {
   // Update teacher membership mutation
   const useUpdateTeacherMembership = () => {
     return useMutation({
-      mutationFn: ({ membershipId, data }: { membershipId: string; data: MembershipRequest }) =>
-        teacherProfileAPI.updateMembership(membershipId, data),
+      mutationFn: ({
+        membershipId,
+        data,
+      }: {
+        membershipId: string;
+        data: MembershipRequest;
+      }) => teacherProfileAPI.updateMembership(membershipId, data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1139,7 +1255,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (membershipId: string) =>
         teacherProfileAPI.deleteMembership(membershipId),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1150,7 +1268,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (data: DependentRequest) =>
         teacherProfileAPI.createDependent(data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1158,10 +1278,17 @@ export const useTeacherProfileQueries = () => {
   // Update dependent mutation
   const useUpdateDependent = () => {
     return useMutation({
-      mutationFn: ({ dependentId, data }: { dependentId: string; data: DependentRequest }) =>
-        teacherProfileAPI.updateDependent(dependentId, data),
+      mutationFn: ({
+        dependentId,
+        data,
+      }: {
+        dependentId: string;
+        data: DependentRequest;
+      }) => teacherProfileAPI.updateDependent(dependentId, data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1172,7 +1299,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (dependentId: string) =>
         teacherProfileAPI.deleteDependent(dependentId),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1183,7 +1312,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (data: ActivityRequest) =>
         teacherProfileAPI.createActivity(data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1191,10 +1322,17 @@ export const useTeacherProfileQueries = () => {
   // Update activity mutation
   const useUpdateActivity = () => {
     return useMutation({
-      mutationFn: ({ activityId, data }: { activityId: string; data: ActivityRequest }) =>
-        teacherProfileAPI.updateActivity(activityId, data),
+      mutationFn: ({
+        activityId,
+        data,
+      }: {
+        activityId: string;
+        data: ActivityRequest;
+      }) => teacherProfileAPI.updateActivity(activityId, data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1205,7 +1343,9 @@ export const useTeacherProfileQueries = () => {
       mutationFn: (activityId: string) =>
         teacherProfileAPI.deleteActivity(activityId),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
       },
     });
   };
@@ -1311,17 +1451,17 @@ export const useSchoolProfileQueries = () => {
 export const teacherProfileApi = teacherProfileAPI;
 export const schoolProfileApi = schoolProfileAPI;
 
-
-
 export const useCreateTeacherEducation = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.createEducation,
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh education data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1334,13 +1474,15 @@ export const useCreateTeacherEducation = () => {
 
 export const useDeleteTeacherEducation = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.deleteEducation,
     onSuccess: (response) => {
       if (response.success) {
         // Invalidate current teacher profile to refresh education data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1353,14 +1495,21 @@ export const useDeleteTeacherEducation = () => {
 
 export const useUpdateTeacherEducation = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ educationId, data }: { educationId: string; data: EducationRequest }) =>
-      teacherProfileAPI.updateEducation(educationId, data),
+    mutationFn: ({
+      educationId,
+      data,
+    }: {
+      educationId: string;
+      data: EducationRequest;
+    }) => teacherProfileAPI.updateEducation(educationId, data),
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh education data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1374,13 +1523,15 @@ export const useUpdateTeacherEducation = () => {
 // New standalone hooks for Experience API
 export const useCreateTeacherExperience = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.createExperience,
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh experience data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1393,14 +1544,21 @@ export const useCreateTeacherExperience = () => {
 
 export const useUpdateTeacherExperience = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ experienceId, data }: { experienceId: string; data: ExperienceRequest }) =>
-      teacherProfileAPI.updateExperience(experienceId, data),
+    mutationFn: ({
+      experienceId,
+      data,
+    }: {
+      experienceId: string;
+      data: ExperienceRequest;
+    }) => teacherProfileAPI.updateExperience(experienceId, data),
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh experience data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1413,13 +1571,15 @@ export const useUpdateTeacherExperience = () => {
 
 export const useDeleteTeacherExperience = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.deleteExperience,
     onSuccess: (response) => {
       if (response.success) {
         // Invalidate current teacher profile to refresh experience data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile to refresh experience data
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1433,13 +1593,15 @@ export const useDeleteTeacherExperience = () => {
 // Standalone hooks for Qualification API
 export const useCreateTeacherQualification = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.createQualification,
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh qualification data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1452,14 +1614,21 @@ export const useCreateTeacherQualification = () => {
 
 export const useUpdateTeacherQualification = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ qualificationId, data }: { qualificationId: string; data: QualificationRequest }) =>
-      teacherProfileAPI.updateQualification(qualificationId, data),
+    mutationFn: ({
+      qualificationId,
+      data,
+    }: {
+      qualificationId: string;
+      data: QualificationRequest;
+    }) => teacherProfileAPI.updateQualification(qualificationId, data),
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh qualification data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1472,13 +1641,15 @@ export const useUpdateTeacherQualification = () => {
 
 export const useDeleteTeacherQualification = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.deleteQualification,
     onSuccess: (response) => {
       if (response.success) {
         // Invalidate current teacher profile to refresh qualification data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1492,13 +1663,15 @@ export const useDeleteTeacherQualification = () => {
 // Standalone hooks for Referee API
 export const useCreateTeacherReferee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.createReferee,
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh referee data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1511,14 +1684,21 @@ export const useCreateTeacherReferee = () => {
 
 export const useUpdateTeacherReferee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ refereeId, data }: { refereeId: string; data: RefereeRequest }) =>
-      teacherProfileAPI.updateReferee(refereeId, data),
+    mutationFn: ({
+      refereeId,
+      data,
+    }: {
+      refereeId: string;
+      data: RefereeRequest;
+    }) => teacherProfileAPI.updateReferee(refereeId, data),
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh referee data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1531,13 +1711,15 @@ export const useUpdateTeacherReferee = () => {
 
 export const useDeleteTeacherReferee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.deleteReferee,
     onSuccess: (response) => {
       if (response.success) {
         // Invalidate current teacher profile to refresh referee data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1551,13 +1733,15 @@ export const useDeleteTeacherReferee = () => {
 // Standalone hooks for Certification API
 export const useCreateTeacherCertification = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: teacherProfileAPI.createCertification,
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh certification data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1570,14 +1754,21 @@ export const useCreateTeacherCertification = () => {
 
 export const useUpdateTeacherCertification = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ certificationId, data }: { certificationId: string; data: CertificationRequest }) =>
-      teacherProfileAPI.updateCertification(certificationId, data),
+    mutationFn: ({
+      certificationId,
+      data,
+    }: {
+      certificationId: string;
+      data: CertificationRequest;
+    }) => teacherProfileAPI.updateCertification(certificationId, data),
     onSuccess: (response) => {
       if (response.success && response.data) {
         // Invalidate current teacher profile to refresh certification data
-        queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+        queryClient.invalidateQueries({
+          queryKey: ["teacher-profile", "current"],
+        });
         // Invalidate teacher profile by ID queries
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
@@ -1594,7 +1785,9 @@ export const useDeleteTeacherCertification = () => {
     mutationFn: (certificationId: string) =>
       teacherProfileAPI.deleteCertification(certificationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1605,7 +1798,9 @@ export const useCreateTeacherDevelopment = () => {
     mutationFn: (data: DevelopmentRequest) =>
       teacherProfileAPI.createDevelopment(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1621,7 +1816,9 @@ export const useUpdateTeacherDevelopment = () => {
       data: DevelopmentRequest;
     }) => teacherProfileAPI.updateDevelopment(developmentId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1632,7 +1829,9 @@ export const useDeleteTeacherDevelopment = () => {
     mutationFn: (developmentId: string) =>
       teacherProfileAPI.deleteDevelopment(developmentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1640,9 +1839,12 @@ export const useDeleteTeacherDevelopment = () => {
 export const useCreateTeacherMembership = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: MembershipRequest) => teacherProfileAPI.createMembership(data),
+    mutationFn: (data: MembershipRequest) =>
+      teacherProfileAPI.createMembership(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1650,10 +1852,17 @@ export const useCreateTeacherMembership = () => {
 export const useUpdateTeacherMembership = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ membershipId, data }: { membershipId: string; data: MembershipRequest }) =>
-      teacherProfileAPI.updateMembership(membershipId, data),
+    mutationFn: ({
+      membershipId,
+      data,
+    }: {
+      membershipId: string;
+      data: MembershipRequest;
+    }) => teacherProfileAPI.updateMembership(membershipId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1661,9 +1870,12 @@ export const useUpdateTeacherMembership = () => {
 export const useDeleteTeacherMembership = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (membershipId: string) => teacherProfileAPI.deleteMembership(membershipId),
+    mutationFn: (membershipId: string) =>
+      teacherProfileAPI.deleteMembership(membershipId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1672,9 +1884,12 @@ export const useDeleteTeacherMembership = () => {
 export const useCreateDependent = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: DependentRequest) => teacherProfileAPI.createDependent(data),
+    mutationFn: (data: DependentRequest) =>
+      teacherProfileAPI.createDependent(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1682,10 +1897,17 @@ export const useCreateDependent = () => {
 export const useUpdateDependent = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ dependentId, data }: { dependentId: string; data: DependentRequest }) =>
-      teacherProfileAPI.updateDependent(dependentId, data),
+    mutationFn: ({
+      dependentId,
+      data,
+    }: {
+      dependentId: string;
+      data: DependentRequest;
+    }) => teacherProfileAPI.updateDependent(dependentId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1693,9 +1915,12 @@ export const useUpdateDependent = () => {
 export const useDeleteDependent = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (dependentId: string) => teacherProfileAPI.deleteDependent(dependentId),
+    mutationFn: (dependentId: string) =>
+      teacherProfileAPI.deleteDependent(dependentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1704,9 +1929,12 @@ export const useDeleteDependent = () => {
 export const useCreateActivity = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: ActivityRequest) => teacherProfileAPI.createActivity(data),
+    mutationFn: (data: ActivityRequest) =>
+      teacherProfileAPI.createActivity(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1714,10 +1942,17 @@ export const useCreateActivity = () => {
 export const useUpdateActivity = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ activityId, data }: { activityId: string; data: ActivityRequest }) =>
-      teacherProfileAPI.updateActivity(activityId, data),
+    mutationFn: ({
+      activityId,
+      data,
+    }: {
+      activityId: string;
+      data: ActivityRequest;
+    }) => teacherProfileAPI.updateActivity(activityId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
@@ -1725,9 +1960,12 @@ export const useUpdateActivity = () => {
 export const useDeleteActivity = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (activityId: string) => teacherProfileAPI.deleteActivity(activityId),
+    mutationFn: (activityId: string) =>
+      teacherProfileAPI.deleteActivity(activityId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-profile", "current"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-profile", "current"],
+      });
     },
   });
 };
