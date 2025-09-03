@@ -26,7 +26,7 @@ export const useApplications = (filters: ApplicationSearchParams) => {
 };
 
 // New hook for teachers to get their own applications
-export const useTeacherApplications = (
+export const useTeacherRecentApplications = (
   params: Omit<ApplicationSearchParams, "jobId">
 ) => {
   return useQuery({
@@ -40,7 +40,7 @@ export const useMyApplications = (
   params: Omit<ApplicationSearchParams, "jobId">
 ) => {
   return useQuery({
-    queryKey: ["teacherApplications", params],
+    queryKey: ["myApplications", params],
     queryFn: () => applicationsAPI.getMyApplications(),
     staleTime: 5 * 60 * 1000,
   });
@@ -67,10 +67,26 @@ export const useApplicationsByTeacher = (
   });
 };
 
-export const useApplicationStats = () => {
+// export const useApplicationStats = () => {
+//   return useQuery({
+//     queryKey: applicationQueryKeys.stats(),
+//     queryFn: () => applicationsAPI.getApplicationStats(),
+//     staleTime: 5 * 60 * 1000,
+//   });
+// };
+
+export const useSchoolDashboardCardData = () => {
   return useQuery({
     queryKey: applicationQueryKeys.stats(),
-    queryFn: () => applicationsAPI.getApplicationStats(),
+    queryFn: () => applicationsAPI.getSchoolDashboardCardsData(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useTeacherDashboardCardData = () => {
+  return useQuery({
+    queryKey: applicationQueryKeys.stats(),
+    queryFn: () => applicationsAPI.getTeacherDashboardCardsData(),
     staleTime: 5 * 60 * 1000,
   });
 };
