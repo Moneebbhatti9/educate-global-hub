@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,20 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BookOpen } from "lucide-react";
-
-interface Program {
-  id: string;
-  name: string;
-  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
-  curriculum: string;
-  ageRange: string;
-  duration: string;
-  subjects: string[];
-  description: string;
-  requirements: string[];
-  capacity: number;
-  fees?: string;
-}
+import { Program } from "@/apis/profiles";
 
 interface AddProgramModalProps {
   open: boolean;
@@ -47,24 +34,55 @@ export const AddProgramModal = ({
   onSave,
   editingProgram,
 }: AddProgramModalProps) => {
-  const [formData, setFormData] = useState<Omit<Program, "id">>({
-    name: editingProgram?.name || "",
-    level: editingProgram?.level || "Elementary",
-    curriculum: editingProgram?.curriculum || "",
-    ageRange: editingProgram?.ageRange || "",
-    duration: editingProgram?.duration || "",
-    subjects: editingProgram?.subjects || [],
-    description: editingProgram?.description || "",
-    requirements: editingProgram?.requirements || [],
-    capacity: editingProgram?.capacity || 25,
-    fees: editingProgram?.fees || "",
+  const [formData, setFormData] = useState<Omit<Program, "_id" | "id">>({
+    name: "",
+    level: "Elementary",
+    curriculum: "",
+    ageRange: "",
+    duration: "",
+    subjects: [],
+    description: "",
+    requirements: [],
+    capacity: 25,
+    fees: "",
   });
+
+  // Update form data when editing program changes
+  useEffect(() => {
+    if (editingProgram) {
+      setFormData({
+        name: editingProgram.name || "",
+        level: editingProgram.level || "Elementary",
+        curriculum: editingProgram.curriculum || "",
+        ageRange: editingProgram.ageRange || "",
+        duration: editingProgram.duration || "",
+        subjects: editingProgram.subjects || [],
+        description: editingProgram.description || "",
+        requirements: editingProgram.requirements || [],
+        capacity: editingProgram.capacity || 25,
+        fees: editingProgram.fees || "",
+      });
+    } else {
+      // Reset form when not editing
+      setFormData({
+        name: "",
+        level: "Elementary",
+        curriculum: "",
+        ageRange: "",
+        duration: "",
+        subjects: [],
+        description: "",
+        requirements: [],
+        capacity: 25,
+        fees: "",
+      });
+    }
+  }, [editingProgram]);
 
   const handleSave = () => {
     if (!formData.name.trim() || !formData.curriculum.trim()) return;
 
     const newProgram: Program = {
-      id: editingProgram?.id || Date.now().toString(),
       ...formData,
     };
 

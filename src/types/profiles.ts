@@ -115,6 +115,7 @@ export interface SchoolProfile extends BaseProfile {
   schoolName: string;
   schoolEmail: string;
   schoolContactNumber: string;
+  alternateContact?: string;
   country: string;
   city: string;
   province: string;
@@ -136,6 +137,14 @@ export interface SchoolProfile extends BaseProfile {
   ageGroup: string[];
   schoolWebsite?: string;
   aboutSchool: string;
+  establishedYear?: string;
+  registrationNumber?: string;
+  professionalSummary?: string;
+  mission?: string;
+  vision?: string;
+  careerObjectives?: string;
+  programs?: any[];
+  media?: any[];
 }
 
 export interface SchoolProfileRequest {

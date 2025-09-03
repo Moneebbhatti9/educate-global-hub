@@ -159,11 +159,9 @@ const TeacherProfile = () => {
               ...prevProfile.personalInfo,
               firstName:
                 fetchedProfile.user?.firstName ||
-                fetchedProfile.fullName?.split(" ")[0] ||
                 "",
               lastName:
                 fetchedProfile.user?.lastName ||
-                fetchedProfile.fullName?.split(" ").slice(1).join(" ") ||
                 "",
               email: fetchedProfile.user?.email || "",
               phone: fetchedProfile.phoneNumber || "",

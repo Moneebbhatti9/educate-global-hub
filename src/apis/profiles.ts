@@ -259,6 +259,8 @@ const PROFILE_ENDPOINTS = {
   TEACHER_MEMBERSHIPS: "/teacher-profiles/me/memberships",
   TEACHER_DEPENDENTS: "/teacher-profiles/me/dependents",
   TEACHER_ACTIVITIES: "/teacher-profiles/me/activities",
+  SCHOOL_PROGRAMS: "/school-profiles/programs",
+  SCHOOL_PROGRAM_BY_ID: (id: string) => `/school-profiles/programs/${id}`,
 } as const;
 
 // Teacher Profile API functions
@@ -711,6 +713,35 @@ export const teacherProfileAPI = {
   },
 };
 
+// Program Types
+export interface Program {
+  _id?: string;
+  id?: string;
+  name: string;
+  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
+  curriculum: string;
+  ageRange: string;
+  duration: string;
+  subjects: string[];
+  description: string;
+  requirements: string[];
+  capacity: number;
+  fees?: string;
+}
+
+export interface ProgramRequest {
+  name: string;
+  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
+  curriculum: string;
+  ageRange: string;
+  duration: string;
+  subjects: string[];
+  description: string;
+  requirements: string[];
+  capacity: number;
+  fees?: string;
+}
+
 // School Profile API functions
 export const schoolProfileAPI = {
   // Create/Update School Profile
@@ -749,6 +780,21 @@ export const schoolProfileAPI = {
     );
   },
 
+  // Get All School Profiles with pagination and filters
+  getAll: async (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    country?: string;
+    city?: string;
+    accreditation?: string;
+  }): Promise<SearchApiResponse<SchoolProfile>> => {
+    return apiHelpers.get<SearchApiResponse<SchoolProfile>>(
+      PROFILE_ENDPOINTS.SCHOOL_PROFILES,
+      { params }
+    );
+  },
+
   // Search Schools
   search: async (
     params: SchoolSearchParams
@@ -756,6 +802,54 @@ export const schoolProfileAPI = {
     return apiHelpers.get<SearchApiResponse<SchoolProfile>>(
       PROFILE_ENDPOINTS.SCHOOL_PROFILE_SEARCH,
       { params }
+    );
+  },
+
+  // Create School Program
+  createProgram: async (
+    data: ProgramRequest
+  ): Promise<ApiResponse<Program>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.post<ApiResponse<Program>>(
+      PROFILE_ENDPOINTS.SCHOOL_PROGRAMS,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Update School Program
+  updateProgram: async (
+    programId: string,
+    data: ProgramRequest
+  ): Promise<ApiResponse<Program>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.put<ApiResponse<Program>>(
+      PROFILE_ENDPOINTS.SCHOOL_PROGRAM_BY_ID(programId),
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
+  // Delete School Program
+  deleteProgram: async (
+    programId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.delete<ApiResponse<{ message: string }>>(
+      PROFILE_ENDPOINTS.SCHOOL_PROGRAM_BY_ID(programId),
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
   },
 };
@@ -1299,11 +1393,63 @@ export const useSchoolProfileQueries = () => {
     });
   };
 
+  // Create school program mutation
+  const useCreateSchoolProgram = () => {
+    return useMutation({
+      mutationFn: schoolProfileAPI.createProgram,
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate current school profile to refresh programs
+          queryClient.invalidateQueries({ queryKey: ["school-profile", "current"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Create school program error:", error);
+      },
+    });
+  };
+
+  // Update school program mutation
+  const useUpdateSchoolProgram = () => {
+    return useMutation({
+      mutationFn: ({ programId, data }: { programId: string; data: ProgramRequest }) =>
+        schoolProfileAPI.updateProgram(programId, data),
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate current school profile to refresh programs
+          queryClient.invalidateQueries({ queryKey: ["school-profile", "current"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Update school program error:", error);
+      },
+    });
+  };
+
+  // Delete school program mutation
+  const useDeleteSchoolProgram = () => {
+    return useMutation({
+      mutationFn: schoolProfileAPI.deleteProgram,
+      onSuccess: (response) => {
+        if (response.success) {
+          // Invalidate current school profile to refresh programs
+          queryClient.invalidateQueries({ queryKey: ["school-profile", "current"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Delete school program error:", error);
+      },
+    });
+  };
+
   return {
     useCurrentSchoolProfile,
     useSchoolProfileById,
     useSchoolSearch,
     useCreateOrUpdateSchoolProfile,
+    useCreateSchoolProgram,
+    useUpdateSchoolProgram,
+    useDeleteSchoolProgram,
   };
 };
 
