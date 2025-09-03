@@ -279,35 +279,31 @@ const SchoolProfile = () => {
         // Update existing program
         const programId = editingProgram._id || editingProgram.id;
         if (programId) {
-          await updateProgramMutation.mutateAsync({
-            programId,
-            data: {
-              name: program.name,
-              level: program.level,
-              curriculum: program.curriculum,
-              ageRange: program.ageRange,
-              duration: program.duration,
-              subjects: program.subjects,
-              description: program.description,
-              requirements: program.requirements,
-              capacity: program.capacity,
-              fees: program.fees,
-            },
-          });
+                  await updateProgramMutation.mutateAsync({
+          programId,
+          data: {
+            programName: program.programName,
+            educationLevel: program.educationLevel,
+            curriculum: program.curriculum,
+            ageRange: program.ageRange,
+            coreSubjects: program.coreSubjects,
+            description: program.description,
+            admissionRequirements: program.admissionRequirements,
+            isActive: program.isActive,
+          },
+        });
         }
       } else {
         // Create new program
         await createProgramMutation.mutateAsync({
-          name: program.name,
-          level: program.level,
+          programName: program.programName,
+          educationLevel: program.educationLevel,
           curriculum: program.curriculum,
           ageRange: program.ageRange,
-          duration: program.duration,
-          subjects: program.subjects,
+          coreSubjects: program.coreSubjects,
           description: program.description,
-          requirements: program.requirements,
-          capacity: program.capacity,
-          fees: program.fees,
+          admissionRequirements: program.admissionRequirements,
+          isActive: program.isActive,
         });
       }
       
@@ -901,25 +897,30 @@ const SchoolProfile = () => {
                         <div key={program._id || program.id} className="border rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg">{program.name}</h3>
+                              <h3 className="font-semibold text-lg">{program.programName}</h3>
                               <p className="text-brand-primary font-medium">
-                                {program.curriculum} • {program.level}
+                                {program.curriculum} • {program.educationLevel}
                               </p>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {program.ageRange} • {program.duration} • Capacity: {program.capacity}
+                                Age Range: {program.ageRange} • Education Level: {program.educationLevel}
                               </p>
-                              {program.fees && (
-                                <p className="text-sm font-medium text-brand-accent-green mb-2">
-                                  Fees: {program.fees}
-                                </p>
+                              {program.isActive !== undefined && (
+                                <div className="flex items-center mb-2">
+                                  <Badge 
+                                    variant={program.isActive ? "default" : "secondary"}
+                                    className={program.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
+                                  >
+                                    {program.isActive ? "Active" : "Inactive"}
+                                  </Badge>
+                                </div>
                               )}
                               <p className="text-sm mb-3">{program.description}</p>
 
-                              {program.subjects.length > 0 && (
+                              {program.coreSubjects && program.coreSubjects.length > 0 && (
                                 <div className="mb-3">
                                   <h4 className="font-medium text-sm mb-2">Core Subjects:</h4>
                                   <div className="flex flex-wrap gap-1">
-                                    {program.subjects.map((subject, idx) => (
+                                    {program.coreSubjects.map((subject, idx) => (
                                       <Badge key={idx} variant="secondary" className="text-xs">
                                         {subject}
                                       </Badge>
@@ -928,11 +929,11 @@ const SchoolProfile = () => {
                                 </div>
                               )}
 
-                              {program.requirements.length > 0 && (
+                              {program.admissionRequirements && program.admissionRequirements.length > 0 && (
                                 <div>
-                                  <h4 className="font-medium text-sm mb-2">Requirements:</h4>
+                                  <h4 className="font-medium text-sm mb-2">Admission Requirements:</h4>
                                   <div className="flex flex-wrap gap-1">
-                                    {program.requirements.map((req, idx) => (
+                                    {program.admissionRequirements.map((req, idx) => (
                                       <Badge key={idx} variant="outline" className="text-xs">
                                         {req}
                                       </Badge>

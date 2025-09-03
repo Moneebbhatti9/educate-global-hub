@@ -127,14 +127,10 @@ interface Language {
 
 const TeacherProfile = () => {
   const { user } = useAuth();
-  const createExperience = useCreateTeacherExperience();
-  const updateExperience = useUpdateTeacherExperience();
   const deleteExperience = useDeleteTeacherExperience();
   const createEducation = useCreateTeacherEducation();
   const updateEducation = useUpdateTeacherEducation();
   const deleteEducation = useDeleteTeacherEducation();
-  const createQualification = useCreateTeacherQualification();
-  const updateQualification = useUpdateTeacherQualification();
   const deleteQualification = useDeleteTeacherQualification();
   const createReferee = useCreateTeacherReferee();
   const updateReferee = useUpdateTeacherReferee();

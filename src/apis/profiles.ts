@@ -772,29 +772,30 @@ export const teacherProfileAPI = {
 export interface Program {
   _id?: string;
   id?: string;
-  name: string;
-  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
+  schoolId?: string;
+  programName: string;
+  educationLevel: "Early Years" | "Elementary" | "Primary" | "Secondary" | "High School" | "All Levels";
   curriculum: string;
   ageRange: string;
-  duration: string;
-  subjects: string[];
+  coreSubjects: string[];
   description: string;
-  requirements: string[];
-  capacity: number;
-  fees?: string;
+  admissionRequirements: string[];
+  isActive: boolean;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 export interface ProgramRequest {
-  name: string;
-  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
+  programName: string;
+  educationLevel: "Early Years" | "Elementary" | "Primary" | "Secondary" | "High School" | "All Levels";
   curriculum: string;
   ageRange: string;
-  duration: string;
-  subjects: string[];
+  coreSubjects: string[];
   description: string;
-  requirements: string[];
-  capacity: number;
-  fees?: string;
+  admissionRequirements: string[];
+  isActive: boolean;
 }
 
 // School Profile API functions

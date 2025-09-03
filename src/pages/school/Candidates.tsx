@@ -144,30 +144,30 @@ const Candidates = () => {
   const mapApplicationsToCandidates = (applications: any[]) => {
     return applications.map((app, index) => ({
       id: app._id || index + 1,
-      name: app.teacher?.fullName || "Not Provided",
-      email: "Not Provided", // Email not in API response
+      name: app.teacher?.fullName || "Name Not Provided",
+      email: "Email Not Provided", // Email not in API response
       avatar: "/api/placeholder/60/60", // Default avatar
-      jobId: app.job?._id || app.jobId || "Not Provided",
-      jobTitle: app.job?.title || jobFromState?.jobTitle || "Not Provided",
-      experience: "Not Provided", // Experience not in API response
-      education: "Not Provided", // Education not in API response
+      jobId: app.job?._id || app.jobId || "Job ID Not Provided",
+      jobTitle: app.job?.title || jobFromState?.jobTitle || "Job Title Not Provided",
+      experience: "Experience Not Provided", // Experience not in API response
+      education: "Education Not Provided", // Education not in API response
       location: app.teacher?.city && app.teacher?.country 
         ? `${app.teacher.city}, ${app.teacher.country}`
-        : "Not Provided",
-      currentPosition: "Not Provided", // Current position not in API response
+        : "Location Not Provided",
+      currentPosition: "Current Position Not Provided", // Current position not in API response
       rating: 0, // Rating not in API response
       status: app.status || "pending",
-      applicationDate: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Not Provided",
+      applicationDate: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Application Date Not Provided",
       resumeUrl: app.resumeUrl || "#",
-      skills: ["Not Provided"], // Skills not in API response
-      languages: ["Not Provided"], // Languages not in API response
-      certifications: ["Not Provided"], // Certifications not in API response
-      salaryExpectation: app.expectedSalary ? `$${app.expectedSalary}` : "Not Provided",
-      availableFrom: app.availableFrom ? new Date(app.availableFrom).toLocaleDateString() : "Not Provided",
-      notes: app.coverLetter || app.reasonForApplying || "Not Provided",
+      skills: ["Skills Not Provided"], // Skills not in API response
+      languages: ["Languages Not Provided"], // Languages not in API response
+      certifications: ["Certifications Not Provided"], // Certifications not in API response
+      salaryExpectation: app.expectedSalary ? `$${app.expectedSalary}` : "Salary Expectation Not Provided",
+      availableFrom: app.availableFrom ? new Date(app.availableFrom).toLocaleDateString() : "Available From Not Provided",
+      notes: app.coverLetter || app.reasonForApplying || "Notes Not Provided",
       // Additional fields from API
-      coverLetter: app.coverLetter || "Not Provided",
-      reasonForApplying: app.reasonForApplying || "Not Provided",
+      coverLetter: app.coverLetter || "Cover Letter Not Provided",
+      reasonForApplying: app.reasonForApplying || "Reason for Applying Not Provided",
       screeningAnswers: app.screeningAnswers || {},
       documents: app.documents || [],
       isWithdrawn: app.isWithdrawn || false,
