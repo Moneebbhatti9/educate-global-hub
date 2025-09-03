@@ -83,6 +83,14 @@ export const useSchoolDashboardCardData = () => {
   });
 };
 
+export const useGetRecentCandidates = () => {
+  return useQuery({
+    queryKey: applicationQueryKeys.recent(),
+    queryFn: () => applicationsAPI.getRecentCandidates(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const useTeacherDashboardCardData = () => {
   return useQuery({
     queryKey: applicationQueryKeys.stats(),

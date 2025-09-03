@@ -222,9 +222,7 @@ const TeacherDashboard = () => {
   const savedJobsList = savedJobs?.data?.savedJobs || [];
 
   // Dynamic stats based on API data
-  const dashboardData =
-    (dashboardCardData?.data as unknown as TeacherDashboardCardsResponse["data"]) ||
-    null;
+  const dashboardData = dashboardCardData?.data || null;
   const stats = [
     {
       title: "Applications Sent",

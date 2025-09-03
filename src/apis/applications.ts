@@ -48,6 +48,9 @@ const APPLICATION_ENDPOINTS = {
   // Get Recent Applications
   GET_RECENT_APPLICATIONS: "/jobs/applications/recent",
 
+  //Get Recent Candidates
+  GET_RECENT_CANDIDATES: "/schoolDashboard/getRecentCandidates",
+
   // Get Overdue Applications
   GET_OVERDUE_APPLICATIONS: "/jobs/applications/overdue",
 
@@ -331,5 +334,12 @@ export const applicationsAPI = {
       }
     );
     return response.blob();
+  },
+
+  //Get Recent Candidates
+  getRecentCandidates: async (): Promise<ApiResponse<JobApplication[]>> => {
+    return apiHelpers.get<ApiResponse<JobApplication[]>>(
+      APPLICATION_ENDPOINTS.GET_RECENT_CANDIDATES
+    );
   },
 };
