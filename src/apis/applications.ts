@@ -11,6 +11,8 @@ import type {
   ApplicationAcceptanceRequest,
   ApplicationShortlistRequest,
   ApplicationReviewRequest,
+  SchoolDashboardCardsResponse,
+  TeacherDashboardCardsResponse,
 } from "../types/application";
 import { ApiResponse, PaginatedResponse } from "@/types/job";
 
@@ -37,11 +39,17 @@ const APPLICATION_ENDPOINTS = {
   // Get Applications by Teacher
   GET_APPLICATIONS_BY_TEACHER: "/jobs/applications/teacher/me",
 
-  // Get Application Stats
-  GET_APPLICATION_STATS: "/jobs/applications/stats",
+  // Get School Card
+  GET_SCHOOLDASHBOARD_CARDS: "/schoolDashboard/dashboardCards",
+
+  // Get Teaceher Card
+  GET_TEACHERDASHBOARD_CARDS: "/teacherDashboard/dashboardCards",
 
   // Get Recent Applications
   GET_RECENT_APPLICATIONS: "/jobs/applications/recent",
+
+  //Get Recent Candidates
+  GET_RECENT_CANDIDATES: "/schoolDashboard/getRecentCandidates",
 
   // Get Overdue Applications
   GET_OVERDUE_APPLICATIONS: "/jobs/applications/overdue",
@@ -138,14 +146,12 @@ export const applicationsAPI = {
   },
 
   // Fetch All Candidates
-  getAllSchoolApplications: async (
-    params: {
-      querySearch?: string;
-      page?: number;
-      limit?: number;
-      status?: string;
-    }
-  ): Promise<ApiResponse<PaginatedResponse<JobApplication>>> => {
+  getAllSchoolApplications: async (params: {
+    querySearch?: string;
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<ApiResponse<PaginatedResponse<JobApplication>>> => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -197,9 +203,25 @@ export const applicationsAPI = {
   },
 
   // Get Application Stats
-  getApplicationStats: async (): Promise<ApiResponse<ApplicationStats>> => {
-    return apiHelpers.get<ApiResponse<ApplicationStats>>(
-      APPLICATION_ENDPOINTS.GET_APPLICATION_STATS
+  // getApplicationStats: async (): Promise<ApiResponse<ApplicationStats>> => {
+  //   return apiHelpers.get<ApiResponse<ApplicationStats>>(
+  //     APPLICATION_ENDPOINTS.GET_APPLICATION_STATS
+  //   );
+  // },
+
+  getSchoolDashboardCardsData: async (): Promise<
+    ApiResponse<SchoolDashboardCardsResponse>
+  > => {
+    return apiHelpers.get<ApiResponse<SchoolDashboardCardsResponse>>(
+      APPLICATION_ENDPOINTS.GET_SCHOOLDASHBOARD_CARDS
+    );
+  },
+
+  getTeacherDashboardCardsData: async (): Promise<
+    ApiResponse<TeacherDashboardCardsResponse>
+  > => {
+    return apiHelpers.get<ApiResponse<TeacherDashboardCardsResponse>>(
+      APPLICATION_ENDPOINTS.GET_TEACHERDASHBOARD_CARDS
     );
   },
 
@@ -312,5 +334,12 @@ export const applicationsAPI = {
       }
     );
     return response.blob();
+  },
+
+  //Get Recent Candidates
+  getRecentCandidates: async (): Promise<ApiResponse<JobApplication[]>> => {
+    return apiHelpers.get<ApiResponse<JobApplication[]>>(
+      APPLICATION_ENDPOINTS.GET_RECENT_CANDIDATES
+    );
   },
 };

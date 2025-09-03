@@ -8,6 +8,17 @@ export {
   HiringAnalyticsSkeleton,
 } from "./dashboard-skeleton";
 
+// Teacher Dashboard Skeletons
+export {
+  TeacherDashboardSkeleton,
+  TeacherDashboardStatsSkeleton,
+  TabNavigationSkeleton,
+  RecommendedJobsSkeleton,
+  RecentApplicationsSkeleton,
+  ApplicationsTabSkeleton,
+  SavedJobsTabSkeleton,
+} from "./teacher-dashboard-skeleton";
+
 // Job Postings Skeletons
 export {
   JobPostingsSkeleton,
