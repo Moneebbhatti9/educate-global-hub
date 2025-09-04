@@ -14,18 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Briefcase } from "lucide-react";
-
-interface Experience {
-  id: string;
-  title: string;
-  employer: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  responsibilities: string;
-  contactPerson?: string;
-}
+import { useCreateTeacherExperience, useUpdateTeacherExperience } from "@/apis/profiles";
+import { Experience, ExperienceRequest } from "@/apis/profiles";
+import { toast } from "sonner";
 
 interface AddExperienceModalProps {
   open: boolean;
@@ -40,7 +31,7 @@ export const AddExperienceModal = ({
   onSave,
   editingExperience,
 }: AddExperienceModalProps) => {
-  const [formData, setFormData] = useState<Omit<Experience, "id">>({
+  const [formData, setFormData] = useState<ExperienceRequest>({
     title: editingExperience?.title || "",
     employer: editingExperience?.employer || "",
     location: editingExperience?.location || "",
@@ -51,35 +42,62 @@ export const AddExperienceModal = ({
     contactPerson: editingExperience?.contactPerson || "",
   });
 
-  const handleSave = () => {
+  const createExperienceMutation = useCreateTeacherExperience();
+  const updateExperienceMutation = useUpdateTeacherExperience();
+
+  const handleSave = async () => {
     if (!formData.title.trim() || !formData.employer.trim()) return;
 
-    const newExperience: Experience = {
-      id: editingExperience?.id || Date.now().toString(),
-      ...formData,
-    };
-
-    onSave(newExperience);
-    onOpenChange(false);
-
-    // Reset form if not editing
-    if (!editingExperience) {
-      setFormData({
-        title: "",
-        employer: "",
-        location: "",
-        startDate: "",
-        endDate: "",
-        current: false,
-        responsibilities: "",
-        contactPerson: "",
-      });
+    try {
+      if (editingExperience) {
+        // Update existing experience
+        const response = await updateExperienceMutation.mutateAsync({
+          experienceId: editingExperience.id,
+          data: formData,
+        });
+        
+        if (response.success && response.data) {
+          onSave(response.data);
+          onOpenChange(false);
+          toast.success("Experience updated successfully");
+        } else {
+          toast.error(response.message || "Failed to update experience");
+        }
+      } else {
+        // Create new experience
+        const response = await createExperienceMutation.mutateAsync(formData);
+        
+        if (response.success && response.data) {
+          onSave(response.data);
+          onOpenChange(false);
+          toast.success("Experience added successfully");
+          
+          // Reset form
+          setFormData({
+            title: "",
+            employer: "",
+            location: "",
+            startDate: "",
+            endDate: "",
+            current: false,
+            responsibilities: "",
+            contactPerson: "",
+          });
+        } else {
+          toast.error(response.message || "Failed to add experience");
+        }
+      }
+    } catch (error) {
+      console.error("Error saving experience:", error);
+      toast.error("An error occurred while saving the experience");
     }
   };
 
-  const updateField = (field: keyof typeof formData, value: any) => {
+  const updateField = (field: keyof ExperienceRequest, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const isLoading = createExperienceMutation.isPending || updateExperienceMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -105,6 +123,7 @@ export const AddExperienceModal = ({
                 placeholder="e.g., Mathematics Teacher"
                 value={formData.title}
                 onChange={(e) => updateField("title", e.target.value)}
+                disabled={isLoading}
               />
             </div>
 
@@ -115,6 +134,7 @@ export const AddExperienceModal = ({
                 placeholder="e.g., Lincoln High School"
                 value={formData.employer}
                 onChange={(e) => updateField("employer", e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -126,6 +146,7 @@ export const AddExperienceModal = ({
               placeholder="e.g., Boston, MA, USA"
               value={formData.location}
               onChange={(e) => updateField("location", e.target.value)}
+              disabled={isLoading}
             />
           </div>
 
@@ -144,6 +165,7 @@ export const AddExperienceModal = ({
                 }}
                 placeholder="Select start date"
                 max={new Date()}
+                disabled={isLoading}
               />
             </div>
 
@@ -160,7 +182,7 @@ export const AddExperienceModal = ({
                   }
                 }}
                 placeholder="Select end date"
-                disabled={formData.current}
+                disabled={formData.current || isLoading}
                 min={
                   formData.startDate ? new Date(formData.startDate) : undefined
                 }
@@ -174,6 +196,7 @@ export const AddExperienceModal = ({
               id="current"
               checked={formData.current}
               onCheckedChange={(checked) => updateField("current", checked)}
+              disabled={isLoading}
             />
             <Label htmlFor="current">I currently work here</Label>
           </div>
@@ -186,6 +209,7 @@ export const AddExperienceModal = ({
               value={formData.responsibilities}
               onChange={(e) => updateField("responsibilities", e.target.value)}
               rows={4}
+              disabled={isLoading}
             />
           </div>
 
@@ -196,19 +220,20 @@ export const AddExperienceModal = ({
               placeholder="e.g., John Smith - Principal"
               value={formData.contactPerson}
               onChange={(e) => updateField("contactPerson", e.target.value)}
+              disabled={isLoading}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!formData.title.trim() || !formData.employer.trim()}
+            disabled={!formData.title.trim() || !formData.employer.trim() || isLoading}
           >
-            {editingExperience ? "Update" : "Add"} Experience
+            {isLoading ? "Saving..." : editingExperience ? "Update" : "Add"} Experience
           </Button>
         </DialogFooter>
       </DialogContent>

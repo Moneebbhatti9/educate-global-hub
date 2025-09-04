@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,33 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Shield } from "lucide-react";
-
-interface Membership {
-  id: string;
-  organizationName: string;
-  membershipType: "Full Member" | "Associate Member" | "Student Member" | "Honorary Member" | "Other";
-  membershipId: string;
-  joinDate: string;
-  expiryDate: string;
-  status: "Active" | "Inactive" | "Pending" | "Expired";
-  benefits: string[];
-  description?: string;
-}
+import { Membership, MembershipRequest } from "@/apis/profiles";
 
 interface AddMembershipModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (membership: Membership) => void;
-  editingMembership?: Membership;
+  editingMembership?: Membership | null;
 }
 
-export const AddMembershipModal = ({
+export const AddMembershipModal: React.FC<AddMembershipModalProps> = ({
   open,
   onOpenChange,
   onSave,
   editingMembership,
-}: AddMembershipModalProps) => {
-  const [formData, setFormData] = useState<Omit<Membership, "id">>({
+}) => {
+  const [formData, setFormData] = useState<MembershipRequest>({
     organizationName: editingMembership?.organizationName || "",
     membershipType: editingMembership?.membershipType || "Full Member",
     membershipId: editingMembership?.membershipId || "",
@@ -57,11 +46,27 @@ export const AddMembershipModal = ({
     description: editingMembership?.description || "",
   });
 
+  React.useEffect(() => {
+    if (editingMembership) {
+      setFormData({
+        organizationName: editingMembership.organizationName || "",
+        membershipType: editingMembership.membershipType || "Full Member",
+        membershipId: editingMembership.membershipId || "",
+        joinDate: editingMembership.joinDate || "",
+        expiryDate: editingMembership.expiryDate || "",
+        status: editingMembership.status || "Active",
+        benefits: editingMembership.benefits || [],
+        description: editingMembership.description || "",
+      });
+    }
+  }, [editingMembership]);
+
   const handleSave = () => {
     if (!formData.organizationName.trim()) return;
 
     const newMembership: Membership = {
       id: editingMembership?.id || Date.now().toString(),
+      _id: editingMembership?._id, // Added _id for API compatibility
       ...formData,
     };
 
@@ -138,7 +143,6 @@ export const AddMembershipModal = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
                   <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="Expired">Expired</SelectItem>
                 </SelectContent>

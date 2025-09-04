@@ -8,6 +8,17 @@ export {
   HiringAnalyticsSkeleton,
 } from "./dashboard-skeleton";
 
+// Teacher Dashboard Skeletons
+export {
+  TeacherDashboardSkeleton,
+  TeacherDashboardStatsSkeleton,
+  TabNavigationSkeleton,
+  RecommendedJobsSkeleton,
+  RecentApplicationsSkeleton,
+  ApplicationsTabSkeleton,
+  SavedJobsTabSkeleton,
+} from "./teacher-dashboard-skeleton";
+
 // Job Postings Skeletons
 export {
   JobPostingsSkeleton,
@@ -52,15 +63,3 @@ export {
   PersonalInfoFormSkeleton,
   EmploymentHistorySkeleton,
 } from "./teacher-profile-skeleton";
-
-// User Management Skeletons
-export {
-  UserManagementSkeleton,
-  UserTableSkeleton,
-  UserTableRowSkeleton,
-  UserFiltersSkeleton,
-  UserPaginationSkeleton,
-  UserManagementHeaderSkeleton,
-  UserCardSkeleton,
-  UserGridSkeleton,
-} from "./user-management-skeleton";

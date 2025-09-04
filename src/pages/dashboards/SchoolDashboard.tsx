@@ -33,11 +33,15 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchoolJobs } from "@/hooks/useJobs";
-import { useApplications } from "@/hooks/useApplications";
-import { useApplicationStats } from "@/hooks/useApplications";
+import {
+  useApplications,
+  useGetRecentCandidates,
+} from "@/hooks/useApplications";
+import { useSchoolDashboardCardData } from "@/hooks/useApplications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNotificationStats } from "@/hooks/useNotifications";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ApplicationStatus } from "@/types/job";
 import type {
   InterviewScheduleRequest,
@@ -55,9 +59,47 @@ import { useMoveToReviewing } from "@/hooks/useApplications";
 import { customToast } from "@/components/ui/sonner";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
+// Interface for the recent candidates API response
+interface RecentCandidate {
+  avatar: string | null;
+  firstName: string;
+  lastName: string;
+  position: string;
+  experience: string;
+  appliedDate: string;
+  status: string;
+}
+
+interface RecentCandidatesResponse {
+  success: boolean;
+  message: string;
+  data: RecentCandidate[];
+}
+
+// Interface for job postings
+interface JobPosting {
+  _id: string;
+  title: string;
+  positionCategory: string;
+  positionSubcategory: string;
+  schoolId?: { schoolName: string };
+  city: string;
+  country: string;
+  status: string;
+  applicantsCount?: number;
+  viewsCount?: number;
+  createdAt?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  currency?: string;
+  jobType: string;
+  applicationDeadline?: string;
+}
+
 const SchoolDashboard = () => {
   const { isAuthenticated, user } = useAuth();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Fetch real-time data
   const { data: schoolJobs, isLoading: schoolJobsLoading } = useSchoolJobs(
@@ -68,8 +110,8 @@ const SchoolDashboard = () => {
     }
   );
 
-  const { data: applicationStats, isLoading: applicationStatsLoading } =
-    useApplicationStats();
+  const { data: schoolCardsCount, isLoading: applicationStatsLoading } =
+    useSchoolDashboardCardData();
   const { data: notificationStats, isLoading: notificationStatsLoading } =
     useNotificationStats();
   const { data: unreadNotifications, isLoading: notificationsLoading } =
@@ -86,6 +128,9 @@ const SchoolDashboard = () => {
   const shortlistApplication = useShortlistApplication();
   const moveToReviewing = useMoveToReviewing();
 
+  const { data: recentCandidates, isLoading: recentCandidatesLoading } =
+    useGetRecentCandidates();
+
   // Get applications for selected job
   const { data: jobApplications, isLoading: jobApplicationsLoading } =
     useApplications({
@@ -99,7 +144,9 @@ const SchoolDashboard = () => {
     schoolJobsLoading ||
     applicationStatsLoading ||
     notificationStatsLoading ||
-    notificationsLoading;
+    notificationsLoading ||
+    recentCandidatesLoading ||
+    jobApplicationsLoading;
 
   // Show skeleton loading state while data is loading
   if (isLoading) {
@@ -112,31 +159,31 @@ const SchoolDashboard = () => {
 
   const stats = [
     {
-      title: "Active Job Postings",
-      value: schoolJobs?.data?.pagination?.total || "0",
+      title: "Total Job",
+      value: schoolCardsCount?.data?.totalJobs || "0",
       change: "+2",
       icon: Briefcase,
       color: "text-brand-primary",
     },
     {
-      title: "Total Applicants",
-      value: applicationStats?.data?.total || "0",
+      title: "Active Jobs",
+      value: schoolCardsCount?.data?.activeJobs || "0",
       change: "+18",
-      icon: Users,
+      icon: CheckCircle,
       color: "text-brand-accent-green",
     },
     {
-      title: "Interviews Scheduled",
-      value: applicationStats?.data?.interviewed || "0",
+      title: "Total Applicants",
+      value: schoolCardsCount?.data?.totalApplicants || "0",
       change: "+3",
-      icon: Calendar,
+      icon: Users,
       color: "text-brand-secondary",
     },
     {
-      title: "New Messages",
-      value: notificationStats?.data?.unreadCount || "0",
+      title: "Hiring Ratio",
+      value: schoolCardsCount?.data?.hiringRatio || "0",
       change: "+7",
-      icon: MessageCircle,
+      icon: TrendingUp,
       color: "text-brand-accent-orange",
     },
   ];
@@ -295,9 +342,11 @@ const SchoolDashboard = () => {
   };
 
   // Access jobs from the actual API response structure
-  const jobPostings = (schoolJobs?.data as any)?.jobs || [];
+  const jobPostings = (schoolJobs?.data as { jobs?: JobPosting[] })?.jobs || [];
 
-  const recentCandidates = jobApplications?.data?.data || [];
+  // Access recent candidates from the API response with proper fallback
+  const recentCandidatesData =
+    (recentCandidates as unknown as RecentCandidatesResponse)?.data || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -326,7 +375,8 @@ const SchoolDashboard = () => {
           </h1>
           <p className="text-muted-foreground">
             Manage your recruitment activities and connect with qualified
-            educators.
+            educators. Track job performance, review applications, and find the
+            best candidates.
           </p>
         </div>
 
@@ -368,18 +418,22 @@ const SchoolDashboard = () => {
                   <CardTitle className="font-heading text-xl">
                     Active Job Postings
                   </CardTitle>
-                  <Button variant="default">
+                  <Button
+                    variant="default"
+                    onClick={() => navigate("/dashboard/school/post-job")}
+                  >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Post New Job
                   </Button>
                 </div>
                 <CardDescription>
-                  Manage your current job listings and their performance
+                  Manage your current job listings and their performance. Track
+                  applications, views, and engagement.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {jobPostings.length > 0 ? (
-                  jobPostings.map((job) => (
+                  jobPostings.map((job: JobPosting) => (
                     <div
                       key={job._id}
                       className="p-4 border border-border rounded-lg hover:border-brand-primary/30 hover:shadow-sm transition-all"
@@ -388,9 +442,11 @@ const SchoolDashboard = () => {
                         <div>
                           <h3 className="font-semibold text-lg">{job.title}</h3>
                           <p className="text-muted-foreground">
+                            <span className="font-medium">Position:</span>{" "}
                             {job.positionCategory} • {job.positionSubcategory}
                           </p>
                           <p className="text-xs text-muted-foreground">
+                            <span className="font-medium">Location:</span>{" "}
                             {job.schoolId?.schoolName} • {job.city},{" "}
                             {job.country}
                           </p>
@@ -401,15 +457,22 @@ const SchoolDashboard = () => {
                       <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-1 text-muted-foreground" />
-                          <span>{job.applicantsCount || 0} applicants</span>
+                          <span>
+                            <span className="font-medium">Applicants:</span>{" "}
+                            {job.applicantsCount || 0}
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <Eye className="w-4 h-4 mr-1 text-muted-foreground" />
-                          <span>{job.viewsCount || 0} views</span>
+                          <span>
+                            <span className="font-medium">Views:</span>{" "}
+                            {job.viewsCount || 0}
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 mr-1 text-muted-foreground" />
                           <span>
+                            <span className="font-medium">Posted:</span>{" "}
                             {job.createdAt
                               ? new Date(job.createdAt).toLocaleDateString()
                               : "N/A"}
@@ -421,6 +484,7 @@ const SchoolDashboard = () => {
                         <div className="flex items-center">
                           <DollarSign className="w-4 h-4 mr-1 text-muted-foreground" />
                           <span>
+                            <span className="font-medium">Salary:</span>{" "}
                             {job.salaryMin && job.salaryMax
                               ? `${job.currency} ${job.salaryMin} - ${job.salaryMax}`
                               : "Salary not disclosed"}
@@ -428,13 +492,16 @@ const SchoolDashboard = () => {
                         </div>
                         <div className="flex items-center">
                           <Briefcase className="w-4 h-4 mr-1 text-muted-foreground" />
-                          <span>{job.jobType}</span>
+                          <span>
+                            <span className="font-medium">Type:</span>{" "}
+                            {job.jobType}
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">
-                          Expires:{" "}
+                          <span className="font-medium">Expires:</span>{" "}
                           {job.applicationDeadline
                             ? new Date(
                                 job.applicationDeadline
@@ -445,11 +512,27 @@ const SchoolDashboard = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedJobId(job._id)}
+                            onClick={() =>
+                              navigate(
+                                `/dashboard/school/candidates?job=${job._id}`,
+                                {
+                                  state: {
+                                    jobId: job._id,
+                                    jobTitle: job.title,
+                                  },
+                                }
+                              )
+                            }
                           >
                             View Applications
                           </Button>
-                          <Button variant="default" size="sm">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() =>
+                              navigate("/dashboard/school/postings")
+                            }
+                          >
                             Manage
                           </Button>
                         </div>
@@ -485,7 +568,8 @@ const SchoolDashboard = () => {
                     </Button>
                   </div>
                   <CardDescription>
-                    Review and manage applications for this position
+                    Review and manage applications for this position. Update
+                    status, schedule interviews, and make hiring decisions.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -692,66 +776,89 @@ const SchoolDashboard = () => {
                   Recent Candidates
                 </CardTitle>
                 <CardDescription>
-                  New applications requiring your attention
+                  New applications requiring your attention. Review these
+                  candidates to find the best fit for your positions.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentCandidates.slice(0, 3).map((candidate) => (
-                  <div
-                    key={candidate?._id}
-                    className="p-3 border border-border rounded-lg"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={`/api/placeholder/40/40`} />
-                        <AvatarFallback>
-                          {candidate?.name
-                            ?.split(" ")
-                            .map((n) => n[0])
-                            .join("") || "NA"}
-                        </AvatarFallback>
-                      </Avatar>
+                {recentCandidatesData.length > 0 ? (
+                  recentCandidatesData.map(
+                    (candidate: RecentCandidate, index: number) => (
+                      <div
+                        key={`${candidate.firstName}-${candidate.lastName}-${index}`}
+                        className="p-3 border border-border rounded-lg"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={candidate.avatar || undefined} />
+                            <AvatarFallback>
+                              {candidate.firstName?.charAt(0) || ""}
+                              {candidate.lastName?.charAt(0) || ""}
+                            </AvatarFallback>
+                          </Avatar>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm">
-                          {candidate?.name || "Unknown Candidate"}
-                        </div>
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {candidate?.position || "Position not specified"}
-                        </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm">
+                              {candidate.firstName && candidate.lastName
+                                ? `${candidate.firstName} ${candidate.lastName}`
+                                : "Unknown Candidate"}
+                            </div>
+                            <div className="text-xs text-muted-foreground mb-1">
+                              <span className="font-medium">Position:</span>{" "}
+                              {candidate.position !== "N/A"
+                                ? candidate.position
+                                : "Position not specified"}
+                            </div>
 
-                        <div className="flex items-center space-x-1 mb-2">
-                          <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                          <span className="text-xs">
-                            {candidate?.rating || "N/A"}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            •{" "}
-                            {candidate?.experience ||
-                              "Experience not specified"}
-                          </span>
-                        </div>
+                            <div className="flex items-center space-x-1 mb-2">
+                              <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                              <span className="text-xs">
+                                <span className="font-medium">Experience:</span>{" "}
+                                {candidate.experience !== "N/A"
+                                  ? candidate.experience
+                                  : "Experience not specified"}
+                              </span>
+                            </div>
 
-                        <div className="flex items-center justify-between">
-                          <Badge
-                            className={`${getStatusColor(
-                              candidate?.status
-                            )} text-xs`}
-                          >
-                            {candidate?.status}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {candidate?.appliedDate || "Date not available"}
-                          </span>
+                            <div className="flex items-center justify-between">
+                              <Badge
+                                className={`${getStatusColor(
+                                  candidate.status
+                                )} text-xs`}
+                              >
+                                <span className="font-medium">Status:</span>{" "}
+                                {candidate.status}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                <span className="font-medium">Applied:</span>{" "}
+                                {candidate.appliedDate
+                                  ? new Date(
+                                      candidate.appliedDate
+                                    ).toLocaleDateString()
+                                  : "Date not available"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )
+                  )
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-medium">No recent candidates</p>
+                    <p className="text-xs">New applications will appear here</p>
                   </div>
-                ))}
+                )}
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => navigate("/dashboard/school/candidates")}
+                >
                   View All Candidates
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
@@ -762,12 +869,17 @@ const SchoolDashboard = () => {
                 <CardTitle className="font-heading text-lg">
                   Quick Actions
                 </CardTitle>
+                <CardDescription>
+                  Common tasks to help you manage your recruitment process
+                  efficiently.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={() => navigate("/dashboard/school/post-job")}
                 >
                   <Briefcase className="w-4 h-4 mr-2" />
                   Post New Job
@@ -776,63 +888,11 @@ const SchoolDashboard = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={() => navigate("/dashboard/school/candidates")}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Browse Teachers
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Schedule Interviews
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Message Candidates
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Hiring Analytics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">
-                  Hiring Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Application Response Rate</span>
-                    <span className="font-semibold">73%</span>
-                  </div>
-                  <Progress value={73} className="h-2" />
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Interview to Hire Ratio</span>
-                    <span className="font-semibold">42%</span>
-                  </div>
-                  <Progress value={42} className="h-2" />
-                </div>
-
-                <div className="pt-2 text-sm text-muted-foreground">
-                  <div className="flex justify-between mb-1">
-                    <span>Average time to hire:</span>
-                    <span>18 days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Most successful posting:</span>
-                    <span>English Teacher</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>

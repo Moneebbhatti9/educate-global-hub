@@ -47,6 +47,9 @@ import {
   FileText,
   Building,
   AlertCircle,
+  Edit,
+  CloudCog,
+  Save,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { AddLanguageModal } from "@/components/Modals/add-language-modal";
@@ -55,32 +58,65 @@ import { AddQualificationModal } from "@/components/Modals/add-qualification-mod
 import { AddEducationModal } from "@/components/Modals/add-education-modal";
 import { AddRefereeModal } from "@/components/Modals/add-referee-modal";
 import { useAuth } from "@/contexts/AuthContext";
-import { teacherProfileAPI } from "@/apis/profiles";
+import {
+  teacherProfileAPI,
+  useCreateTeacherExperience,
+  useUpdateTeacherExperience,
+  useDeleteTeacherExperience,
+  useCreateTeacherEducation,
+  useUpdateTeacherEducation,
+  useDeleteTeacherEducation,
+  useCreateTeacherQualification,
+  useUpdateTeacherQualification,
+  useDeleteTeacherQualification,
+  useCreateTeacherReferee,
+  useUpdateTeacherReferee,
+  useDeleteTeacherReferee,
+  useCreateTeacherCertification,
+  useUpdateTeacherCertification,
+  useDeleteTeacherCertification,
+  useCreateTeacherDevelopment,
+  useUpdateTeacherDevelopment,
+  useDeleteTeacherDevelopment,
+  useCreateTeacherMembership,
+  useUpdateTeacherMembership,
+  useDeleteTeacherMembership,
+  useCreateDependent,
+  useUpdateDependent,
+  useDeleteDependent,
+  useCreateActivity,
+  useUpdateActivity,
+  useDeleteActivity,
+  Experience,
+  Qualification,
+  Referee,
+  Certification,
+  Development,
+  Membership,
+  Dependent,
+  Activity,
+} from "@/apis/profiles";
 import { TeacherProfile as TeacherProfileType } from "@/types/profiles";
 import { TeacherProfileSkeleton } from "@/components/skeletons";
-
-interface Experience {
-  id: string;
-  title: string;
-  employer: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  responsibilities: string;
-  contactPerson?: string;
-}
+import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
+import { AddCertificationModal } from "@/components/Modals/add-certification-modal";
+import { AddDevelopmentModal } from "@/components/Modals/add-development-modal";
+import { AddMembershipModal } from "@/components/Modals/add-membership-modal";
+import { AddActivityModal } from "@/components/Modals/add-activity-modal";
+import { AddTravelPlanModal } from "@/components/Modals/add-travel-plan-modal";
 
 interface Education {
-  id: string;
-  degree: string;
+  id?: string;
+  _id?: string;
   institution: string;
+  degree: string;
   field: string;
-  gpa?: string;
   startDate: string;
   endDate: string;
+  gpa?: number;
   thesis?: string;
   honors?: string;
+  type?: "University" | "School" | "Professional";
 }
 
 interface Language {
@@ -91,12 +127,42 @@ interface Language {
 
 const TeacherProfile = () => {
   const { user } = useAuth();
+  const deleteExperience = useDeleteTeacherExperience();
+  const createEducation = useCreateTeacherEducation();
+  const updateEducation = useUpdateTeacherEducation();
+  const deleteEducation = useDeleteTeacherEducation();
+  const deleteQualification = useDeleteTeacherQualification();
+  const createReferee = useCreateTeacherReferee();
+  const updateReferee = useUpdateTeacherReferee();
+  const deleteReferee = useDeleteTeacherReferee();
+  const createCertification = useCreateTeacherCertification();
+  const updateCertification = useUpdateTeacherCertification();
+  const deleteCertification = useDeleteTeacherCertification();
+  const createDevelopment = useCreateTeacherDevelopment();
+  const updateDevelopment = useUpdateTeacherDevelopment();
+  const deleteDevelopment = useDeleteTeacherDevelopment();
+  const createMembership = useCreateTeacherMembership();
+  const updateMembership = useUpdateTeacherMembership();
+  const deleteMembership = useDeleteTeacherMembership();
+  const createDependent = useCreateDependent();
+  const updateDependent = useUpdateDependent();
+  const deleteDependent = useDeleteDependent();
+  const createActivity = useCreateActivity();
+  const updateActivity = useUpdateActivity();
+  const deleteActivity = useDeleteActivity();
   const [activeTab, setActiveTab] = useState("overview");
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
+  const [qualifications, setQualifications] = useState<Qualification[]>([]);
+  const [referees, setReferees] = useState<Referee[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalProfile, setOriginalProfile] = useState<ProfileData | null>(
+    null
+  );
 
   // Fetch teacher profile data when component mounts
   useEffect(() => {
@@ -126,14 +192,13 @@ const TeacherProfile = () => {
               ...prevProfile.personalInfo,
               firstName:
                 fetchedProfile.user?.firstName ||
-                fetchedProfile.fullName?.split(" ")[0] ||
                 "",
               lastName:
                 fetchedProfile.user?.lastName ||
-                fetchedProfile.fullName?.split(" ").slice(1).join(" ") ||
                 "",
               email: fetchedProfile.user?.email || "",
               phone: fetchedProfile.phoneNumber || "",
+              avatar: fetchedProfile.user?.avatarUrl || "",
               address: {
                 ...prevProfile.personalInfo.address,
                 city: fetchedProfile.city || "",
@@ -145,18 +210,145 @@ const TeacherProfile = () => {
             bio: fetchedProfile.professionalBio || "",
             subjects: fetchedProfile.subject ? [fetchedProfile.subject] : [],
             yearsOfExperience: fetchedProfile.yearsOfTeachingExperience || 0,
-            qualifications: fetchedProfile.additionalQualifications || [],
+            qualifications: fetchedProfile.qualifications || [],
             profileCompletion: fetchedProfile.profileCompletion || 0,
             isProfileComplete: fetchedProfile.isProfileComplete || false,
             pgce: fetchedProfile.pgce || false,
             keyAchievements: fetchedProfile.keyAchievements || [],
-            certifications: fetchedProfile.certifications || [],
+            certifications: fetchedProfile.certifications
+              ? fetchedProfile.certifications.map((cert: any) => ({
+                  _id: cert._id || cert.id || Date.now().toString(),
+                  id: cert.id || cert._id || Date.now().toString(),
+                  certificationName:
+                    cert.certificationName || cert.name || cert.title || "",
+                  issuingOrganization:
+                    cert.issuingOrganization ||
+                    cert.issuer ||
+                    cert.institution ||
+                    "",
+                  issueDate: cert.issueDate || "",
+                  expiryDate: cert.expiryDate || "",
+                  credentialId: cert.credentialId || cert.certificationId || "",
+                  credentialUrl: cert.credentialUrl || "",
+                  description: cert.description || "",
+                }))
+              : [],
             employment: fetchedProfile.employment || [],
             education: fetchedProfile.education || [],
             referees: fetchedProfile.referees || [],
-            development: fetchedProfile.development || [],
+            development: fetchedProfile.development
+              ? fetchedProfile.development.map((dev: any) => ({
+                  _id: dev._id || dev.id || Date.now().toString(),
+                  id: dev.id || dev._id || Date.now().toString(),
+                  title: dev.title || "",
+                  provider: dev.provider || "",
+                  type: dev.type || "Course",
+                  duration: dev.duration || "",
+                  completionDate: dev.completionDate || "",
+                  skills: dev.skills || [],
+                  impact: dev.impact || "",
+                  certificateUrl: dev.certificateUrl || "",
+                }))
+              : [],
             memberships: fetchedProfile.memberships || [],
           }));
+
+          // Update local state with fetched data
+          setEducations(fetchedProfile.education || []);
+          setExperiences(fetchedProfile.employment || []);
+          setReferees(fetchedProfile.referees || []);
+          setQualifications(fetchedProfile.qualifications || []);
+          setCertifications(
+            fetchedProfile.certifications
+              ? fetchedProfile.certifications.map((cert: any) => ({
+                  _id: cert._id || cert.id || Date.now().toString(),
+                  id: cert.id || cert._id || Date.now().toString(),
+                  certificationName:
+                    cert.certificationName || cert.name || cert.title || "",
+                  issuingOrganization:
+                    cert.issuingOrganization ||
+                    cert.issuer ||
+                    cert.institution ||
+                    "",
+                  issueDate: cert.issueDate || "",
+                  expiryDate: cert.expiryDate || "",
+                  credentialId: cert.credentialId || cert.certificationId || "",
+                  credentialUrl: cert.credentialUrl || "",
+                  description: cert.description || "",
+                }))
+              : []
+          );
+          setDevelopments(
+            fetchedProfile.development
+              ? fetchedProfile.development.map((dev: any) => ({
+                  _id: dev._id || dev.id || Date.now().toString(),
+                  id: dev.id || dev._id || Date.now().toString(),
+                  title: dev.title || "",
+                  provider: dev.provider || "",
+                  type: dev.type || "Course",
+                  duration: dev.duration || "",
+                  completionDate: dev.completionDate || "",
+                  skills: dev.skills || [],
+                  impact: dev.impact || "",
+                  certificateUrl: dev.certificateUrl || "",
+                }))
+              : []
+          );
+          setMemberships(
+            fetchedProfile.memberships
+              ? fetchedProfile.memberships.map((mem: any) => ({
+                  _id: mem._id || mem.id || Date.now().toString(),
+                  id: mem.id || mem._id || Date.now().toString(),
+                  organizationName: mem.organizationName || "",
+                  membershipType: mem.membershipType || "Full Member",
+                  membershipId: mem.membershipId || "",
+                  joinDate: mem.joinDate || "",
+                  expiryDate: mem.expiryDate || "",
+                  status: mem.status || "Active",
+                  benefits: mem.benefits || [],
+                  description: mem.description || "",
+                }))
+              : []
+          );
+          setTravelPlans(
+            fetchedProfile.dependents
+              ? fetchedProfile.dependents.map((dep: any) => ({
+                  _id: dep._id || dep.id || Date.now().toString(),
+                  id: dep.id || dep._id || Date.now().toString(),
+                  dependentName: dep.dependentName || "",
+                  relationship: dep.relationship || "Spouse",
+                  age: dep.age || undefined,
+                  nationality: dep.nationality || "",
+                  passportNumber: dep.passportNumber || "",
+                  passportExpiry: dep.passportExpiry || "",
+                  visaRequired: dep.visaRequired || false,
+                  visaStatus: dep.visaStatus || "Not Applied",
+                  accommodationNeeds: dep.accommodationNeeds || "",
+                  medicalNeeds: dep.medicalNeeds || "",
+                  educationNeeds: dep.educationNeeds || "",
+                  notes: dep.notes || "",
+                }))
+              : []
+          );
+          setActivities(
+            fetchedProfile.activities
+              ? fetchedProfile.activities.map((act: any) => ({
+                  _id: act._id || act.id || Date.now().toString(),
+                  id: act.id || act._id || Date.now().toString(),
+                  name: act.name || "",
+                  type: act.type || "Club",
+                  role: act.role || "",
+                  organization: act.organization || "",
+                  startDate: act.startDate || "",
+                  endDate: act.endDate || "",
+                  current: act.current || false,
+                  description: act.description || "",
+                  achievements: act.achievements || [],
+                  skillsDeveloped: act.skillsDeveloped || [],
+                  timeCommitment: act.timeCommitment || "",
+                }))
+              : []
+          );
         } else {
           console.log("API response not successful:", response);
         }
@@ -177,7 +369,54 @@ const TeacherProfile = () => {
   const [showQualificationModal, setShowQualificationModal] = useState(false);
   const [showEducationModal, setShowEducationModal] = useState(false);
   const [showRefereeModal, setShowRefereeModal] = useState(false);
+  const [showCertificationModal, setShowCertificationModal] = useState(false);
+  const [showDevelopmentModal, setShowDevelopmentModal] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showTravelPlanModal, setShowTravelPlanModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+
+  // State for development data
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [developments, setDevelopments] = useState<Development[]>([]);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [travelPlans, setTravelPlans] = useState<Dependent[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  // Reset editingItem when qualification modal is closed
+  useEffect(() => {
+    if (!showQualificationModal) {
+      setEditingItem(null);
+    }
+  }, [showQualificationModal]);
+
+  // Reset editingItem when referee modal is closed
+  useEffect(() => {
+    if (!showRefereeModal) {
+      setEditingItem(null);
+    }
+  }, [showRefereeModal]);
+
+  // Reset editingItem when membership modal is closed
+  useEffect(() => {
+    if (!showMembershipModal) {
+      setEditingItem(null);
+    }
+  }, [showMembershipModal]);
+
+  // Reset editingItem when dependent modal is closed
+  useEffect(() => {
+    if (!showTravelPlanModal) {
+      setEditingItem(null);
+    }
+  }, [showTravelPlanModal]);
+
+  // Reset editingItem when activity modal is closed
+  useEffect(() => {
+    if (!showActivityModal) {
+      setEditingItem(null);
+    }
+  }, [showActivityModal]);
 
   // Define profile type based on API response
   type ProfileData = {
@@ -195,6 +434,7 @@ const TeacherProfile = () => {
       gender: string;
       maritalStatus: string;
       linkedIn: string;
+      avatar?: string;
       address: {
         street: string;
         city: string;
@@ -208,17 +448,19 @@ const TeacherProfile = () => {
     careerObjectives: string;
     subjects: string[];
     yearsOfExperience: number;
-    qualifications: string[];
+    qualifications: Qualification[];
     profileCompletion: number;
     isProfileComplete: boolean;
     pgce: boolean;
     keyAchievements: string[];
-    certifications: string[];
+    certifications: Certification[];
     employment: any[];
     education: any[];
     referees: any[];
-    development: any[];
-    memberships: any[];
+    development: Development[];
+    memberships: Membership[];
+    dependents: Dependent[];
+    activities: Activity[];
   };
 
   // Empty profile data structure
@@ -237,6 +479,7 @@ const TeacherProfile = () => {
       gender: "",
       maritalStatus: "",
       linkedIn: "",
+      avatar: "",
       address: {
         street: "",
         city: "",
@@ -250,39 +493,21 @@ const TeacherProfile = () => {
     careerObjectives: "",
     subjects: [],
     yearsOfExperience: 0,
-    qualifications: [],
+    qualifications: [] as Qualification[],
     profileCompletion: 0,
     isProfileComplete: false,
     pgce: false,
     keyAchievements: [],
-    certifications: [],
+    certifications: [] as Certification[],
     employment: [],
     education: [],
     referees: [],
-    development: [],
+    development: [] as Development[],
     memberships: [],
+    dependents: [],
+    activities: [],
   });
 
-  const addExperience = () => {
-    const newExperience: Experience = {
-      id: Date.now().toString(),
-      title: "",
-      employer: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      current: false,
-      responsibilities: "",
-      contactPerson: "",
-    };
-    setExperiences([...experiences, newExperience]);
-  };
-
-  const removeExperience = (id: string) => {
-    setExperiences(experiences.filter((exp) => exp.id !== id));
-  };
-
-  // Modal handlers
   const handleSaveLanguage = (language: Language) => {
     if (editingItem) {
       setLanguages(languages.map((l) => (l.id === language.id ? language : l)));
@@ -292,15 +517,469 @@ const TeacherProfile = () => {
     setEditingItem(null);
   };
 
-  const handleSaveExperience = (experience: Experience) => {
-    if (editingItem) {
-      setExperiences(
-        experiences.map((e) => (e.id === experience.id ? experience : e))
-      );
-    } else {
-      setExperiences([...experiences, experience]);
+  const handleSaveExperience = async (experience: Experience) => {
+    try {
+      // Update local state with the new experience
+      if (editingItem) {
+        setExperiences(
+          experiences.map((e) => (e.id === experience.id ? experience : e))
+        );
+      } else {
+        setExperiences([...experiences, experience]);
+      }
+      setEditingItem(null);
+
+      // You can add a success toast here
+      console.log("Experience saved successfully:", experience);
+    } catch (error) {
+      console.error("Failed to save experience:", error);
+      // You can add an error toast here
     }
-    setEditingItem(null);
+  };
+
+  const handleDeleteEmployment = async (employmentId: string) => {
+    try {
+      const response = await deleteExperience.mutateAsync(employmentId);
+
+      if (response.success) {
+        // You can add a success toast here
+        console.log("Employment deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete employment:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleSaveEducation = async (education: Education) => {
+    try {
+      let response;
+
+      if (editingItem && education._id) {
+        // Update existing education
+        const educationId = education._id;
+        if (educationId) {
+          response = await updateEducation.mutateAsync({
+            educationId,
+            data: education,
+          });
+        }
+      } else {
+        // Create new education
+        response = await createEducation.mutateAsync(education);
+      }
+
+      if (response.success && response.data) {
+        // Update local state with the new education
+        if (editingItem) {
+          setEducations(
+            educations.map((e) =>
+              e.id === education.id || e._id === education._id ? education : e
+            )
+          );
+        } else {
+          setEducations([...educations, education]);
+        }
+        setEditingItem(null);
+
+        // You can add a success toast here
+        console.log("Education saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save education:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleDeleteEducation = async (educationId: string) => {
+    try {
+      const response = await deleteEducation.mutateAsync(educationId);
+
+      if (response.success) {
+        // You can add a success toast here
+        console.log("Education deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete education:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleSaveQualification = async (qualification: Qualification) => {
+    try {
+      // Update local state with the new qualification
+      if (editingItem) {
+        setQualifications(
+          qualifications.map((q) =>
+            q.id === qualification.id || q._id === qualification._id
+              ? qualification
+              : q
+          )
+        );
+      } else {
+        setQualifications([...qualifications, qualification]);
+      }
+      setEditingItem(null);
+
+      // You can add a success toast here
+      console.log("Qualification saved successfully:", qualification);
+    } catch (error) {
+      console.error("Failed to save qualification:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleDeleteQualification = async (qualificationId: string) => {
+    try {
+      const response = await deleteQualification.mutateAsync(qualificationId);
+
+      if (response.success) {
+        // Remove from local state
+        setQualifications(
+          qualifications.filter(
+            (q) => q._id !== qualificationId && q.id !== qualificationId
+          )
+        );
+        // You can add a success toast here
+        console.log("Qualification deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete qualification:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleSaveReferee = async (referee: Referee) => {
+    try {
+      let response;
+
+      if (editingItem && referee._id) {
+        // Update existing referee
+        const refereeId = referee._id;
+        if (refereeId) {
+          response = await updateReferee.mutateAsync({
+            refereeId,
+            data: referee,
+          });
+        }
+      } else {
+        // Create new referee
+        response = await createReferee.mutateAsync(referee);
+      }
+
+      if (response.success && response.data) {
+        // Update local state with the new referee
+        if (editingItem) {
+          setReferees(
+            referees.map((r) =>
+              r.id === referee.id || r._id === referee._id ? referee : r
+            )
+          );
+        } else {
+          setReferees([...referees, referee]);
+        }
+        setEditingItem(null);
+
+        // You can add a success toast here
+        console.log("Referee saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save referee:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleDeleteReferee = async (refereeId: string) => {
+    try {
+      const response = await deleteReferee.mutateAsync(refereeId);
+
+      if (response.success) {
+        // Remove from local state
+        setReferees(
+          referees.filter((r) => r._id !== refereeId && r.id !== refereeId)
+        );
+        // You can add a success toast here
+        console.log("Referee deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete referee:", error);
+      // You can add an error toast here
+      // You can add an error toast here
+    }
+  };
+
+  // Handler functions for development data
+  const handleSaveCertification = async (certification: Certification) => {
+    try {
+      let response;
+
+      if (editingItem && certification._id) {
+        // Update existing certification
+        const certificationId = certification._id;
+        if (certificationId) {
+          response = await updateCertification.mutateAsync({
+            certificationId,
+            data: certification,
+          });
+        }
+      } else {
+        // Create new certification
+        response = await createCertification.mutateAsync(certification);
+      }
+
+      if (response.success && response.data) {
+        // Update local state with the new certification
+        if (editingItem) {
+          setCertifications(
+            certifications.map((c) =>
+              c.id === certification.id || c._id === certification._id
+                ? certification
+                : c
+            )
+          );
+        } else {
+          setCertifications([...certifications, certification]);
+        }
+        setEditingItem(null);
+
+        // You can add a success toast here
+        console.log("Certification saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save certification:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleDeleteCertification = async (certificationId: string) => {
+    try {
+      const response = await deleteCertification.mutateAsync(certificationId);
+
+      if (response.success) {
+        // Remove from local state
+        setCertifications(
+          certifications.filter(
+            (c) => c._id !== certificationId && c.id !== certificationId
+          )
+        );
+        // You can add a success toast here
+        console.log("Certification deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete certification:", error);
+      // You can add an error toast here
+    }
+  };
+
+  const handleSaveTravelPlan = async (dependent: Dependent) => {
+    try {
+      let response;
+      if (editingItem && dependent._id) {
+        const dependentId = dependent._id;
+        if (dependentId) {
+          response = await updateDependent.mutateAsync({
+            dependentId,
+            data: dependent,
+          });
+        }
+      } else {
+        response = await createDependent.mutateAsync(dependent);
+      }
+      if (response.success && response.data) {
+        if (editingItem) {
+          setTravelPlans(
+            travelPlans.map((d) =>
+              d.id === dependent.id || d._id === dependent._id ? dependent : d
+            )
+          );
+        } else {
+          setTravelPlans([...travelPlans, dependent]);
+        }
+        setEditingItem(null);
+        console.log("Dependent saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save dependent:", error);
+    }
+  };
+
+  const handleSaveActivity = async (activity: Activity) => {
+    try {
+      let response;
+      if (editingItem && activity._id) {
+        const activityId = activity._id;
+        if (activityId) {
+          response = await updateActivity.mutateAsync({
+            activityId,
+            data: activity,
+          });
+        }
+      } else {
+        response = await createActivity.mutateAsync(activity);
+      }
+      if (response.success && response.data) {
+        if (editingItem) {
+          setActivities(
+            activities.map((a) =>
+              a.id === activity.id || a._id === activity._id ? activity : a
+            )
+          );
+        } else {
+          setActivities([...activities, activity]);
+        }
+        setEditingItem(null);
+        console.log("Activity saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save activity:", error);
+    }
+  };
+
+  const handleSaveDevelopment = async (development: Development) => {
+    try {
+      let response;
+      if (editingItem && development._id) {
+        // Update existing development
+        const developmentId = development._id;
+        if (developmentId) {
+          response = await updateDevelopment.mutateAsync({
+            developmentId,
+            data: development,
+          });
+        }
+      } else {
+        // Create new development
+        response = await createDevelopment.mutateAsync(development);
+      }
+      if (response.success && response.data) {
+        // Update local state with the new development
+        if (editingItem) {
+          setDevelopments(
+            developments.map((d) =>
+              d.id === development.id || d._id === development._id
+                ? development
+                : d
+            )
+          );
+        } else {
+          setDevelopments([...developments, development]);
+        }
+        setEditingItem(null);
+        console.log("Development saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save development:", error);
+    }
+  };
+
+  const handleDeleteDevelopment = async (developmentId: string) => {
+    try {
+      const response = await deleteDevelopment.mutateAsync(developmentId);
+      if (response.success) {
+        setDevelopments(
+          developments.filter(
+            (d) => d._id !== developmentId && d.id !== developmentId
+          )
+        );
+        console.log("Development deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete development:", error);
+    }
+  };
+
+  const handleDeleteMembership = async (membershipId: string) => {
+    try {
+      const response = await deleteMembership.mutateAsync(membershipId);
+      if (response.success) {
+        setMemberships(
+          memberships.filter(
+            (m) => m._id !== membershipId && m.id !== membershipId
+          )
+        );
+        console.log("Membership deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete membership:", error);
+    }
+  };
+
+  const handleDeleteDependent = async (dependentId: string) => {
+    try {
+      const response = await deleteDependent.mutateAsync(dependentId);
+      if (response.success) {
+        setTravelPlans(
+          travelPlans.filter(
+            (d) => d._id !== dependentId && d.id !== dependentId
+          )
+        );
+        console.log("Dependent deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete dependent:", error);
+    }
+  };
+
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      const response = await deleteActivity.mutateAsync(activityId);
+      if (response.success) {
+        setActivities(
+          activities.filter((a) => a._id !== activityId && a.id !== activityId)
+        );
+        console.log("Activity deleted successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete activity:", error);
+    }
+  };
+
+  const handleSaveMembership = async (membership: Membership) => {
+    try {
+      let response;
+      if (editingItem && membership._id) {
+        const membershipId = membership._id;
+        if (membershipId) {
+          response = await updateMembership.mutateAsync({
+            membershipId,
+            data: membership,
+          });
+        }
+      } else {
+        response = await createMembership.mutateAsync(membership);
+      }
+      if (response.success && response.data) {
+        if (editingItem) {
+          setMemberships(
+            memberships.map((m) =>
+              m.id === membership.id || m._id === membership._id
+                ? membership
+                : m
+            )
+          );
+        } else {
+          setMemberships([...memberships, membership]);
+        }
+        setEditingItem(null);
+        console.log("Membership saved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to save membership:", error);
+    }
+  };
+
+  // Helper functions for editing and removing items
+  const editItem = (item: any, setModal: (open: boolean) => void) => {
+    setEditingItem(item);
+    setModal(true);
+  };
+
+  const removeItem = (
+    id: string,
+    setter: React.Dispatch<React.SetStateAction<any[]>>,
+    array: any[]
+  ) => {
+    setter(array.filter((item) => item.id !== id));
   };
 
   // Helper function to handle undefined/null values
@@ -311,6 +990,36 @@ const TeacherProfile = () => {
     return value;
   };
 
+  const handleProfileSummaryUpdate = (data: {
+    bio: string;
+    professionalSummary: string;
+    careerObjectives: string;
+  }) => {
+    setProfile((prev) => ({
+      ...prev,
+      bio: data.bio,
+      professionalSummary: data.professionalSummary,
+      careerObjectives: data.careerObjectives,
+    }));
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+
+      // Clear the original profile since changes are saved
+      setOriginalProfile(null);
+      setIsEditing(false);
+      // You can add a success toast here
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      // You can add an error toast here
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  console.log("profile", profile);
   return (
     <DashboardLayout role="teacher">
       {/* Loading State */}
@@ -342,16 +1051,18 @@ const TeacherProfile = () => {
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src="/api/placeholder/120/120" />
-                    <AvatarFallback className="text-2xl">SJ</AvatarFallback>
+                    <AvatarImage
+                      src={
+                        profile.personalInfo?.avatar ||
+                        user?.avatarUrl ||
+                        "/api/placeholder/120/120"
+                      }
+                    />
+                    <AvatarFallback className="text-2xl">
+                      {profile.personalInfo.firstName?.charAt(0) || ""}
+                      {profile.personalInfo.lastName?.charAt(0) || ""}
+                    </AvatarFallback>
                   </Avatar>
-                  <Button
-                    size="sm"
-                    className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
-                    variant="outline"
-                  >
-                    <Upload className="w-4 h-4" />
-                  </Button>
                 </div>
 
                 <div className="flex-1">
@@ -476,36 +1187,26 @@ const TeacherProfile = () => {
               {/* Profile Summary Section */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <FileText className="w-5 h-5 mr-2" />
-                    Professional Summary
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <FileText className="w-5 h-5 mr-2" />
+                      Professional Summary
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSummaryModal(true)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Summary
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <h4 className="font-semibold mb-2">Professional Bio</h4>
                     <p className="text-sm text-muted-foreground">
                       {getDisplayValue(profile.bio, "No bio available")}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Detailed Summary</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {getDisplayValue(
-                        profile.professionalSummary,
-                        "No detailed summary available"
-                      )}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2">Career Objectives</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {getDisplayValue(
-                        profile.careerObjectives,
-                        "No career objectives specified"
-                      )}
                     </p>
                   </div>
                 </CardContent>
@@ -541,8 +1242,8 @@ const TeacherProfile = () => {
                         Qualifications
                       </span>
                       <span className="font-semibold">
-                        {profile.qualifications.length > 0
-                          ? profile.qualifications.length
+                        {qualifications.length > 0
+                          ? qualifications.length
                           : "None"}
                       </span>
                     </div>
@@ -675,13 +1376,60 @@ const TeacherProfile = () => {
             <TabsContent value="personal" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    Personal Details & Contact Information
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <User className="w-5 h-5 mr-2" />
+                      Personal Details & Contact Information
+                    </CardTitle>
+                    <div className="flex space-x-2">
+                      {isEditing && (
+                        <>
+                          <Button
+                            variant="hero"
+                            size="sm"
+                            onClick={handleSaveProfile}
+                          >
+                            Save Changes
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!isEditing) {
+                            setOriginalProfile(
+                              JSON.parse(JSON.stringify(profile))
+                            );
+                            setIsEditing(true);
+                          } else {
+                            if (originalProfile) {
+                              setProfile(originalProfile);
+                            }
+                            setIsEditing(false);
+                          }
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        {isEditing ? "Cancel" : "Edit profile"}
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {isEditing && (
+                      <div className="col-span-full mb-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-sm text-blue-700">
+                            <Edit className="w-4 h-4 inline mr-2" />
+                            You are now editing your personal information. Click
+                            "Save Changes" to save or "Cancel" to discard
+                            changes.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="firstName">First Name *</Label>
@@ -689,7 +1437,19 @@ const TeacherProfile = () => {
                           id="firstName"
                           value={profile.personalInfo.firstName}
                           placeholder="Enter first name"
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                firstName: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -698,7 +1458,19 @@ const TeacherProfile = () => {
                           id="lastName"
                           value={profile.personalInfo.lastName}
                           placeholder="Enter last name"
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                lastName: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -707,7 +1479,19 @@ const TeacherProfile = () => {
                           id="title"
                           value={profile.personalInfo.title}
                           placeholder="Enter professional title"
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                title: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -731,7 +1515,7 @@ const TeacherProfile = () => {
                             }
                           }}
                           placeholder="Select date of birth"
-                          disabled={true}
+                          disabled={!isEditing}
                           max={new Date()}
                         />
                       </div>
@@ -740,13 +1524,41 @@ const TeacherProfile = () => {
                         <Input
                           id="placeOfBirth"
                           value={profile.personalInfo.placeOfBirth}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                placeOfBirth: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
                         <Label htmlFor="nationality">Nationality</Label>
-                        <Select disabled={true}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.nationality}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                nationality: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger
+                            className={
+                              !isEditing ? "bg-muted cursor-not-allowed" : ""
+                            }
+                          >
                             <SelectValue
                               placeholder={profile.personalInfo.nationality}
                             />
@@ -766,7 +1578,19 @@ const TeacherProfile = () => {
                         <Input
                           id="phone"
                           value={profile.personalInfo.phone}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                phone: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -774,7 +1598,19 @@ const TeacherProfile = () => {
                         <Input
                           id="alternatePhone"
                           value={profile.personalInfo.alternatePhone}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                alternatePhone: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -784,6 +1620,7 @@ const TeacherProfile = () => {
                           type="email"
                           value={profile.personalInfo.email}
                           readOnly={true}
+                          className="bg-muted cursor-not-allowed"
                         />
                       </div>
                       <div>
@@ -791,13 +1628,41 @@ const TeacherProfile = () => {
                         <Input
                           id="passportNo"
                           value={profile.personalInfo.passportNo}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                passportNo: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
                         <Label htmlFor="gender">Gender</Label>
-                        <Select disabled={true}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.gender}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                gender: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger
+                            className={
+                              !isEditing ? "bg-muted cursor-not-allowed" : ""
+                            }
+                          >
                             <SelectValue
                               placeholder={profile.personalInfo.gender}
                             />
@@ -814,8 +1679,24 @@ const TeacherProfile = () => {
                       </div>
                       <div>
                         <Label htmlFor="maritalStatus">Marital Status</Label>
-                        <Select disabled={true}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.maritalStatus}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                maritalStatus: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger
+                            className={
+                              !isEditing ? "bg-muted cursor-not-allowed" : ""
+                            }
+                          >
                             <SelectValue
                               placeholder={profile.personalInfo.maritalStatus}
                             />
@@ -844,7 +1725,22 @@ const TeacherProfile = () => {
                         <Input
                           id="street"
                           value={profile.personalInfo.address.street}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  street: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -852,7 +1748,22 @@ const TeacherProfile = () => {
                         <Input
                           id="city"
                           value={profile.personalInfo.address.city}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  city: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -860,13 +1771,47 @@ const TeacherProfile = () => {
                         <Input
                           id="state"
                           value={profile.personalInfo.address.state}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  state: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
                         <Label htmlFor="country">Country</Label>
-                        <Select disabled={true}>
-                          <SelectTrigger>
+                        <Select
+                          disabled={!isEditing}
+                          value={profile.personalInfo.address.country}
+                          onValueChange={(value) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  country: value,
+                                },
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger
+                            className={
+                              !isEditing ? "bg-muted cursor-not-allowed" : ""
+                            }
+                          >
                             <SelectValue
                               placeholder={profile.personalInfo.address.country}
                             />
@@ -883,7 +1828,22 @@ const TeacherProfile = () => {
                         <Input
                           id="postalCode"
                           value={profile.personalInfo.address.postalCode}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                address: {
+                                  ...prev.personalInfo.address,
+                                  postalCode: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                         />
                       </div>
                       <div>
@@ -891,7 +1851,19 @@ const TeacherProfile = () => {
                         <Input
                           id="linkedin"
                           value={profile.personalInfo.linkedIn}
-                          readOnly={true}
+                          readOnly={!isEditing}
+                          className={
+                            !isEditing ? "bg-muted cursor-not-allowed" : ""
+                          }
+                          onChange={(e) =>
+                            setProfile((prev) => ({
+                              ...prev,
+                              personalInfo: {
+                                ...prev.personalInfo,
+                                linkedIn: e.target.value,
+                              },
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -931,7 +1903,7 @@ const TeacherProfile = () => {
                               size="sm"
                               className="text-destructive"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </div>
                         ))
@@ -965,101 +1937,48 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Sample Employment Entry */}
-                  <div className="border rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          Mathematics Teacher
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Lincoln High School
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Boston, MA • Sep 2019 - Present
-                        </p>
+                  {profile.employment?.map((job: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {job.title || job.position}
+                          </h3>
+                          <p className="text-muted-foreground">
+                            {job.employer || job.company}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {job.startDate?.split("T")[0]} -{" "}
+                            {job.endDate?.split("T")[0] || "Present"}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleDeleteEmployment(job._id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Job Description</Label>
+                          <Textarea
+                            value={job.responsibilities || job.description}
+                            rows={4}
+                            readOnly={true}
+                          />
+                        </div>
                       </div>
                     </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Key Responsibilities</Label>
-                        <Textarea
-                          value="• Teach Algebra I and II to 9th and 10th grade students\n• Develop engaging curriculum aligned with state standards\n• Implement differentiated instruction strategies\n• Mentor new teachers in mathematics department"
-                          rows={4}
-                          readOnly={true}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Contact Person</Label>
-                        <Input
-                          value="Dr. Maria Rodriguez, Principal - mrodriguez@lincolnhs.edu"
-                          readOnly={true}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Add more employment entries as needed */}
-                  <div className="border rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          Mathematics Tutor
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Academic Success Center
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Boston, MA • Jun 2018 - Aug 2019
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Key Responsibilities</Label>
-                        <Textarea
-                          value="• Provided one-on-one tutoring in algebra and geometry\n• Assisted students in developing study skills and confidence\n• Tracked student progress and communicated with parents"
-                          rows={3}
-                          readOnly={true}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Contact Person</Label>
-                        <Input
-                          value="James Wilson, Center Director - jwilson@academicsuccess.com"
-                          readOnly={true}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Additional tabs would follow similar pattern... */}
-            {/* For brevity, I'll add placeholder content for the remaining tabs */}
 
             <TabsContent value="education" className="space-y-6">
               <Card>
@@ -1079,10 +1998,83 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Educational background section with university and school
-                    education details...
-                  </p>
+                  {educations.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No education details added yet. Click "Add Education" to
+                      get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {educations.map((education: Education, index: number) => (
+                        <div key={index} className="border rounded-lg p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {education.degree}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                {education.institution}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {education.field && `${education.field} • `}
+                                {education.startDate} - {education.endDate}
+                                {education.gpa && ` • GPA: ${education.gpa}`}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingItem(education);
+                                  setShowEducationModal(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() =>
+                                  handleDeleteEducation(
+                                    education._id || education.id || ""
+                                  )
+                                }
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {(education.thesis || education.honors) && (
+                            <div className="space-y-3">
+                              {education.thesis && (
+                                <div>
+                                  <Label className="text-sm font-medium">
+                                    Thesis/Project
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    {education.thesis}
+                                  </p>
+                                </div>
+                              )}
+                              {education.honors && (
+                                <div>
+                                  <Label className="text-sm font-medium">
+                                    Honors & Awards
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    {education.honors}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1105,26 +2097,374 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Qualifications, certifications, and licenses section...
-                  </p>
+                  {profile.qualifications.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No qualifications added yet. Click "Add Qualification" to
+                      get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {profile.qualifications.map((qualification) => {
+                        console.log(qualification);
+                        return (
+                          <div
+                            key={qualification._id || qualification.id}
+                            className="border rounded-lg p-4 space-y-3"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium">
+                                    {qualification.title}
+                                  </h4>
+                                  {qualification.certificationId && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      ID: {qualification.certificationId}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {qualification.institution}
+                                </p>
+                                {qualification.subject && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Subject: {qualification.subject}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  {qualification.issueDate && (
+                                    <span>
+                                      Issued: {qualification.issueDate}
+                                    </span>
+                                  )}
+                                  {qualification.expiryDate && (
+                                    <span>
+                                      Expires: {qualification.expiryDate}
+                                    </span>
+                                  )}
+                                </div>
+                                {qualification.ageRanges &&
+                                  qualification.ageRanges.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {qualification.ageRanges.map(
+                                        (range, index) => (
+                                          <Badge
+                                            key={index}
+                                            variant="outline"
+                                            className="text-xs"
+                                          >
+                                            {range}
+                                          </Badge>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                                {qualification.description && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {qualification.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 ml-4">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingItem(qualification);
+                                    setShowQualificationModal(true);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive"
+                                  onClick={() =>
+                                    handleDeleteQualification(
+                                      qualification._id ||
+                                        qualification.id ||
+                                        ""
+                                    )
+                                  }
+                                >
+                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
+            {/* Professional Development Tab */}
             <TabsContent value="development" className="space-y-6">
+              {/* Professional Certifications */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-lg flex items-center">
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Professional Development
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <Award className="w-5 h-5 mr-2" />
+                      Professional Certifications
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingItem(null);
+                        setShowCertificationModal(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Certification
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Professional development, courses, and memberships
-                    section...
-                  </p>
+                  <div className="space-y-4">
+                    {certifications.map((cert) => (
+                      <div key={cert.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold">
+                              {cert.certificationName}
+                            </h3>
+                            <p className="text-brand-primary text-sm">
+                              {cert.issuingOrganization}
+                            </p>
+                            <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                              <p>Issue Date: {cert.issueDate}</p>
+                              <p>Expiry Date: {cert.expiryDate}</p>
+                              <p>Credential ID: {cert.credentialId}</p>
+                              {cert.credentialUrl && (
+                                <p>
+                                  <a
+                                    href={cert.credentialUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-brand-primary hover:underline"
+                                  >
+                                    View Credential
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+                            {cert.description && (
+                              <p className="text-sm mt-2">{cert.description}</p>
+                            )}
+                          </div>
+                          <div className="flex space-x-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingItem(cert);
+                                setShowCertificationModal(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleDeleteCertification(
+                                  cert._id || cert.id || ""
+                                )
+                              }
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {certifications.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No certifications added yet.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Professional Development */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Professional Development
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingItem(null);
+                        setShowDevelopmentModal(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Development
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {developments.map((dev) => (
+                      <div key={dev.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{dev.title}</h3>
+                            <p className="text-brand-primary text-sm">
+                              {dev.provider}
+                            </p>
+                            <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                              <p>Type: {dev.type}</p>
+                              <p>Duration: {dev.duration}</p>
+                              <p>Completed: {dev.completionDate}</p>
+                              {dev.skills.length > 0 && (
+                                <p>Skills: {dev.skills.join(", ")}</p>
+                              )}
+                            </div>
+                            <p className="text-sm mt-2">{dev.impact}</p>
+                          </div>
+                          <div className="flex space-x-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                editItem(dev, setShowDevelopmentModal)
+                              }
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleDeleteDevelopment(dev._id || dev.id || "")
+                              }
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {developments.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No professional development activities added yet.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Professional Memberships */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg flex items-center">
+                      <Shield className="w-5 h-5 mr-2" />
+                      Professional Memberships
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingItem(null);
+                          setShowMembershipModal(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Membership
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {memberships.map((membership) => (
+                      <div
+                        key={membership.id}
+                        className="border rounded-lg p-4"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold">
+                              {membership.organizationName}
+                            </h3>
+                            <p className="text-brand-primary text-sm">
+                              {membership.membershipType}
+                            </p>
+                            <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                              <p>Member ID: {membership.membershipId}</p>
+                              <p>
+                                Status:{" "}
+                                <Badge
+                                  variant={
+                                    membership.status === "Active"
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
+                                  {membership.status}
+                                </Badge>
+                              </p>
+                              <p>Joined: {membership.joinDate}</p>
+                              <p>Expires: {membership.expiryDate}</p>
+                              {membership.benefits.length > 0 && (
+                                <p>
+                                  Benefits: {membership.benefits.join(", ")}
+                                </p>
+                              )}
+                            </div>
+                            {membership.description && (
+                              <p className="text-sm mt-2">
+                                {membership.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex space-x-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                editItem(membership, setShowMembershipModal)
+                              }
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleDeleteMembership(
+                                  membership._id || membership.id || ""
+                                )
+                              }
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {memberships.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No memberships added yet.
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1147,9 +2487,87 @@ const TeacherProfile = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Professional references section...
-                  </p>
+                  {referees.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No referees added yet. Click "Add Referee" to get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {referees.map((referee: Referee, index: number) => (
+                        <div key={index} className="border rounded-lg p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {referee.name}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                {referee.position} at {referee.organization}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {referee.relationship} • Known for{" "}
+                                {referee.yearsKnown} years
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingItem(referee);
+                                  setShowRefereeModal(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() =>
+                                  handleDeleteReferee(
+                                    referee._id || referee.id || ""
+                                  )
+                                }
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label className="text-sm font-medium">
+                                  Email
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  {referee.email}
+                                </p>
+                              </div>
+                              <div>
+                                <Label className="text-sm font-medium">
+                                  Phone
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  {referee.phone}
+                                </p>
+                              </div>
+                            </div>
+                            {referee.notes && (
+                              <div>
+                                <Label className="text-sm font-medium">
+                                  Notes
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  {referee.notes}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1158,27 +2576,248 @@ const TeacherProfile = () => {
               <div className="grid gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="font-heading text-lg">
-                      Travel Plans & Dependents
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="font-heading text-lg flex items-center">
+                        <Users className="w-5 h-5 mr-2" />
+                        Travel Plans & Dependents
+                      </CardTitle>
+                      <div className="flex gap-2">
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingItem(null);
+                              setShowTravelPlanModal(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Travel Plan
+                          </Button>
+                        </>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">
-                      Travel plans and dependent information...
-                    </p>
+                    <div className="space-y-4">
+                      {travelPlans.map((dependent) => (
+                        <div
+                          key={dependent.id}
+                          className="border rounded-lg p-4"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold">
+                                {dependent.dependentName}
+                              </h3>
+                              <p className="text-brand-primary text-sm">
+                                {dependent.relationship}
+                              </p>
+                              <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                                <p>Age: {dependent.age || "Not specified"}</p>
+                                <p>Nationality: {dependent.nationality}</p>
+                                <p>Passport: {dependent.passportNumber}</p>
+                                <p>Expires: {dependent.passportExpiry}</p>
+                                <p>
+                                  Visa Required:{" "}
+                                  {dependent.visaRequired ? "Yes" : "No"}
+                                </p>
+                                {dependent.visaRequired && (
+                                  <p>
+                                    Visa Status:{" "}
+                                    <Badge
+                                      variant={
+                                        dependent.visaStatus === "Approved"
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                    >
+                                      {dependent.visaStatus}
+                                    </Badge>
+                                  </p>
+                                )}
+                              </div>
+                              {dependent.accommodationNeeds && (
+                                <p className="text-sm mt-2">
+                                  Accommodation: {dependent.accommodationNeeds}
+                                </p>
+                              )}
+                              {dependent.medicalNeeds && (
+                                <p className="text-sm mt-2">
+                                  Medical Needs: {dependent.medicalNeeds}
+                                </p>
+                              )}
+                              {dependent.educationNeeds && (
+                                <p className="text-sm mt-2">
+                                  Education Needs: {dependent.educationNeeds}
+                                </p>
+                              )}
+                              {dependent.notes && (
+                                <p className="text-sm mt-2">
+                                  {dependent.notes}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex space-x-2 ml-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  editItem(dependent, setShowTravelPlanModal)
+                                }
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteDependent(
+                                    dependent._id || dependent.id || ""
+                                  )
+                                }
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {travelPlans.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">
+                          No dependents added yet.
+                        </p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="font-heading text-lg">
-                      Extracurricular Activities
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="font-heading text-lg">
+                        Extracurricular Activities
+                      </CardTitle>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingItem(null);
+                            setShowActivityModal(true);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Activity
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">
-                      Extracurricular activities and achievements...
-                    </p>
+                    <div className="space-y-4">
+                      {activities.map((activity) => (
+                        <div
+                          key={activity.id}
+                          className="border rounded-lg p-4"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold">{activity.name}</h3>
+                              <p className="text-brand-primary text-sm">
+                                {activity.type}
+                              </p>
+                              <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                                <p>Role: {activity.role}</p>
+                                {activity.organization && (
+                                  <p>Organization: {activity.organization}</p>
+                                )}
+                                <p>
+                                  Duration: {activity.startDate} -{" "}
+                                  {activity.current
+                                    ? "Present"
+                                    : activity.endDate}
+                                </p>
+                                <p>
+                                  Time Commitment: {activity.timeCommitment}
+                                </p>
+                              </div>
+                              {activity.description && (
+                                <p className="text-sm mt-2">
+                                  {activity.description}
+                                </p>
+                              )}
+                              {activity.achievements.length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-sm font-medium">
+                                    Achievements:
+                                  </p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {activity.achievements.map(
+                                      (achievement, index) => (
+                                        <Badge
+                                          key={index}
+                                          variant="outline"
+                                          className="text-xs"
+                                        >
+                                          {achievement}
+                                        </Badge>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {activity.skillsDeveloped.length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-sm font-medium">
+                                    Skills Developed:
+                                  </p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {activity.skillsDeveloped.map(
+                                      (skill, index) => (
+                                        <Badge
+                                          key={index}
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          {skill}
+                                        </Badge>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex space-x-2 ml-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  editItem(activity, setShowActivityModal)
+                                }
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteActivity(
+                                    activity._id || activity.id || ""
+                                  )
+                                }
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {activities.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">
+                          No activities added yet.
+                        </p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -1221,22 +2860,68 @@ const TeacherProfile = () => {
           <AddQualificationModal
             open={showQualificationModal}
             onOpenChange={setShowQualificationModal}
-            onSave={() => {}}
+            onSave={handleSaveQualification}
             editingQualification={editingItem}
           />
 
           <AddEducationModal
             open={showEducationModal}
             onOpenChange={setShowEducationModal}
-            onSave={() => {}}
+            onSave={handleSaveEducation}
             editingEducation={editingItem}
           />
 
           <AddRefereeModal
             open={showRefereeModal}
             onOpenChange={setShowRefereeModal}
-            onSave={() => {}}
+            onSave={handleSaveReferee}
             editingReferee={editingItem}
+          />
+
+          <ProfileSummaryModal
+            open={showSummaryModal}
+            onOpenChange={setShowSummaryModal}
+            onSave={handleProfileSummaryUpdate}
+            initialData={{
+              bio: profile.bio,
+              professionalSummary: profile.professionalSummary,
+              careerObjectives: profile.careerObjectives,
+            }}
+          />
+
+          <AddCertificationModal
+            open={showCertificationModal}
+            onOpenChange={setShowCertificationModal}
+            onSave={handleSaveCertification}
+            editingCertification={editingItem}
+          />
+
+          <AddDevelopmentModal
+            open={showDevelopmentModal}
+            onOpenChange={setShowDevelopmentModal}
+            onSave={handleSaveDevelopment}
+            editingDevelopment={editingItem}
+          />
+
+          <AddMembershipModal
+            open={showMembershipModal}
+            onOpenChange={setShowMembershipModal}
+            onSave={handleSaveMembership}
+            editingMembership={editingItem}
+          />
+
+          <AddTravelPlanModal
+            open={showTravelPlanModal}
+            onOpenChange={setShowTravelPlanModal}
+            onSave={handleSaveTravelPlan}
+            editingTravelPlan={editingItem}
+          />
+
+          <AddActivityModal
+            open={showActivityModal}
+            onOpenChange={setShowActivityModal}
+            onSave={handleSaveActivity}
+            editingActivity={editingItem}
           />
         </div>
       )}

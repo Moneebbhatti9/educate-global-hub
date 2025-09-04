@@ -499,9 +499,6 @@ const SchoolProfileForm = ({
                   {...register("address")}
                   className={isFieldInvalid("address") ? "border-red-500" : ""}
                 />
-                <p className="text-sm text-muted-foreground">
-                  Address must be at least 5 characters long
-                </p>
                 {getFieldError("address") && (
                   <p className="text-sm text-red-500">
                     {getFieldError("address")}

@@ -117,3 +117,27 @@ export interface ApplicationReviewRequest {
   nextSteps?: string;
   timeline?: string;
 }
+
+export interface SchoolDashboardCardsResponse {
+  success: boolean;
+
+  totalJobs: number;
+  activeJobs: number;
+  totalApplicants: number;
+  hiringRatio: string;
+
+  message: string;
+}
+
+export interface TeacherDashboardCardsResponse {
+  success: boolean;
+  message: string;
+
+  cards: {
+    applicationsSent: number;
+    resourcesUploaded: number;
+    resourcesDownloaded: number;
+    earnings: number;
+  };
+  recentApplications: any[];
+}

@@ -49,11 +49,39 @@ export interface TeacherProfile extends BaseProfile {
   additionalQualifications?: string[];
   profileCompletion?: number;
   employment?: any[];
-  education?: any[];
+  education?: Education[];
   qualifications?: any[];
   referees?: any[];
   development?: any[];
   memberships?: any[];
+  dependents?: any[];
+  activities?: any[];
+}
+
+// Education Types
+export interface Education {
+  id?: string;
+  institution: string;
+  degree: string;
+  field: string;
+  startDate: string;
+  endDate: string;
+  gpa?: number;
+  thesis?: string;
+  honors?: string;
+  type?: "University" | "School" | "Professional";
+}
+
+export interface EducationRequest {
+  institution: string;
+  degree: string;
+  field: string;
+  startDate: string;
+  endDate: string;
+  gpa?: number;
+  thesis?: string;
+  honors?: string;
+  type?: "University" | "School" | "Professional";
 }
 
 export interface TeacherProfileRequest {
@@ -87,6 +115,7 @@ export interface SchoolProfile extends BaseProfile {
   schoolName: string;
   schoolEmail: string;
   schoolContactNumber: string;
+  alternateContact?: string;
   country: string;
   city: string;
   province: string;
@@ -108,6 +137,14 @@ export interface SchoolProfile extends BaseProfile {
   ageGroup: string[];
   schoolWebsite?: string;
   aboutSchool: string;
+  establishedYear?: string;
+  registrationNumber?: string;
+  professionalSummary?: string;
+  mission?: string;
+  vision?: string;
+  careerObjectives?: string;
+  programs?: any[];
+  media?: any[];
 }
 
 export interface SchoolProfileRequest {
@@ -251,3 +288,4 @@ export const PROFILE_STORAGE_KEYS = {
   SCHOOL_PROFILE: "school_profile",
   PROFILE_COMPLETION_STATE: "profile_completion_state",
 } as const;
+

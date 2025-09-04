@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,37 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plane } from "lucide-react";
-
-interface TravelPlan {
-  id: string;
-  dependentName: string;
-  relationship: "Spouse" | "Child" | "Parent" | "Sibling" | "Other";
-  age?: number;
-  nationality: string;
-  passportNumber: string;
-  passportExpiry: string;
-  visaRequired: boolean;
-  visaStatus?: "Not Applied" | "Applied" | "Approved" | "Denied";
-  accommodationNeeds: string;
-  medicalNeeds?: string;
-  educationNeeds?: string;
-  notes?: string;
-}
+import { Dependent, DependentRequest } from "@/apis/profiles";
 
 interface AddTravelPlanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (travelPlan: TravelPlan) => void;
-  editingTravelPlan?: TravelPlan;
+  onSave: (dependent: Dependent) => void;
+  editingTravelPlan?: Dependent | null;
 }
 
-export const AddTravelPlanModal = ({
+export const AddTravelPlanModal: React.FC<AddTravelPlanModalProps> = ({
   open,
   onOpenChange,
   onSave,
   editingTravelPlan,
 }: AddTravelPlanModalProps) => {
-  const [formData, setFormData] = useState<Omit<TravelPlan, "id">>({
+  const [formData, setFormData] = useState<DependentRequest>({
     dependentName: editingTravelPlan?.dependentName || "",
     relationship: editingTravelPlan?.relationship || "Spouse",
     age: editingTravelPlan?.age || undefined,
@@ -65,11 +50,31 @@ export const AddTravelPlanModal = ({
     notes: editingTravelPlan?.notes || "",
   });
 
+  React.useEffect(() => {
+    if (editingTravelPlan) {
+      setFormData({
+        dependentName: editingTravelPlan.dependentName || "",
+        relationship: editingTravelPlan.relationship || "Spouse",
+        age: editingTravelPlan.age || undefined,
+        nationality: editingTravelPlan.nationality || "",
+        passportNumber: editingTravelPlan.passportNumber || "",
+        passportExpiry: editingTravelPlan.passportExpiry || "",
+        visaRequired: editingTravelPlan.visaRequired || false,
+        visaStatus: editingTravelPlan.visaStatus || "Not Applied",
+        accommodationNeeds: editingTravelPlan.accommodationNeeds || "",
+        medicalNeeds: editingTravelPlan.medicalNeeds || "",
+        educationNeeds: editingTravelPlan.educationNeeds || "",
+        notes: editingTravelPlan.notes || "",
+      });
+    }
+  }, [editingTravelPlan]);
+
   const handleSave = () => {
     if (!formData.dependentName.trim()) return;
 
-    const newTravelPlan: TravelPlan = {
+    const newTravelPlan: Dependent = {
       id: editingTravelPlan?.id || Date.now().toString(),
+      _id: editingTravelPlan?._id, // Added _id for API compatibility
       ...formData,
     };
 
@@ -128,7 +133,7 @@ export const AddTravelPlanModal = ({
 
             <div className="space-y-2">
               <Label htmlFor="relationship">Relationship</Label>
-              <Select value={formData.relationship} onValueChange={(value: TravelPlan["relationship"]) => updateField("relationship", value)}>
+              <Select value={formData.relationship} onValueChange={(value: Dependent["relationship"]) => updateField("relationship", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select relationship" />
                 </SelectTrigger>
@@ -214,7 +219,7 @@ export const AddTravelPlanModal = ({
             {formData.visaRequired && (
               <div className="space-y-2">
                 <Label htmlFor="visaStatus">Visa Status</Label>
-                <Select value={formData.visaStatus} onValueChange={(value) => updateField("visaStatus", value as TravelPlan["visaStatus"])}>
+                <Select value={formData.visaStatus} onValueChange={(value) => updateField("visaStatus", value as Dependent["visaStatus"])}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select visa status" />
                   </SelectTrigger>

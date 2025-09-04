@@ -22,16 +22,16 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { GraduationCap } from "lucide-react";
 
 interface Education {
-  id: string;
-  degree: string;
+  id?: string;
   institution: string;
+  degree: string;
   field: string;
-  gpa?: string;
   startDate: string;
   endDate: string;
+  gpa?: number;
   thesis?: string;
   honors?: string;
-  type: "University" | "School" | "Professional";
+  type?: "University" | "School" | "Professional";
 }
 
 interface AddEducationModalProps {
@@ -51,7 +51,7 @@ export const AddEducationModal = ({
     degree: editingEducation?.degree || "",
     institution: editingEducation?.institution || "",
     field: editingEducation?.field || "",
-    gpa: editingEducation?.gpa || "",
+    gpa: editingEducation?.gpa || undefined,
     startDate: editingEducation?.startDate || "",
     endDate: editingEducation?.endDate || "",
     thesis: editingEducation?.thesis || "",
@@ -63,8 +63,9 @@ export const AddEducationModal = ({
     if (!formData.degree.trim() || !formData.institution.trim()) return;
 
     const newEducation: Education = {
-      id: editingEducation?.id || Date.now().toString(),
+      id: editingEducation?.id || undefined,
       ...formData,
+      gpa: formData.gpa ? Number(formData.gpa) : undefined,
     };
 
     onSave(newEducation);
@@ -76,7 +77,7 @@ export const AddEducationModal = ({
         degree: "",
         institution: "",
         field: "",
-        gpa: "",
+        gpa: undefined,
         startDate: "",
         endDate: "",
         thesis: "",
@@ -110,8 +111,8 @@ export const AddEducationModal = ({
             <Label htmlFor="type">Education Type *</Label>
             <Select
               value={formData.type}
-              onValueChange={(value: Education["type"]) =>
-                updateField("type", value)
+              onValueChange={(value: string) =>
+                updateField("type", value as Education["type"])
               }
             >
               <SelectTrigger>
@@ -164,9 +165,13 @@ export const AddEducationModal = ({
               <Label htmlFor="gpa">GPA/Grade</Label>
               <Input
                 id="gpa"
-                placeholder="e.g., 3.8/4.0 or First Class"
-                value={formData.gpa}
-                onChange={(e) => updateField("gpa", e.target.value)}
+                type="number"
+                step="0.1"
+                min="0"
+                max="4"
+                placeholder="e.g., 3.8"
+                value={formData.gpa || ""}
+                onChange={(e) => updateField("gpa", e.target.value ? Number(e.target.value) : undefined)}
               />
             </div>
           </div>
