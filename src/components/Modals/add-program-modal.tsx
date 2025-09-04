@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,20 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BookOpen } from "lucide-react";
-
-interface Program {
-  id: string;
-  name: string;
-  level: "Pre-K" | "Elementary" | "Middle School" | "High School" | "Sixth Form" | "Other";
-  curriculum: string;
-  ageRange: string;
-  duration: string;
-  subjects: string[];
-  description: string;
-  requirements: string[];
-  capacity: number;
-  fees?: string;
-}
+import { Program } from "@/apis/profiles";
 
 interface AddProgramModalProps {
   open: boolean;
@@ -47,24 +34,49 @@ export const AddProgramModal = ({
   onSave,
   editingProgram,
 }: AddProgramModalProps) => {
-  const [formData, setFormData] = useState<Omit<Program, "id">>({
-    name: editingProgram?.name || "",
-    level: editingProgram?.level || "Elementary",
-    curriculum: editingProgram?.curriculum || "",
-    ageRange: editingProgram?.ageRange || "",
-    duration: editingProgram?.duration || "",
-    subjects: editingProgram?.subjects || [],
-    description: editingProgram?.description || "",
-    requirements: editingProgram?.requirements || [],
-    capacity: editingProgram?.capacity || 25,
-    fees: editingProgram?.fees || "",
+  const [formData, setFormData] = useState<Omit<Program, "_id" | "id">>({
+    programName: "",
+    educationLevel: "Elementary",
+    curriculum: "",
+    ageRange: "",
+    coreSubjects: [],
+    description: "",
+    admissionRequirements: [],
+    isActive: true,
   });
 
+  // Update form data when editing program changes
+  useEffect(() => {
+    if (editingProgram) {
+      setFormData({
+        programName: editingProgram.programName || "",
+        educationLevel: editingProgram.educationLevel || "Elementary",
+        curriculum: editingProgram.curriculum || "",
+        ageRange: editingProgram.ageRange || "",
+        coreSubjects: editingProgram.coreSubjects || [],
+        description: editingProgram.description || "",
+        admissionRequirements: editingProgram.admissionRequirements || [],
+        isActive: editingProgram.isActive !== undefined ? editingProgram.isActive : true,
+      });
+    } else {
+      // Reset form when not editing
+      setFormData({
+        programName: "",
+        educationLevel: "Elementary",
+        curriculum: "",
+        ageRange: "",
+        coreSubjects: [],
+        description: "",
+        admissionRequirements: [],
+        isActive: true,
+      });
+    }
+  }, [editingProgram]);
+
   const handleSave = () => {
-    if (!formData.name.trim() || !formData.curriculum.trim()) return;
+    if (!formData.programName.trim() || !formData.curriculum.trim()) return;
 
     const newProgram: Program = {
-      id: editingProgram?.id || Date.now().toString(),
       ...formData,
     };
 
@@ -74,16 +86,14 @@ export const AddProgramModal = ({
     // Reset form if not editing
     if (!editingProgram) {
       setFormData({
-        name: "",
-        level: "Elementary",
+        programName: "",
+        educationLevel: "Elementary",
         curriculum: "",
         ageRange: "",
-        duration: "",
-        subjects: [],
+        coreSubjects: [],
         description: "",
-        requirements: [],
-        capacity: 25,
-        fees: "",
+        admissionRequirements: [],
+        isActive: true,
       });
     }
   };
@@ -110,28 +120,28 @@ export const AddProgramModal = ({
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Program Name *</Label>
+              <Label htmlFor="programName">Program Name *</Label>
               <Input
-                id="name"
+                id="programName"
                 placeholder="e.g., International Baccalaureate Diploma"
-                value={formData.name}
-                onChange={(e) => updateField("name", e.target.value)}
+                value={formData.programName}
+                onChange={(e) => updateField("programName", e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="level">Education Level</Label>
-              <Select value={formData.level} onValueChange={(value: Program["level"]) => updateField("level", value)}>
+              <Label htmlFor="educationLevel">Education Level</Label>
+              <Select value={formData.educationLevel} onValueChange={(value: Program["educationLevel"]) => updateField("educationLevel", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select education level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pre-K">Pre-K</SelectItem>
+                  <SelectItem value="Early Years">Early Years</SelectItem>
                   <SelectItem value="Elementary">Elementary</SelectItem>
-                  <SelectItem value="Middle School">Middle School</SelectItem>
+                  <SelectItem value="Primary">Primary</SelectItem>
+                  <SelectItem value="Secondary">Secondary</SelectItem>
                   <SelectItem value="High School">High School</SelectItem>
-                  <SelectItem value="Sixth Form">Sixth Form</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="All Levels">All Levels</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -159,40 +169,15 @@ export const AddProgramModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="duration">Program Duration</Label>
-              <Input
-                id="duration"
-                placeholder="e.g., 2 years, 1 academic year"
-                value={formData.duration}
-                onChange={(e) => updateField("duration", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="capacity">Class Capacity</Label>
-              <Input
-                id="capacity"
-                type="number"
-                min="1"
-                max="50"
-                placeholder="e.g., 25"
-                value={formData.capacity}
-                onChange={(e) => updateField("capacity", parseInt(e.target.value) || 25)}
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor="subjects">Core Subjects</Label>
+            <Label htmlFor="coreSubjects">Core Subjects</Label>
             <Input
-              id="subjects"
+              id="coreSubjects"
               placeholder="e.g., Mathematics, English, Science, History (comma separated)"
-              value={formData.subjects.join(", ")}
+              value={formData.coreSubjects.join(", ")}
               onChange={(e) =>
                 updateField(
-                  "subjects",
+                  "coreSubjects",
                   e.target.value.split(",").map((s) => s.trim()).filter(s => s)
                 )
               }
@@ -211,14 +196,14 @@ export const AddProgramModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="requirements">Admission Requirements</Label>
+            <Label htmlFor="admissionRequirements">Admission Requirements</Label>
             <Input
-              id="requirements"
+              id="admissionRequirements"
               placeholder="e.g., Minimum GPA 3.5, Language Proficiency, Interview (comma separated)"
-              value={formData.requirements.join(", ")}
+              value={formData.admissionRequirements.join(", ")}
               onChange={(e) =>
                 updateField(
-                  "requirements",
+                  "admissionRequirements",
                   e.target.value.split(",").map((s) => s.trim()).filter(s => s)
                 )
               }
@@ -226,13 +211,16 @@ export const AddProgramModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="fees">Program Fees (Optional)</Label>
-            <Input
-              id="fees"
-              placeholder="e.g., $15,000/year, €12,000/year"
-              value={formData.fees}
-              onChange={(e) => updateField("fees", e.target.value)}
-            />
+            <Label htmlFor="isActive">Program Status</Label>
+            <Select value={formData.isActive ? "active" : "inactive"} onValueChange={(value) => updateField("isActive", value === "active")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select program status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -242,7 +230,7 @@ export const AddProgramModal = ({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!formData.name.trim() || !formData.curriculum.trim()}
+            disabled={!formData.programName.trim() || !formData.curriculum.trim()}
           >
             {editingProgram ? "Update" : "Add"} Program
           </Button>

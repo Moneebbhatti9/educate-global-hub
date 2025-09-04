@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,36 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trophy } from "lucide-react";
-
-interface Activity {
-  id: string;
-  name: string;
-  type: "Club" | "Sport" | "Community Service" | "Leadership" | "Hobby" | "Volunteer Work" | "Other";
-  role: string;
-  organization?: string;
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  description: string;
-  achievements: string[];
-  skillsDeveloped: string[];
-  timeCommitment: string;
-}
+import { Activity, ActivityRequest } from "@/apis/profiles";
 
 interface AddActivityModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (activity: Activity) => void;
-  editingActivity?: Activity;
+  editingActivity?: Activity | null;
 }
 
-export const AddActivityModal = ({
+export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   open,
   onOpenChange,
   onSave,
   editingActivity,
 }: AddActivityModalProps) => {
-  const [formData, setFormData] = useState<Omit<Activity, "id">>({
+  const [formData, setFormData] = useState<ActivityRequest>({
     name: editingActivity?.name || "",
     type: editingActivity?.type || "Club",
     role: editingActivity?.role || "",
@@ -63,11 +49,30 @@ export const AddActivityModal = ({
     timeCommitment: editingActivity?.timeCommitment || "",
   });
 
+  React.useEffect(() => {
+    if (editingActivity) {
+      setFormData({
+        name: editingActivity.name || "",
+        type: editingActivity.type || "Club",
+        role: editingActivity.role || "",
+        organization: editingActivity.organization || "",
+        startDate: editingActivity.startDate || "",
+        endDate: editingActivity.endDate || "",
+        current: editingActivity.current || false,
+        description: editingActivity.description || "",
+        achievements: editingActivity.achievements || [],
+        skillsDeveloped: editingActivity.skillsDeveloped || [],
+        timeCommitment: editingActivity.timeCommitment || "",
+      });
+    }
+  }, [editingActivity]);
+
   const handleSave = () => {
     if (!formData.name.trim() || !formData.role.trim()) return;
 
     const newActivity: Activity = {
       id: editingActivity?.id || Date.now().toString(),
+      _id: editingActivity?._id, // Added _id for API compatibility
       ...formData,
     };
 

@@ -31,59 +31,189 @@ import {
   Bookmark,
   Plus,
   Building2,
+  Upload,
+  Download,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTeacherApplications } from "@/hooks/useApplications";
-import { useApplicationStats } from "@/hooks/useApplications";
+import {
+  useMyApplications,
+  useTeacherDashboardCardData,
+  useTeacherRecentApplications,
+} from "@/hooks/useApplications";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { useSavedJobStats } from "@/hooks/useSavedJobs";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNotificationStats } from "@/hooks/useNotifications";
 import { useState } from "react";
 import { ApplicationStatus } from "@/types/job";
+import {
+  TeacherDashboardCardsResponse,
+  JobApplication,
+} from "@/types/application";
 import { useWithdrawApplication } from "@/hooks/useApplications";
 import { useSaveJob } from "@/hooks/useSavedJobs";
 import { useRemoveSavedJob } from "@/hooks/useSavedJobs";
 import { customToast } from "@/components/ui/sonner";
 import { useTeacherRecommendedJobs } from "@/hooks/useJobs";
+import { TeacherDashboardSkeleton } from "@/components/skeletons";
+
+// Interface for the actual API response structure
+interface TeacherApplicationResponse {
+  _id: string;
+  jobId: {
+    _id: string;
+    title: string;
+    educationLevel: string;
+    country: string;
+    city: string;
+    jobType: string;
+    applicationDeadline: string;
+    status: string;
+    schoolName: string;
+  };
+  teacherId: string;
+  coverLetter: string;
+  expectedSalary?: number;
+  availableFrom: string;
+  reasonForApplying: string;
+  screeningAnswers: Record<string, string>;
+  status: ApplicationStatus;
+  resumeUrl?: string;
+  documents: string[];
+  isWithdrawn: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interface for notifications
+interface NotificationResponse {
+  _id: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  type: string;
+}
 
 const TeacherDashboard = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "overview" | "applications" | "saved"
   >("overview");
 
   // Fetch real-time data
-  const { data: teacherApplications } = useTeacherApplications({
+  const {
+    data: teacherRecentApplications,
+    isLoading: recentApplicationsLoading,
+  } = useTeacherRecentApplications({
     page: 1,
     limit: 10,
   });
 
-  const { data: applicationStats } = useApplicationStats();
-  const { data: savedJobStats } = useSavedJobStats();
-  const { data: savedJobs } = useSavedJobs({ page: 1, limit: 10 });
-  const { data: notificationStats } = useNotificationStats();
-  const { data: unreadNotifications } = useNotifications({
-    isRead: false,
-    limit: 5,
+  const { data: teacherApplications, isLoading: applicationsLoading } =
+    useMyApplications({
+      page: 1,
+      limit: 10,
+    });
+
+  const { data: dashboardCardData, isLoading: dashboardLoading } =
+    useTeacherDashboardCardData();
+  const { data: savedJobStats, isLoading: savedJobsStatsLoading } =
+    useSavedJobStats();
+  const { data: savedJobs, isLoading: savedJobsLoading } = useSavedJobs({
+    page: 1,
+    limit: 10,
   });
+  const { data: notificationStats, isLoading: notificationStatsLoading } =
+    useNotificationStats();
+  const { data: unreadNotifications, isLoading: notificationsLoading } =
+    useNotifications({
+      isRead: false,
+      limit: 5,
+    });
 
   // Fetch recommended jobs
-  const { data: recommendedJobsResponse } = useTeacherRecommendedJobs(5);
+  const { data: recommendedJobsResponse, isLoading: recommendedJobsLoading } =
+    useTeacherRecommendedJobs(5);
 
   // Application management mutations
   const withdrawApplication = useWithdrawApplication();
   const saveJob = useSaveJob();
   const removeSavedJob = useRemoveSavedJob();
 
+  // Check if any data is still loading
+  const isLoading =
+    authLoading ||
+    dashboardLoading ||
+    savedJobsStatsLoading ||
+    savedJobsLoading ||
+    notificationStatsLoading ||
+    notificationsLoading ||
+    recommendedJobsLoading ||
+    recentApplicationsLoading ||
+    applicationsLoading;
+
+  // Check if there are any errors
+  const hasErrors =
+    dashboardCardData?.error ||
+    savedJobStats?.error ||
+    savedJobs?.error ||
+    notificationStats?.error ||
+    unreadNotifications?.error ||
+    recommendedJobsResponse?.error ||
+    teacherRecentApplications?.error ||
+    teacherApplications?.error;
+
+  // Show skeleton loading state while data is loading
+  if (isLoading) {
+    return (
+      <DashboardLayout role="teacher">
+        <TeacherDashboardSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  // Show error message if there are API errors
+  if (hasErrors) {
+    return (
+      <DashboardLayout role="teacher">
+        <div className="space-y-6">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-semibold text-destructive mb-4">
+              Something went wrong
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              We encountered an error while loading your dashboard data.
+            </p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Extract data from API responses based on actual API structure
   // Handle both possible response structures for applications
-  const applications =
-    (teacherApplications?.data as any)?.applications ||
-    teacherApplications?.data ||
-    [];
-  // API 6: /api/v1/notifications?isRead=false&limit=5 returns { data: { notifications: [] } }
-  const notifications = (unreadNotifications?.data as any)?.notifications || [];
+  const recentApplications =
+    (
+      teacherRecentApplications?.data as unknown as {
+        applications?: TeacherApplicationResponse[];
+      }
+    )?.applications || [];
+
+  const myApplications =
+    (
+      teacherApplications?.data as unknown as {
+        applications?: TeacherApplicationResponse[];
+      }
+    )?.applications || [];
+
+  const notifications =
+    (
+      unreadNotifications?.data as unknown as {
+        notifications?: NotificationResponse[];
+      }
+    )?.notifications || [];
   // Recommended jobs API returns { data: Job[] }
   const recommendedJobs = Array.isArray(recommendedJobsResponse?.data)
     ? recommendedJobsResponse.data
@@ -92,33 +222,34 @@ const TeacherDashboard = () => {
   const savedJobsList = savedJobs?.data?.savedJobs || [];
 
   // Dynamic stats based on API data
+  const dashboardData = dashboardCardData?.data || null;
   const stats = [
     {
-      title: "Profile Views",
-      value: "0", // This would come from teacher profile API when available
-      change: "+0%",
-      icon: Eye,
-      color: "text-brand-primary",
-    },
-    {
       title: "Applications Sent",
-      value: (applicationStats?.data as any)?.stats?.[0]?.total || "0",
+      value: dashboardData?.cards?.applicationsSent?.toString() || "0",
       change: "+0",
       icon: Briefcase,
       color: "text-brand-accent-green",
     },
     {
-      title: "Interview Requests",
-      value: (applicationStats?.data as any)?.stats?.[0]?.interviewed || "0",
+      title: "Resources Uploaded",
+      value: dashboardData?.cards?.resourcesUploaded?.toString() || "0",
       change: "+0",
-      icon: Users,
+      icon: Upload,
+      color: "text-brand-primary",
+    },
+    {
+      title: "Resources Downloaded",
+      value: dashboardData?.cards?.resourcesDownloaded?.toString() || "0",
+      change: "+0",
+      icon: Download,
       color: "text-brand-secondary",
     },
     {
-      title: "Messages",
-      value: notificationStats?.data?.unreadCount || "0",
+      title: "Earnings",
+      value: `$${dashboardData?.cards?.earnings?.toFixed(2) || "0.00"}`,
       change: "+0",
-      icon: MessageCircle,
+      icon: DollarSign,
       color: "text-brand-accent-orange",
     },
   ];
@@ -280,7 +411,7 @@ const TeacherDashboard = () => {
             onClick={() => setActiveTab("applications")}
             className="flex-1"
           >
-            My Applications ({applications?.length || 0})
+            My Applications ({myApplications?.length || 0})
           </Button>
           <Button
             variant={activeTab === "saved" ? "default" : "ghost"}
@@ -399,8 +530,8 @@ const TeacherDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {applications && applications.length > 0 ? (
-                    applications.slice(0, 3).map((application) => (
+                  {recentApplications && recentApplications.length > 0 ? (
+                    recentApplications.slice(0, 3).map((application) => (
                       <div
                         key={application._id}
                         className="p-3 border border-border rounded-lg"
@@ -409,16 +540,21 @@ const TeacherDashboard = () => {
                           <Avatar className="w-8 h-8">
                             <AvatarImage src={`/api/placeholder/32/32`} />
                             <AvatarFallback>
-                              {application?.job?.title?.charAt(0) || "J"}
+                              {application?.jobId?.title?.charAt(0) || "J"}
                             </AvatarFallback>
                           </Avatar>
 
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-sm">
-                              {application.job?.title || "Job Title"}
+                              {application.jobId?.title || "Job Title"}
                             </div>
                             <div className="text-xs text-muted-foreground mb-1">
-                              {application.job?.organization || "School Name"}
+                              {application.jobId?.schoolName || "School Name"}
+                            </div>
+                            <div className="text-xs text-muted-foreground mb-1">
+                              {application.jobId?.city},{" "}
+                              {application.jobId?.country} •{" "}
+                              {application.jobId?.jobType?.replace("_", " ")}
                             </div>
 
                             <div className="flex items-center justify-between">
@@ -461,9 +597,9 @@ const TeacherDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {applications && applications.length > 0 ? (
+              {myApplications && myApplications.length > 0 ? (
                 <div className="space-y-4">
-                  {applications.map((application) => (
+                  {myApplications.map((application) => (
                     <div
                       key={application._id}
                       className="p-4 border border-border rounded-lg"
@@ -471,10 +607,10 @@ const TeacherDashboard = () => {
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h4 className="font-semibold">
-                            {application.job?.title || "Job Title"}
+                            {application.jobId?.title || "Job Title"}
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            {application.job?.organization || "School Name"}
+                            {application.jobId?.schoolName || "School Name"}
                           </p>
                         </div>
                         {getStatusBadge(application.status)}
@@ -486,12 +622,31 @@ const TeacherDashboard = () => {
                             <strong>Cover Letter:</strong>
                           </p>
                           <p className="text-sm bg-muted p-3 rounded">
-                            {application.coverLetter}
+                            {application.coverLetter.length > 200
+                              ? `${application.coverLetter.substring(
+                                  0,
+                                  200
+                                )}...`
+                              : application.coverLetter}
                           </p>
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
+                        <div>
+                          <span className="font-medium">Location:</span>
+                          <p>
+                            {application.jobId?.city},{" "}
+                            {application.jobId?.country}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Job Type:</span>
+                          <p className="capitalize">
+                            {application.jobId?.jobType?.replace("_", " ") ||
+                              "Not specified"}
+                          </p>
+                        </div>
                         {application.availableFrom && (
                           <div>
                             <span className="font-medium">Available From:</span>

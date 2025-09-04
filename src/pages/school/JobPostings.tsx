@@ -570,7 +570,13 @@ const JobPostings = () => {
                           <DropdownMenuItem
                             onClick={() =>
                               navigate(
-                                `/dashboard/school/candidates?job=${job._id}`
+                                `/dashboard/school/candidates?job=${job._id}`,
+                                {
+                                  state: {
+                                    jobId: job._id,
+                                    jobTitle: job.title
+                                  }
+                                }
                               )
                             }
                           >
@@ -746,6 +752,10 @@ const JobPostings = () => {
                         </Button>
                         <Link
                           to={`/dashboard/school/candidates?job=${job._id}`}
+                          state={{
+                            jobId: job._id,
+                            jobTitle: job.title
+                          }}
                         >
                           <Button variant="default" size="sm">
                             <Users className="w-4 h-4 mr-1" />
