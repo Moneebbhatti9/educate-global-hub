@@ -95,7 +95,7 @@ const JobManagement = () => {
   const updateJobStatus = useAdminUpdateJobStatus();
   const deleteJob = useAdminDeleteJob();
 
-  const jobs = jobsData?.data?.jobs || [];
+  const jobs = (jobsData?.data as any)?.jobs || [];
   const pagination = jobsData?.data?.pagination;
   const stats = statsData?.data;
 
