@@ -87,6 +87,7 @@ import {
   useCreateActivity,
   useUpdateActivity,
   useDeleteActivity,
+  useUpdateTeacherProfile,
   Experience,
   Qualification,
   Referee,
@@ -127,6 +128,7 @@ interface Language {
 
 const TeacherProfile = () => {
   const { user } = useAuth();
+
   const deleteExperience = useDeleteTeacherExperience();
   const createEducation = useCreateTeacherEducation();
   const updateEducation = useUpdateTeacherEducation();
@@ -150,6 +152,7 @@ const TeacherProfile = () => {
   const createActivity = useCreateActivity();
   const updateActivity = useUpdateActivity();
   const deleteActivity = useDeleteActivity();
+  const updateTeacherProfile = useUpdateTeacherProfile();
   const [activeTab, setActiveTab] = useState("overview");
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
@@ -990,29 +993,94 @@ const TeacherProfile = () => {
     return value;
   };
 
-  const handleProfileSummaryUpdate = (data: {
+  const handleProfileSummaryUpdate = async (data: {
     bio: string;
     professionalSummary: string;
     careerObjectives: string;
   }) => {
-    setProfile((prev) => ({
-      ...prev,
-      bio: data.bio,
-      professionalSummary: data.professionalSummary,
-      careerObjectives: data.careerObjectives,
-    }));
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Prepare the payload with only the professional bio
+      const updatePayload = {
+        professionalBio: data.bio,
+      };
+
+      // Call the API to update the profile
+      const response = await updateTeacherProfile.mutateAsync(updatePayload);
+
+      if (response.success) {
+        // Update local state
+        setProfile((prev) => ({
+          ...prev,
+          bio: data.bio,
+          professionalSummary: data.professionalSummary,
+          careerObjectives: data.careerObjectives,
+        }));
+        
+        // Close the modal
+        setShowSummaryModal(false);
+        console.log("Profile summary updated successfully");
+      } else {
+        throw new Error(response.message || "Failed to update profile summary");
+      }
+    } catch (error) {
+      console.error("Error updating profile summary:", error);
+      setError(error instanceof Error ? error.message : "Failed to update profile summary");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveProfile = async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
-      // Clear the original profile since changes are saved
-      setOriginalProfile(null);
-      setIsEditing(false);
-      // You can add a success toast here
+      // Prepare the payload with only the personal information that can be edited
+      const updatePayload = {
+        personalInfo: {
+          firstName: profile.personalInfo.firstName,
+          lastName: profile.personalInfo.lastName,
+          title: profile.personalInfo.title,
+          phone: profile.personalInfo.phone,
+          alternatePhone: profile.personalInfo.alternatePhone,
+          dateOfBirth: profile.personalInfo.dateOfBirth,
+          placeOfBirth: profile.personalInfo.placeOfBirth,
+          nationality: profile.personalInfo.nationality,
+          passportNo: profile.personalInfo.passportNo,
+          gender: profile.personalInfo.gender,
+          maritalStatus: profile.personalInfo.maritalStatus,
+          linkedIn: profile.personalInfo.linkedIn,
+          address: {
+            street: profile.personalInfo.address.street,
+            city: profile.personalInfo.address.city,
+            state: profile.personalInfo.address.state,
+            country: profile.personalInfo.address.country,
+            postalCode: profile.personalInfo.address.postalCode,
+          },
+        },
+        bio: profile.bio,
+        professionalSummary: profile.professionalSummary,
+        careerObjectives: profile.careerObjectives,
+      };
+
+      // Call the API to update the profile
+      const response = await updateTeacherProfile.mutateAsync(updatePayload);
+
+      if (response.success) {
+        // Clear the original profile since changes are saved
+        setOriginalProfile(null);
+        setIsEditing(false);
+        // You can add a success toast here
+        console.log("Profile updated successfully");
+      } else {
+        throw new Error(response.message || "Failed to update profile");
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
+      setError(error instanceof Error ? error.message : "Failed to save profile");
       // You can add an error toast here
     } finally {
       setIsLoading(false);
@@ -1388,8 +1456,19 @@ const TeacherProfile = () => {
                             variant="hero"
                             size="sm"
                             onClick={handleSaveProfile}
+                            disabled={isLoading || updateTeacherProfile.isPending}
                           >
-                            Save Changes
+                            {isLoading || updateTeacherProfile.isPending ? (
+                              <>
+                                <CloudCog className="w-4 h-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save Changes
+                              </>
+                            )}
                           </Button>
                         </>
                       )}
@@ -1426,6 +1505,16 @@ const TeacherProfile = () => {
                             You are now editing your personal information. Click
                             "Save Changes" to save or "Cancel" to discard
                             changes.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {error && (
+                      <div className="col-span-full mb-4">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm text-red-700">
+                            <AlertCircle className="w-4 h-4 inline mr-2" />
+                            {error}
                           </p>
                         </div>
                       </div>
@@ -2887,6 +2976,8 @@ const TeacherProfile = () => {
               professionalSummary: profile.professionalSummary,
               careerObjectives: profile.careerObjectives,
             }}
+            isLoading={isLoading || updateTeacherProfile.isPending}
+            error={error}
           />
 
           <AddCertificationModal

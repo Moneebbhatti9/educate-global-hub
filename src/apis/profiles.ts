@@ -317,6 +317,22 @@ export const teacherProfileAPI = {
     );
   },
 
+  // Update Teacher Profile (PATCH)
+  updateTeacherProfile: async (
+    data: any
+  ): Promise<ApiResponse<TeacherProfile>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.patch<ApiResponse<TeacherProfile>>(
+      `${PROFILE_ENDPOINTS.TEACHER_PROFILES}/updateTeacherProfile`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
   // Get Current Teacher Profile
   getCurrent: async (): Promise<ApiResponse<TeacherProfile>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
@@ -816,6 +832,22 @@ export const schoolProfileAPI = {
     );
   },
 
+  // Update School Profile (PATCH)
+  updateSchoolProfile: async (
+    data: any
+  ): Promise<ApiResponse<SchoolProfile>> => {
+    const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
+    return apiHelpers.patch<ApiResponse<SchoolProfile>>(
+      `${PROFILE_ENDPOINTS.SCHOOL_PROFILES}/updateSchoolProfile`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
+
   // Get Current School Profile
   getCurrent: async (): Promise<ApiResponse<SchoolProfile>> => {
     const token = secureStorage.getItem<string>(STORAGE_KEYS.AUTH_TOKEN);
@@ -961,6 +993,24 @@ export const useTeacherProfileQueries = () => {
       },
       onError: (error) => {
         console.error("Create/Update teacher profile error:", error);
+      },
+    });
+  };
+
+  // Update teacher profile mutation (PATCH)
+  const useUpdateTeacherProfile = () => {
+    return useMutation({
+      mutationFn: teacherProfileAPI.updateTeacherProfile,
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Update current teacher profile in cache
+          queryClient.setQueryData(["teacher-profile", "current"], response);
+          // Invalidate search results
+          queryClient.invalidateQueries({ queryKey: ["teacher-search"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Update teacher profile error:", error);
       },
     });
   };
@@ -1450,6 +1500,7 @@ export const useTeacherProfileQueries = () => {
     useTeacherProfileById,
     useTeacherSearch,
     useCreateOrUpdateTeacherProfile,
+    useUpdateTeacherProfile,
     useCreateTeacherExperience,
     useUpdateTeacherExperience,
     useDeleteTeacherExperience,
@@ -1534,6 +1585,24 @@ export const useSchoolProfileQueries = () => {
     });
   };
 
+  // Update school profile mutation (PATCH)
+  const useUpdateSchoolProfile = () => {
+    return useMutation({
+      mutationFn: schoolProfileAPI.updateSchoolProfile,
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Update current school profile in cache
+          queryClient.setQueryData(["school-profile", "current"], response);
+          // Invalidate search results
+          queryClient.invalidateQueries({ queryKey: ["school-search"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Update school profile error:", error);
+      },
+    });
+  };
+
   // Create school program mutation
   const useCreateSchoolProgram = () => {
     return useMutation({
@@ -1588,6 +1657,7 @@ export const useSchoolProfileQueries = () => {
     useSchoolProfileById,
     useSchoolSearch,
     useCreateOrUpdateSchoolProfile,
+    useUpdateSchoolProfile,
     useCreateSchoolProgram,
     useUpdateSchoolProgram,
     useDeleteSchoolProgram,
@@ -2113,6 +2183,44 @@ export const useDeleteActivity = () => {
       queryClient.invalidateQueries({
         queryKey: ["teacher-profile", "current"],
       });
+    },
+  });
+};
+
+// Standalone hook for updating school profile
+export const useUpdateSchoolProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: schoolProfileAPI.updateSchoolProfile,
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        // Update current school profile in cache
+        queryClient.setQueryData(["school-profile", "current"], response);
+        // Invalidate search results
+        queryClient.invalidateQueries({ queryKey: ["school-search"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Update school profile error:", error);
+    },
+  });
+};
+
+// Standalone hook for updating teacher profile
+export const useUpdateTeacherProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: teacherProfileAPI.updateTeacherProfile,
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        // Update current teacher profile in cache
+        queryClient.setQueryData(["teacher-profile", "current"], response);
+        // Invalidate search results
+        queryClient.invalidateQueries({ queryKey: ["teacher-search"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Update teacher profile error:", error);
     },
   });
 };

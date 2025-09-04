@@ -50,7 +50,7 @@ import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
 import { AddProgramModal } from "@/components/Modals/add-program-modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { z } from "zod";
-import { useSchoolProfileQueries, Program } from "@/apis/profiles";
+import { useSchoolProfileQueries, Program, useUpdateSchoolProfile } from "@/apis/profiles";
 
 // Schema for school information validation
 const schoolInfoSchema = z.object({
@@ -88,6 +88,12 @@ const SchoolProfile = () => {
   const createProgramMutation = useCreateSchoolProgram();
   const updateProgramMutation = useUpdateSchoolProgram();
   const deleteProgramMutation = useDeleteSchoolProgram();
+  
+  // School profile update mutation
+  const updateSchoolProfile = useUpdateSchoolProfile();
+  
+  // Error state for profile updates
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   // Log API states for debugging
   useEffect(() => {
@@ -225,27 +231,50 @@ const SchoolProfile = () => {
       const isValid = await schoolInfoForm.trigger();
       if (!isValid) return;
 
+      setUpdateError(null);
       const formData = schoolInfoForm.getValues();
-      // API call would go here
-      console.log("Saving school info:", formData);
       
-      const updatedProfile = {
-        ...profile,
-        schoolInfo: {
-          ...formData,
-          alternateContact: formData.alternateContact || "",
-          schoolWebsite: formData.schoolWebsite || "",
-        },
+      // Prepare the payload for the API
+      const updatePayload = {
+        schoolName: formData.schoolName,
+        schoolEmail: formData.schoolEmail,
+        schoolContactNumber: formData.schoolContactNumber,
+        alternateContact: formData.alternateContact || "",
+        country: formData.country,
+        city: formData.city,
+        province: formData.state, // API uses 'province' but UI uses 'state'
+        zipCode: formData.zipCode,
+        address: formData.address,
+        schoolWebsite: formData.schoolWebsite || "",
+        establishedYear: formData.establishedYear,
+        registrationNumber: formData.registrationNumber,
       };
-      
-      // Update both current and original profile
-      setProfile(updatedProfile);
-      setOriginalProfile(updatedProfile);
-      setIsEditing(false);
-      
-      // Success notification would go here
+
+      // Call the API to update the profile
+      const response = await updateSchoolProfile.mutateAsync(updatePayload);
+
+      if (response.success) {
+        const updatedProfile = {
+          ...profile,
+          schoolInfo: {
+            ...formData,
+            alternateContact: formData.alternateContact || "",
+            schoolWebsite: formData.schoolWebsite || "",
+          },
+        };
+        
+        // Update both current and original profile
+        setProfile(updatedProfile);
+        setOriginalProfile(updatedProfile);
+        setIsEditing(false);
+        
+        console.log("School info updated successfully");
+      } else {
+        throw new Error(response.message || "Failed to update school info");
+      }
     } catch (error) {
       console.error("Error saving school info:", error);
+      setUpdateError(error instanceof Error ? error.message : "Failed to save school info");
     }
   };
 
@@ -260,17 +289,41 @@ const SchoolProfile = () => {
   };
 
   // Modal handlers
-  const handleProfileSummaryUpdate = (data: {
+  const handleProfileSummaryUpdate = async (data: {
     bio: string;
     professionalSummary: string;
     careerObjectives: string;
   }) => {
-    setProfile((prev) => ({
-      ...prev,
-      aboutSchool: data.bio,
-      professionalSummary: data.professionalSummary,
-      careerObjectives: data.careerObjectives,
-    }));
+    try {
+      setUpdateError(null);
+
+      // Prepare the payload with only the about school
+      const updatePayload = {
+        aboutSchool: data.bio,
+      };
+
+      // Call the API to update the profile
+      const response = await updateSchoolProfile.mutateAsync(updatePayload);
+
+      if (response.success) {
+        // Update local state
+        setProfile((prev) => ({
+          ...prev,
+          aboutSchool: data.bio,
+          professionalSummary: data.professionalSummary,
+          careerObjectives: data.careerObjectives,
+        }));
+        
+        // Close the modal
+        setShowSummaryModal(false);
+        console.log("School summary updated successfully");
+      } else {
+        throw new Error(response.message || "Failed to update school summary");
+      }
+    } catch (error) {
+      console.error("Error updating school summary:", error);
+      setUpdateError(error instanceof Error ? error.message : "Failed to update school summary");
+    }
   };
 
   const handleSaveProgram = async (program: Program) => {
@@ -669,9 +722,19 @@ const SchoolProfile = () => {
                              <Button
                                variant="outline"
                                onClick={handleSaveSchoolInfo}
+                               disabled={updateSchoolProfile.isPending}
                              >
-                               <Save className="w-4 h-4 mr-2" />
-                               Save Changes
+                               {updateSchoolProfile.isPending ? (
+                                 <>
+                                   <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                                   Saving...
+                                 </>
+                               ) : (
+                                 <>
+                                   <Save className="w-4 h-4 mr-2" />
+                                   Save Changes
+                                 </>
+                               )}
                              </Button>
                              <Button
                                variant="outline"
@@ -691,6 +754,15 @@ const SchoolProfile = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {updateError && (
+                      <div className="mb-4">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm text-red-700">
+                            {updateError}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div>
@@ -942,7 +1014,6 @@ const SchoolProfile = () => {
                                 </div>
                               )}
                             </div>
-                            {isEditing && (
                               <div className="flex space-x-2 ml-4">
                                 <Button
                                   variant="outline"
@@ -953,14 +1024,15 @@ const SchoolProfile = () => {
                                 </Button>
                                 <Button
                                   variant="outline"
+                                  className="text-destructive"
                                   size="sm"
                                   onClick={() => removeProgram(program._id || program.id || "")}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
-                            )}
                           </div>
+                          
                         </div>
                       ))}
                       {programs.length === 0 && (
@@ -1029,6 +1101,8 @@ const SchoolProfile = () => {
             professionalSummary: profile.professionalSummary,
             careerObjectives: profile.careerObjectives,
           }}
+          isLoading={updateSchoolProfile.isPending}
+          error={updateError}
         />
 
         <AddProgramModal

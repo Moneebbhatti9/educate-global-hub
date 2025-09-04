@@ -11,17 +11,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { FileText } from "lucide-react";
+import { FileText, AlertCircle } from "lucide-react";
 
 interface ProfileSummaryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { bio: string; professionalSummary: string; careerObjectives: string }) => void;
+  onSave: (data: { bio: string; professionalSummary: string; careerObjectives: string }) => Promise<void>;
   initialData?: {
     bio?: string;
     professionalSummary?: string;
     careerObjectives?: string;
   };
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 export const ProfileSummaryModal = ({
@@ -29,6 +31,8 @@ export const ProfileSummaryModal = ({
   onOpenChange,
   onSave,
   initialData,
+  isLoading = false,
+  error = null,
 }: ProfileSummaryModalProps) => {
   const [formData, setFormData] = useState({
     bio: initialData?.bio || "",
@@ -36,9 +40,13 @@ export const ProfileSummaryModal = ({
     careerObjectives: initialData?.careerObjectives || "",
   });
 
-  const handleSave = () => {
-    onSave(formData);
-    onOpenChange(false);
+  const handleSave = async () => {
+    try {
+      await onSave(formData);
+    } catch (error) {
+      // Error handling is done in the parent component
+      console.error("Error saving profile summary:", error);
+    }
   };
 
   const updateField = (field: keyof typeof formData, value: string) => {
@@ -63,6 +71,15 @@ export const ProfileSummaryModal = ({
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-700">
+                <AlertCircle className="w-4 h-4 inline mr-2" />
+                {error}
+              </p>
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="bio">Professional Bio</Label>
             <Textarea
@@ -72,6 +89,7 @@ export const ProfileSummaryModal = ({
               onChange={(e) => updateField('bio', e.target.value)}
               rows={4}
               className="resize-none"
+              disabled={isLoading}
             />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>A concise overview of your professional background</span>
@@ -124,11 +142,18 @@ export const ProfileSummaryModal = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Summary
+          <Button 
+            onClick={handleSave}
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save Summary"}
           </Button>
         </DialogFooter>
       </DialogContent>
