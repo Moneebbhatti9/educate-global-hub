@@ -61,6 +61,12 @@ const GDPRCompliance = lazy(() => import("./pages/legal/GDPRCompliance"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
 const JobManagement = lazy(() => import("./pages/admin/JobManagement"));
+const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
+
+// New Public Pages
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 const TeacherSettings = lazy(() => import("./pages/teacher/TeacherSettings"));
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 
@@ -104,6 +110,9 @@ const AppRoutes = () => {
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumDetail />} />
         <Route path="/resources" element={<Resources />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/pricing" element={<Pricing />} />
 
         {/* Legal Pages */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -187,6 +196,7 @@ const AppRoutes = () => {
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="jobs" element={<JobManagement />} />
+          <Route path="forum" element={<ForumManagement />} />
         </Route>
 
         {/* ======================================== */}
