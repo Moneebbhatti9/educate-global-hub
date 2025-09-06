@@ -181,7 +181,7 @@ const ForumManagement = () => {
               interactions
             </p>
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <Button variant="outline">
               <Archive className="w-4 h-4 mr-2" />
               Archive Selected
@@ -242,7 +242,7 @@ const ForumManagement = () => {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
+          </div> */}
         </div>
 
         {/* Stats Cards */}
@@ -340,7 +340,7 @@ const ForumManagement = () => {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="reported">Reported</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
+                  {/* <SelectItem value="archived">Archived</SelectItem> */}
                 </SelectContent>
               </Select>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -467,10 +467,10 @@ const ForumManagement = () => {
                         <Eye className="w-4 h-4 mr-2" />
                         View Discussion
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      {/* <DropdownMenuItem>
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Discussion
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuItem>
                         {discussion.isPinned ? (
                           <>
@@ -497,10 +497,10 @@ const ForumManagement = () => {
                           </>
                         )}
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      {/* <DropdownMenuItem>
                         <Archive className="w-4 h-4 mr-2" />
                         Archive Discussion
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuItem className="text-destructive">
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete Discussion
