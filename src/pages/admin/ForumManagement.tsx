@@ -246,7 +246,7 @@ const ForumManagement = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -306,7 +306,7 @@ const ForumManagement = () => {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          {/* <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-4 h-4 text-yellow-500" />
@@ -316,7 +316,7 @@ const ForumManagement = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Filters and Search */}
