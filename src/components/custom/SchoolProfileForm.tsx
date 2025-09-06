@@ -75,7 +75,7 @@ const SchoolProfileForm = ({
   } = useFormValidation({
     schema: schoolProfileFormSchema,
     mode: "onTouched",
-    defaultValues: {
+     defaultValues: {
       schoolName: initialData?.schoolName || "",
       schoolEmail: initialData?.schoolEmail || "",
       schoolContactNumber: initialData?.schoolContactNumber || "",
@@ -94,17 +94,9 @@ const SchoolProfileForm = ({
     },
   });
 
-  const formData = watch();
 
-  // Pre-fill form with initial data when component mounts
-  useEffect(() => {
-    if (initialData) {
-      // Pre-fill basic information that was collected during signup
-      if (initialData.schoolEmail) {
-        setValue("schoolEmail", initialData.schoolEmail);
-      }
-    }
-  }, [initialData, setValue]);
+
+  const formData = watch();
 
   const addCurriculum = () => {
     if (
@@ -320,13 +312,13 @@ const SchoolProfileForm = ({
           ))}
         </div>
 
-        {/* Connecting lines */}
+{/*        
         <div className="flex items-center w-full mb-4">
           <div className="flex-1 h-0.5 bg-muted"></div>
           <div className="flex-1 h-0.5 bg-muted"></div>
         </div>
 
-        <Progress value={getProgressPercentage()} className="h-2" />
+        <Progress value={getProgressPercentage()} className="h-2" /> */}
       </div>
 
       {/* Form */}
@@ -377,7 +369,6 @@ const SchoolProfileForm = ({
                     className={
                       isFieldInvalid("schoolName") ? "border-red-500" : ""
                     }
-                    readOnly
                   />
                   {getFieldError("schoolName") && (
                     <p className="text-sm text-red-500">
