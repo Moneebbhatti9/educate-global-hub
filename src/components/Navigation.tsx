@@ -45,6 +45,24 @@ const Navigation = () => {
             >
               Forum
             </Link>
+            <Link
+              to="/pricing"
+              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link
+              to="/about"
+              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/contact"
+              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+            >
+              Contant Us
+            </Link>
             {/* <Link
               to="/suppliers"
               className="text-foreground hover:text-brand-primary font-medium transition-colors"

@@ -33,6 +33,7 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  MessagesSquare,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -124,9 +125,9 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         { name: "Users", href: `/dashboard/admin/users`, icon: Users },
         { name: "Jobs", href: `/dashboard/admin/jobs`, icon: Briefcase },
         {
-          name: "Analytics",
-          href: `/dashboard/admin/analytics`,
-          icon: BarChart3,
+          name: "Forum",
+          href: `/dashboard/admin/forum`,
+          icon: MessagesSquare,
         },
       ],
     },
