@@ -16,6 +16,7 @@ export interface User {
   avatarUrl?: string;
   avatar?: string; // Keep for backward compatibility
   phone?: string;
+  profileCompletion?: number; // Profile completion percentage (0-100)
   createdAt: string;
   updatedAt: string;
 }

@@ -33,6 +33,7 @@ const OTPVerificationPage = lazy(() => import("./pages/OTPVerificationPage"));
 const ProfileCompletionPage = lazy(
   () => import("./pages/ProfileCompletionPage")
 );
+const AuthCallback = lazy(() => import("./components/AuthCallback"));
 const TeacherDashboard = lazy(
   () => import("./pages/dashboards/TeacherDashboard")
 );
@@ -141,6 +142,7 @@ const AppRoutes = () => {
         />
         <Route path="/otp-verification" element={<OTPVerificationPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/profile-completion"
           element={

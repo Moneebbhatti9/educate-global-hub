@@ -31,6 +31,10 @@ const AUTH_ENDPOINTS = {
   PROFILE: "/users/profile",
   COMPLETE_PROFILE: "/users/complete-profile",
   UPLOAD_AVATAR: "/users/avatar",
+  // Social login endpoints
+  GOOGLE_AUTH: "/auth/google",
+  FACEBOOK_AUTH: "/auth/facebook",
+  SOCIAL_CALLBACK: "/auth/social/callback",
 } as const;
 
 // Authentication API functions
@@ -160,6 +164,35 @@ export const authAPI = {
     return apiHelpers.upload<ApiResponse<{ avatarUrl: string }>>(
       AUTH_ENDPOINTS.UPLOAD_AVATAR,
       formData
+    );
+  },
+
+  // Social login - redirect to OAuth provider
+  initiateGoogleAuth: (): string => {
+    const baseURL =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    return `${baseURL}${AUTH_ENDPOINTS.GOOGLE_AUTH}`;
+  },
+
+  initiateFacebookAuth: (): string => {
+    const baseURL =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    return `${baseURL}${AUTH_ENDPOINTS.FACEBOOK_AUTH}`;
+  },
+
+  // Handle social login callback (for API-based flow)
+  handleSocialCallback: async (
+    provider: "google" | "facebook",
+    code: string,
+    state?: string
+  ): Promise<ApiResponse<AuthResponse>> => {
+    return apiHelpers.post<ApiResponse<AuthResponse>>(
+      AUTH_ENDPOINTS.SOCIAL_CALLBACK,
+      {
+        provider,
+        code,
+        state,
+      }
     );
   },
 };
@@ -315,6 +348,30 @@ export const useAuthQueries = () => {
     });
   };
 
+  // Social login callback mutation
+  const useSocialCallback = () => {
+    return useMutation({
+      mutationFn: ({
+        provider,
+        code,
+        state,
+      }: {
+        provider: "google" | "facebook";
+        code: string;
+        state?: string;
+      }) => authAPI.handleSocialCallback(provider, code, state),
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // Invalidate and refetch profile
+          queryClient.invalidateQueries({ queryKey: ["profile"] });
+        }
+      },
+      onError: (error) => {
+        console.error("Social login callback error:", error);
+      },
+    });
+  };
+
   return {
     useProfile,
     useLogin,
@@ -327,5 +384,6 @@ export const useAuthQueries = () => {
     useChangePassword,
     useCompleteProfile,
     useUploadAvatar,
+    useSocialCallback,
   };
 };

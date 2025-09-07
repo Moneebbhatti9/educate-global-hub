@@ -107,6 +107,19 @@ interface AuthContextType extends AuthState {
   uploadAvatar: (file: File) => Promise<void>;
   refreshToken: () => Promise<void>;
   updateUser: (user: User) => void;
+  // Social login methods
+  initiateGoogleAuth: () => void;
+  initiateFacebookAuth: () => void;
+  handleSocialLogin: (
+    user: User,
+    accessToken: string,
+    refreshToken: string
+  ) => void;
+  handleSocialLoginWithTokens: (
+    accessToken: string,
+    refreshToken: string,
+    userId: string
+  ) => Promise<void>;
 }
 
 // Create context
@@ -193,17 +206,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 lastName: user.lastName,
               },
             });
-          } else if (!user.isProfileComplete) {
-            navigate("/profile-completion", {
-              state: {
-                email: user.email,
-                role: user.role,
-                firstName: user.firstName,
-                lastName: user.lastName,
-              },
-            });
           } else {
-            navigate(`/dashboard/${user.role}`);
+            // Check if profile is actually complete (100% completion)
+            const isProfileActuallyComplete =
+              user.isProfileComplete &&
+              (user.profileCompletion === undefined ||
+                user.profileCompletion >= 100);
+
+            if (!isProfileActuallyComplete) {
+              navigate("/profile-completion", {
+                state: {
+                  email: user.email,
+                  role: user.role,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                },
+              });
+            } else {
+              navigate(`/dashboard/${user.role}`);
+            }
           }
         } else {
           throw new Error(response.message || "Login failed");
@@ -248,6 +269,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           type: "LOGIN_SUCCESS",
           payload: { user, token: accessToken },
         });
+
+        // Navigate based on user state for new signups
+        if (!user.isEmailVerified) {
+          navigate("/otp-verification", {
+            state: {
+              email: user.email,
+              role: user.role,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            },
+          });
+        } else {
+          // Check if profile is actually complete (100% completion)
+          const isProfileActuallyComplete =
+            user.isProfileComplete &&
+            (user.profileCompletion === undefined ||
+              user.profileCompletion >= 100);
+
+          if (!isProfileActuallyComplete) {
+            navigate("/profile-completion", {
+              state: {
+                email: user.email,
+                role: user.role,
+                firstName: user.firstName,
+                lastName: user.lastName,
+              },
+            });
+          } else {
+            navigate(`/dashboard/${user.role}`);
+          }
+        }
       } else {
         throw new Error(response.message || "Signup failed");
       }
@@ -570,6 +622,110 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  // Social login methods
+  const initiateGoogleAuth = useCallback(() => {
+    const authUrl = authAPI.initiateGoogleAuth();
+    window.location.href = authUrl;
+  }, []);
+
+  const initiateFacebookAuth = useCallback(() => {
+    const authUrl = authAPI.initiateFacebookAuth();
+    window.location.href = authUrl;
+  }, []);
+
+  const handleSocialLogin = useCallback(
+    (user: User, accessToken: string, refreshToken: string) => {
+      try {
+        secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
+        secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+        secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);
+
+        dispatch({
+          type: "LOGIN_SUCCESS",
+          payload: { user, token: accessToken },
+        });
+
+        // Navigate based on user state
+        // For social login, skip email verification since OAuth providers verify emails
+        // Check if profile is actually complete (100% completion)
+        const isProfileActuallyComplete =
+          user.isProfileComplete &&
+          (user.profileCompletion === undefined ||
+            user.profileCompletion >= 100);
+
+        if (!isProfileActuallyComplete) {
+          navigate("/profile-completion", {
+            state: {
+              email: user.email,
+              role: user.role,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            },
+          });
+        } else {
+          navigate(`/dashboard/${user.role}`);
+        }
+      } catch (error) {
+        console.error("Social login error:", error);
+        throw error;
+      }
+    },
+    [navigate]
+  );
+
+  const handleSocialLoginWithTokens = useCallback(
+    async (accessToken: string, refreshToken: string, userId: string) => {
+      try {
+        // First, store the tokens
+        secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
+        secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+
+        // Fetch user profile using the access token
+        const userResponse = await authAPI.getProfile();
+
+        if (userResponse.success && userResponse.data) {
+          const user = userResponse.data;
+
+          // Store user data
+          secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);
+
+          // Update auth context
+          dispatch({
+            type: "LOGIN_SUCCESS",
+            payload: { user, token: accessToken },
+          });
+
+          // Navigate based on user state
+          // For social login, skip email verification since OAuth providers verify emails
+          // Check if profile is actually complete (100% completion)
+          const isProfileActuallyComplete =
+            user.isProfileComplete &&
+            (user.profileCompletion === undefined ||
+              user.profileCompletion >= 100);
+
+          if (!isProfileActuallyComplete) {
+            navigate("/profile-completion", {
+              state: {
+                email: user.email,
+                role: user.role,
+                firstName: user.firstName,
+                lastName: user.lastName,
+              },
+            });
+          } else {
+            navigate(`/dashboard/${user.role}`);
+          }
+        } else {
+          throw new Error("Failed to fetch user profile");
+        }
+      } catch (error) {
+        console.error("Social login with tokens error:", error);
+        throw error;
+      }
+    },
+    [navigate]
+  );
+
   const contextValue: AuthContextType = {
     ...state,
     login,
@@ -584,6 +740,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     uploadAvatar,
     refreshToken,
     updateUser,
+    initiateGoogleAuth,
+    initiateFacebookAuth,
+    handleSocialLogin,
+    handleSocialLoginWithTokens,
   };
 
   return (
