@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { DualRangeSlider } from "@/components/ui/dual-range-slider";
 import {
   Search,
   MapPin,
@@ -80,8 +81,8 @@ const JobSearch = () => {
     subject: "",
     educationLevel: undefined,
     jobType: undefined,
-    salaryMin: undefined,
-    salaryMax: undefined,
+    salaryMin: 1,
+    salaryMax: 1000,
     country: "",
     city: "",
     isUrgent: undefined,
@@ -169,8 +170,8 @@ const JobSearch = () => {
       subject: "",
       educationLevel: undefined,
       jobType: undefined,
-      salaryMin: undefined,
-      salaryMax: undefined,
+      salaryMin: 1,
+      salaryMax: 1000,
       country: "",
       city: "",
       isUrgent: undefined,
@@ -382,21 +383,21 @@ const JobSearch = () => {
               <div className="space-y-3">
                 <Label>Salary Range (USD)</Label>
                 <div className="px-2">
-                  <Slider
-                    value={[filters.salaryMin || 0, filters.salaryMax || 10000]}
-                    onValueChange={(value) => {
+                  <DualRangeSlider
+                    value={[filters.salaryMin || 1, filters.salaryMax || 1000]}
+                    onChange={(value) => {
                       handleFilterChange("salaryMin", value[0]);
                       handleFilterChange("salaryMax", value[1]);
                     }}
-                    max={10000}
-                    min={0}
-                    step={500}
+                    max={1000}
+                    min={1}
+                    step={1}
                     className="w-full"
                   />
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>${(filters.salaryMin || 0).toLocaleString()}</span>
-                  <span>${(filters.salaryMax || 10000).toLocaleString()}</span>
+                  <span>${(filters.salaryMin || 1).toLocaleString()}</span>
+                  <span>${(filters.salaryMax || 1000).toLocaleString()}</span>
                 </div>
               </div>
 
