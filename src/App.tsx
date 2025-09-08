@@ -62,6 +62,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
 const JobManagement = lazy(() => import("./pages/admin/JobManagement"));
 const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
+const JobAdvertisementManagement = lazy(() => import("./pages/admin/JobAdvertisementManagement"));
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -197,6 +198,7 @@ const AppRoutes = () => {
           <Route path="users" element={<UserManagement />} />
           <Route path="jobs" element={<JobManagement />} />
           <Route path="forum" element={<ForumManagement />} />
+          <Route path="job-ads" element={<JobAdvertisementManagement />} />
         </Route>
 
         {/* ======================================== */}
