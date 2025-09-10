@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import OTPVerification from "@/components/custom/OTPVerification";
@@ -17,16 +18,37 @@ interface LocationState {
 const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyOTP, sendOTP } = useAuth();
+  const { verifyOTP, sendOTP, isAuthenticated, user, isInitialized } = useAuth();
 
   const { handleError, showSuccess } = useErrorHandler();
   const state = location.state as LocationState;
 
   // Redirect if no state data (user came directly to this route)
-  if (!state?.email) {
+  if (!state || !state.email) {
     navigate("/signup");
     return null;
   }
+
+  // Handle authentication state changes after OTP verification
+  useEffect(() => {
+    if (isInitialized && isAuthenticated && user) {
+      // User is now authenticated after OTP verification
+      if (!user.isProfileComplete) {
+        // Navigate to profile completion
+        navigate("/profile-completion", {
+          state: {
+            email: user.email,
+            role: user.role,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          },
+        });
+      } else {
+        // Navigate to appropriate dashboard
+        navigate(`/dashboard/${user.role}`);
+      }
+    }
+  }, [isInitialized, isAuthenticated, user, navigate]);
 
   const handleVerify = async (otp: string) => {
     try {
@@ -38,21 +60,11 @@ const OTPVerificationPage = () => {
       // Show success toast
       showSuccess(
         "Email verified successfully!",
-        "Your account has been verified. Please complete your profile."
+        "Your account has been verified. Redirecting..."
       );
 
-      // Add a small delay to allow toast to be visible before navigation
-      setTimeout(() => {
-        // Navigate to profile completion with state
-        navigate("/profile-completion", {
-          state: {
-            email: state.email,
-            role: state.role,
-            firstName: state.firstName,
-            lastName: state.lastName,
-          },
-        });
-      }, 1500);
+      // Navigation will be handled by the useEffect hook
+      // when the authentication state updates
     } catch (error) {
       handleError(error, "Verification failed");
       throw error;
