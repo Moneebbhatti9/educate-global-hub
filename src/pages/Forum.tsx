@@ -60,7 +60,7 @@ const Forum = () => {
   const handleCreateDiscussion = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle discussion creation logic here
-    console.log("New discussion:", newDiscussion);
+
     setIsDialogOpen(false);
     setNewDiscussion({ title: "", content: "", category: "", tags: "" });
   };

@@ -2,11 +2,23 @@ import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Mail,
@@ -19,7 +31,7 @@ import {
   BookOpen,
   Send,
   CheckCircle,
-  Globe
+  Globe,
 } from "lucide-react";
 
 const ContactUs = () => {
@@ -28,17 +40,16 @@ const ContactUs = () => {
     email: "",
     subject: "",
     category: "",
-    message: ""
+    message: "",
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission
-    console.log("Form submitted:", formData);
   };
 
   const contactMethods = [
@@ -47,29 +58,29 @@ const ContactUs = () => {
       title: "Email Support",
       description: "Get in touch via email for detailed inquiries",
       contact: "support@teachconnect.global",
-      note: "Response within 24 hours"
+      note: "Response within 24 hours",
     },
     {
       icon: Phone,
       title: "Phone Support",
       description: "Speak directly with our support team",
       contact: "+1 (555) 123-4567",
-      note: "Mon-Fri, 9AM-6PM EST"
+      note: "Mon-Fri, 9AM-6PM EST",
     },
     {
       icon: MessageSquare,
       title: "Live Chat",
       description: "Instant support for urgent questions",
       contact: "Available on platform",
-      note: "Mon-Fri, 9AM-6PM EST"
+      note: "Mon-Fri, 9AM-6PM EST",
     },
     {
       icon: HeadphonesIcon,
       title: "Technical Support",
       description: "Platform issues and technical assistance",
       contact: "tech@teachconnect.global",
-      note: "Response within 12 hours"
-    }
+      note: "Response within 12 hours",
+    },
   ];
 
   const offices = [
@@ -78,49 +89,50 @@ const ContactUs = () => {
       address: "123 Education Plaza, Suite 400",
       city: "New York, NY 10001, USA",
       phone: "+1 (555) 123-4567",
-      email: "hq@teachconnect.global"
+      email: "hq@teachconnect.global",
     },
     {
       location: "European Office",
       address: "45 Education Square",
       city: "London, UK EC1A 1BB",
       phone: "+44 20 7123 4567",
-      email: "europe@teachconnect.global"
+      email: "europe@teachconnect.global",
     },
     {
       location: "Asia-Pacific Office",
       address: "88 Learning Tower, Level 20",
       city: "Singapore 018956",
       phone: "+65 6123 4567",
-      email: "apac@teachconnect.global"
-    }
+      email: "apac@teachconnect.global",
+    },
   ];
 
   const departments = [
     {
       icon: Users,
       title: "Teacher Support",
-      description: "Career guidance, application assistance, and placement support",
-      email: "teachers@teachconnect.global"
+      description:
+        "Career guidance, application assistance, and placement support",
+      email: "teachers@teachconnect.global",
     },
     {
       icon: BookOpen,
       title: "School Partnerships",
       description: "Recruitment solutions and partnership opportunities",
-      email: "schools@teachconnect.global"
+      email: "schools@teachconnect.global",
     },
     {
       icon: Globe,
       title: "International Relations",
       description: "Global expansion and regional partnerships",
-      email: "international@teachconnect.global"
-    }
+      email: "international@teachconnect.global",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main>
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -134,8 +146,9 @@ const ContactUs = () => {
                 <span className="text-primary block">Help You</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Have questions about our platform, need support with your application, or want to 
-                explore partnership opportunities? Our global team is ready to assist you.
+                Have questions about our platform, need support with your
+                application, or want to explore partnership opportunities? Our
+                global team is ready to assist you.
               </p>
             </div>
           </div>
@@ -146,17 +159,26 @@ const ContactUs = () => {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {contactMethods.map((method, index) => (
-                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 group">
+                <Card
+                  key={index}
+                  className="text-center hover:shadow-lg transition-all duration-300 group"
+                >
                   <CardHeader>
                     <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors mx-auto w-fit">
                       <method.icon className="w-6 h-6 text-primary" />
                     </div>
-                    <CardTitle className="font-heading text-lg">{method.title}</CardTitle>
+                    <CardTitle className="font-heading text-lg">
+                      {method.title}
+                    </CardTitle>
                     <CardDescription>{method.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="font-semibold text-foreground mb-2">{method.contact}</p>
-                    <p className="text-sm text-muted-foreground">{method.note}</p>
+                    <p className="font-semibold text-foreground mb-2">
+                      {method.contact}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {method.note}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -171,9 +193,12 @@ const ContactUs = () => {
               {/* Contact Form */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-heading text-2xl">Send us a Message</CardTitle>
+                  <CardTitle className="font-heading text-2xl">
+                    Send us a Message
+                  </CardTitle>
                   <CardDescription>
-                    Fill out the form below and we'll get back to you as soon as possible.
+                    Fill out the form below and we'll get back to you as soon as
+                    possible.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -185,7 +210,9 @@ const ContactUs = () => {
                           id="name"
                           placeholder="Your full name"
                           value={formData.name}
-                          onChange={(e) => handleInputChange("name", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("name", e.target.value)
+                          }
                           required
                         />
                       </div>
@@ -196,7 +223,9 @@ const ContactUs = () => {
                           type="email"
                           placeholder="your.email@example.com"
                           value={formData.email}
-                          onChange={(e) => handleInputChange("email", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("email", e.target.value)
+                          }
                           required
                         />
                       </div>
@@ -204,17 +233,33 @@ const ContactUs = () => {
 
                     <div>
                       <Label htmlFor="category">Category *</Label>
-                      <Select onValueChange={(value) => handleInputChange("category", value)}>
+                      <Select
+                        onValueChange={(value) =>
+                          handleInputChange("category", value)
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select inquiry type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="teacher-support">Teacher Support</SelectItem>
-                          <SelectItem value="school-partnership">School Partnership</SelectItem>
-                          <SelectItem value="technical-issue">Technical Issue</SelectItem>
-                          <SelectItem value="billing">Billing & Payments</SelectItem>
-                          <SelectItem value="general">General Inquiry</SelectItem>
-                          <SelectItem value="feedback">Feedback & Suggestions</SelectItem>
+                          <SelectItem value="teacher-support">
+                            Teacher Support
+                          </SelectItem>
+                          <SelectItem value="school-partnership">
+                            School Partnership
+                          </SelectItem>
+                          <SelectItem value="technical-issue">
+                            Technical Issue
+                          </SelectItem>
+                          <SelectItem value="billing">
+                            Billing & Payments
+                          </SelectItem>
+                          <SelectItem value="general">
+                            General Inquiry
+                          </SelectItem>
+                          <SelectItem value="feedback">
+                            Feedback & Suggestions
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -225,7 +270,9 @@ const ContactUs = () => {
                         id="subject"
                         placeholder="Brief description of your inquiry"
                         value={formData.subject}
-                        onChange={(e) => handleInputChange("subject", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("subject", e.target.value)
+                        }
                         required
                       />
                     </div>
@@ -237,12 +284,17 @@ const ContactUs = () => {
                         placeholder="Please provide details about your inquiry. The more information you provide, the better we can assist you."
                         rows={6}
                         value={formData.message}
-                        onChange={(e) => handleInputChange("message", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("message", e.target.value)
+                        }
                         required
                       />
                     </div>
 
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+                    <Button
+                      type="submit"
+                      className="w-full bg-primary hover:bg-primary/90"
+                    >
                       <Send className="w-4 h-4 mr-2" />
                       Send Message
                     </Button>
@@ -250,8 +302,9 @@ const ContactUs = () => {
                     <div className="flex items-start space-x-2 text-sm text-muted-foreground">
                       <CheckCircle className="w-4 h-4 mt-0.5 text-green-500" />
                       <p>
-                        We typically respond within 24 hours during business days. 
-                        For urgent matters, please use our live chat or phone support.
+                        We typically respond within 24 hours during business
+                        days. For urgent matters, please use our live chat or
+                        phone support.
                       </p>
                     </div>
                   </form>
@@ -263,21 +316,32 @@ const ContactUs = () => {
                 {/* Departments */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="font-heading text-xl">Contact by Department</CardTitle>
+                    <CardTitle className="font-heading text-xl">
+                      Contact by Department
+                    </CardTitle>
                     <CardDescription>
                       Reach out to the right team for faster assistance
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {departments.map((dept, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div
+                        key={index}
+                        className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                      >
                         <div className="p-2 rounded-lg bg-primary/10">
                           <dept.icon className="w-4 h-4 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-semibold text-foreground">{dept.title}</h4>
-                          <p className="text-sm text-muted-foreground mb-1">{dept.description}</p>
-                          <p className="text-sm font-medium text-primary">{dept.email}</p>
+                          <h4 className="font-semibold text-foreground">
+                            {dept.title}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            {dept.description}
+                          </p>
+                          <p className="text-sm font-medium text-primary">
+                            {dept.email}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -294,12 +358,16 @@ const ContactUs = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Monday - Friday</span>
+                      <span className="text-muted-foreground">
+                        Monday - Friday
+                      </span>
                       <span className="font-medium">9:00 AM - 6:00 PM EST</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Saturday</span>
-                      <span className="font-medium">10:00 AM - 2:00 PM EST</span>
+                      <span className="font-medium">
+                        10:00 AM - 2:00 PM EST
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Sunday</span>
@@ -307,7 +375,8 @@ const ContactUs = () => {
                     </div>
                     <div className="pt-2 border-t">
                       <p className="text-sm text-muted-foreground">
-                        Emergency technical support available 24/7 for platform downtime issues.
+                        Emergency technical support available 24/7 for platform
+                        downtime issues.
                       </p>
                     </div>
                   </CardContent>
@@ -325,14 +394,17 @@ const ContactUs = () => {
                 Our Global Offices
               </h2>
               <p className="text-lg text-muted-foreground">
-                With teams around the world, we provide local support for our global community 
-                of educators and schools.
+                With teams around the world, we provide local support for our
+                global community of educators and schools.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {offices.map((office, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                <Card
+                  key={index}
+                  className="hover:shadow-lg transition-all duration-300"
+                >
                   <CardHeader>
                     <CardTitle className="font-heading text-lg flex items-center">
                       <MapPin className="w-5 h-5 mr-2 text-primary" />
@@ -368,17 +440,21 @@ const ContactUs = () => {
                 Looking for Quick Answers?
               </h2>
               <p className="text-xl opacity-90 mb-8">
-                Check out our comprehensive FAQ section for immediate answers to common questions 
-                about our platform, services, and processes.
+                Check out our comprehensive FAQ section for immediate answers to
+                common questions about our platform, services, and processes.
               </p>
-              <Button size="lg" variant="outline" className="bg-white text-primary hover:bg-white/90">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-white text-primary hover:bg-white/90"
+              >
                 Visit FAQ Center
               </Button>
             </div>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

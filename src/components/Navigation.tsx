@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Globe, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import educateLinkLogo from "@/assets/educate-link-logo-transparent.png";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
-  console.log("user", user);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -23,6 +23,7 @@ const Navigation = () => {
             <span className="font-heading font-bold text-xl text-foreground">
               Educate Link
             </span>
+            {/* <img src={educateLinkLogo} alt="Educate Link" /> */}
           </Link>
 
           {/* Desktop Navigation */}

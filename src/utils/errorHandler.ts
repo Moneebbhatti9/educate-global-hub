@@ -167,7 +167,6 @@ export const errorHandler = {
 
   logError: (error: unknown, context?: string): void => {
     if (import.meta.env.DEV) {
-      console.error(`[${context || "Error"}]:`, error);
     }
   },
 };

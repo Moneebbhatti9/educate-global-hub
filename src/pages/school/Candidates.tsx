@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  useSearchParams,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
@@ -55,8 +60,14 @@ import { applicationsAPI } from "@/apis/applications";
 import { customToast } from "@/components/ui/sonner";
 import type { ApplicationStatus } from "@/types/job";
 import { CandidatesSkeleton } from "@/components/skeletons/candidates-skeleton";
-import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
-import { EmptyCandidates, EmptySearchResults } from "@/components/ui/empty-state";
+import {
+  DashboardErrorFallback,
+  SectionErrorFallback,
+} from "@/components/ui/error-fallback";
+import {
+  EmptyCandidates,
+  EmptySearchResults,
+} from "@/components/ui/empty-state";
 
 const Candidates = () => {
   const navigate = useNavigate();
@@ -74,14 +85,13 @@ const Candidates = () => {
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
 
   // Get job data from navigation state if available
-  const jobFromState = location.state as { jobId?: string; jobTitle?: string } | null;
+  const jobFromState = location.state as {
+    jobId?: string;
+    jobTitle?: string;
+  } | null;
   const effectiveJobId = jobFromState?.jobId || selectedJob;
 
   // Debug logging
-  console.log("Navigation state:", location.state);
-  console.log("Job from state:", jobFromState);
-  console.log("Effective job ID:", effectiveJobId);
-  console.log("Selected job from URL:", selectedJob);
 
   // API hooks
   const { data: jobsData, isLoading: jobsLoading } = useSchoolJobs(
@@ -96,20 +106,19 @@ const Candidates = () => {
         // Fetch applications for a specific job
         setIsLoadingApplications(true);
         try {
-          const response = await applicationsAPI.getApplicationsByJob(effectiveJobId, {
-            page: currentPage,
-            limit: 20,
-            status: statusFilter === "all" ? undefined : statusFilter,
-            search: searchTerm || undefined,
-          });
-          
-          console.log("Applications by job response:", response);
-          
+          const response = await applicationsAPI.getApplicationsByJob(
+            effectiveJobId,
+            {
+              page: currentPage,
+              limit: 20,
+              status: statusFilter === "all" ? undefined : statusFilter,
+              search: searchTerm || undefined,
+            }
+          );
+
           // Store the API response data
           setApplicationsData(response.data);
-          
         } catch (error) {
-          console.error("Error fetching applications by job:", error);
           customToast.error("Failed to fetch applications. Please try again.");
         } finally {
           setIsLoadingApplications(false);
@@ -124,15 +133,13 @@ const Candidates = () => {
             status: statusFilter === "all" ? undefined : statusFilter,
             querySearch: searchTerm || undefined,
           });
-          
-          console.log("All school applications response:", response);
-          
+
           // Store the API response data
           setApplicationsData(response.data);
-          
         } catch (error) {
-          console.error("Error fetching all school applications:", error);
-          customToast.error("Failed to fetch all applications. Please try again.");
+          customToast.error(
+            "Failed to fetch all applications. Please try again."
+          );
         } finally {
           setIsLoadingApplications(false);
         }
@@ -150,26 +157,35 @@ const Candidates = () => {
       email: "Email Not Provided", // Email not in API response
       avatar: "/api/placeholder/60/60", // Default avatar
       jobId: app.job?._id || app.jobId || "Job ID Not Provided",
-      jobTitle: app.job?.title || jobFromState?.jobTitle || "Job Title Not Provided",
+      jobTitle:
+        app.job?.title || jobFromState?.jobTitle || "Job Title Not Provided",
       experience: "Experience Not Provided", // Experience not in API response
       education: "Education Not Provided", // Education not in API response
-      location: app.teacher?.city && app.teacher?.country 
-        ? `${app.teacher.city}, ${app.teacher.country}`
-        : "Location Not Provided",
+      location:
+        app.teacher?.city && app.teacher?.country
+          ? `${app.teacher.city}, ${app.teacher.country}`
+          : "Location Not Provided",
       currentPosition: "Current Position Not Provided", // Current position not in API response
       rating: 0, // Rating not in API response
       status: app.status || "pending",
-      applicationDate: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Application Date Not Provided",
+      applicationDate: app.createdAt
+        ? new Date(app.createdAt).toLocaleDateString()
+        : "Application Date Not Provided",
       resumeUrl: app.resumeUrl || "#",
       skills: ["Skills Not Provided"], // Skills not in API response
       languages: ["Languages Not Provided"], // Languages not in API response
       certifications: ["Certifications Not Provided"], // Certifications not in API response
-      salaryExpectation: app.expectedSalary ? `$${app.expectedSalary}` : "Salary Expectation Not Provided",
-      availableFrom: app.availableFrom ? new Date(app.availableFrom).toLocaleDateString() : "Available From Not Provided",
+      salaryExpectation: app.expectedSalary
+        ? `$${app.expectedSalary}`
+        : "Salary Expectation Not Provided",
+      availableFrom: app.availableFrom
+        ? new Date(app.availableFrom).toLocaleDateString()
+        : "Available From Not Provided",
       notes: app.coverLetter || app.reasonForApplying || "Notes Not Provided",
       // Additional fields from API
       coverLetter: app.coverLetter || "Cover Letter Not Provided",
-      reasonForApplying: app.reasonForApplying || "Reason for Applying Not Provided",
+      reasonForApplying:
+        app.reasonForApplying || "Reason for Applying Not Provided",
       screeningAnswers: app.screeningAnswers || {},
       documents: app.documents || [],
       isWithdrawn: app.isWithdrawn || false,
@@ -180,7 +196,7 @@ const Candidates = () => {
   };
 
   // Get candidates from API response or fallback to empty array
-  const candidates = applicationsData?.applications 
+  const candidates = applicationsData?.applications
     ? mapApplicationsToCandidates(applicationsData.applications)
     : [];
 
@@ -253,26 +269,43 @@ const Candidates = () => {
     return matchesSearch && matchesStatus && matchesJob && matchesExperience;
   });
 
-  const groupedCandidates = effectiveJobId && applicationsData?.applications ? [
-    {
-      _id: effectiveJobId,
-      title: jobFromState?.jobTitle || "Selected Job",
-      candidates: candidates
-    }
-  ] : applicationsData?.applications ? [
-    // When viewing all applications, create a single group
-    {
-      _id: "all",
-      title: "All Applications",
-      candidates: candidates
-    }
-  ] : [];
+  const groupedCandidates =
+    effectiveJobId && applicationsData?.applications
+      ? [
+          {
+            _id: effectiveJobId,
+            title: jobFromState?.jobTitle || "Selected Job",
+            candidates: candidates,
+          },
+        ]
+      : applicationsData?.applications
+      ? [
+          // When viewing all applications, create a single group
+          {
+            _id: "all",
+            title: "All Applications",
+            candidates: candidates,
+          },
+        ]
+      : [];
 
   const stats = {
-    total: applicationsData?.summary?.totalApplications || applicationsData?.applications?.length || 0,
-    new: applicationsData?.applications?.filter((app: any) => app.status === "pending").length || 0,
-    reviewing: applicationsData?.applications?.filter((app: any) => app.status === "reviewing").length || 0,
-    shortlisted: applicationsData?.applications?.filter((app: any) => app.status === "shortlisted").length || 0,
+    total:
+      applicationsData?.summary?.totalApplications ||
+      applicationsData?.applications?.length ||
+      0,
+    new:
+      applicationsData?.applications?.filter(
+        (app: any) => app.status === "pending"
+      ).length || 0,
+    reviewing:
+      applicationsData?.applications?.filter(
+        (app: any) => app.status === "reviewing"
+      ).length || 0,
+    shortlisted:
+      applicationsData?.applications?.filter(
+        (app: any) => app.status === "shortlisted"
+      ).length || 0,
   };
 
   const handleStatusChange = async (
@@ -303,9 +336,9 @@ const Candidates = () => {
   const handleDownloadResume = (resumeUrl: string) => {
     if (resumeUrl && resumeUrl !== "#") {
       // Create a temporary link to download the resume
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = resumeUrl;
-      link.download = 'resume.pdf';
+      link.download = "resume.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -337,7 +370,10 @@ const Candidates = () => {
           {jobFromState?.jobTitle ? (
             <div className="mt-3 p-3 bg-muted rounded-lg">
               <p className="text-sm font-medium text-foreground">
-                Currently viewing candidates for: <span className="text-brand-primary">{jobFromState.jobTitle}</span>
+                Currently viewing candidates for:{" "}
+                <span className="text-brand-primary">
+                  {jobFromState.jobTitle}
+                </span>
               </p>
             </div>
           ) : (
@@ -409,7 +445,9 @@ const Candidates = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>
-                {jobFromState?.jobTitle ? `Candidates for ${jobFromState.jobTitle}` : "All Candidates"}
+                {jobFromState?.jobTitle
+                  ? `Candidates for ${jobFromState.jobTitle}`
+                  : "All Candidates"}
               </CardTitle>
               <div className="flex items-center space-x-4">
                 <div className="relative">
@@ -477,10 +515,9 @@ const Candidates = () => {
                   <Card className="p-8 text-center text-muted-foreground">
                     <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                     <p>
-                      {effectiveJobId 
-                        ? "No candidates found for this position." 
-                        : "Please select a job to view candidates."
-                      }
+                      {effectiveJobId
+                        ? "No candidates found for this position."
+                        : "Please select a job to view candidates."}
                     </p>
                   </Card>
                 ) : (
@@ -596,7 +633,9 @@ const Candidates = () => {
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
                                         onClick={() =>
-                                          handleScheduleInterview(candidate.email)
+                                          handleScheduleInterview(
+                                            candidate.email
+                                          )
                                         }
                                       >
                                         <Calendar className="w-4 h-4 mr-2" />
@@ -653,7 +692,10 @@ const Candidates = () => {
                                       </Badge>
                                     ))}
                                   {candidate.skills.length > 3 && (
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
                                       +{candidate.skills.length - 3} more
                                     </Badge>
                                   )}

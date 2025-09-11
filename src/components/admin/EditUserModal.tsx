@@ -186,7 +186,6 @@ export const EditUserModal = ({
 
         form.reset(formData);
       } catch (profileError) {
-        console.log("No profile data found, using basic user data");
         // Set form with basic user data only
         form.reset({
           firstName: user.firstName || "",
@@ -194,7 +193,6 @@ export const EditUserModal = ({
         });
       }
     } catch (error) {
-      console.error("Failed to fetch user data:", error);
     } finally {
       setIsFetching(false);
     }
@@ -226,7 +224,6 @@ export const EditUserModal = ({
       onSave(data);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to update user:", error);
     } finally {
       setIsLoading(false);
     }
@@ -1204,8 +1201,8 @@ export const EditUserModal = ({
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
                 >

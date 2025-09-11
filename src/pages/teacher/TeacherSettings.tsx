@@ -245,7 +245,6 @@ const TeacherSettings = () => {
       }
 
       customToast.error(errorTitle, errorDescription);
-      console.error("Profile update error:", error);
     }
   };
 
@@ -328,7 +327,6 @@ const TeacherSettings = () => {
       }
 
       customToast.error(errorTitle, errorDescription);
-      console.error("Avatar update error:", error);
     }
   };
 
@@ -346,7 +344,6 @@ const TeacherSettings = () => {
       const errorDescription = (error?.response as any)?.data?.errors;
 
       customToast.error(errorTitle, errorDescription);
-      console.error("Password change error:", error);
     }
   };
 
@@ -409,7 +406,7 @@ const TeacherSettings = () => {
   //       }
 
   //       customToast.error(errorTitle, errorDescription);
-  //       console.error("Account deletion error:", error);
+  //
   //     }
   //   }
   // };

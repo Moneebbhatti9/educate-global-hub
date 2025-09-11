@@ -342,7 +342,6 @@ const EditJob = () => {
 
       navigate("/dashboard/school/postings");
     } catch (error: unknown) {
-      console.error("Error updating job:", error);
       customToast.error("Failed to update job. Please try again.");
     }
   };

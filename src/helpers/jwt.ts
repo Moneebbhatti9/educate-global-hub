@@ -15,7 +15,6 @@ export const jwtHelpers = {
       );
       return JSON.parse(jsonPayload);
     } catch (error) {
-      console.error("Error parsing JWT token:", error);
       return null;
     }
   },

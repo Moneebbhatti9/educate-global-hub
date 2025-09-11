@@ -262,7 +262,6 @@ const TeacherProfileForm = ({
       // Call the onComplete callback - navigation will be handled by ProfileCompletionPage
       onComplete(data);
     } catch (error) {
-      console.error("Error creating teacher profile:", error);
       customToast.error(
         "Profile Creation Failed",
         "There was an error creating your profile. Please try again."

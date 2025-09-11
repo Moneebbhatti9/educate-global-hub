@@ -48,7 +48,7 @@ export const ChangeStatusModal = ({
   const [newStatus, setNewStatus] = useState<string>("");
   const [reason, setReason] = useState("");
 
-  console.log("ChangeStatusModal userData:", userData); // Debug log
+  // Debug log
 
   if (!userData) return null;
 
@@ -58,11 +58,10 @@ export const ChangeStatusModal = ({
     // Handle both id and _id fields
     const userId = userData.id || userData._id;
     if (!userId) {
-      console.error("No user ID found:", userData);
       return;
     }
 
-    console.log("Submitting status change:", { userId, newStatus, reason }); // Debug log
+    // Debug log
     onStatusChange(userId, newStatus, reason);
     onOpenChange(false);
     setNewStatus("");

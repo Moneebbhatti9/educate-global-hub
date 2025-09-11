@@ -16,7 +16,11 @@ import { FileText, AlertCircle } from "lucide-react";
 interface ProfileSummaryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { bio: string; professionalSummary: string; careerObjectives: string }) => Promise<void>;
+  onSave: (data: {
+    bio: string;
+    professionalSummary: string;
+    careerObjectives: string;
+  }) => Promise<void>;
   initialData?: {
     bio?: string;
     professionalSummary?: string;
@@ -45,16 +49,18 @@ export const ProfileSummaryModal = ({
       await onSave(formData);
     } catch (error) {
       // Error handling is done in the parent component
-      console.error("Error saving profile summary:", error);
     }
   };
 
   const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const getWordCount = (text: string) => {
-    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
   };
 
   return (
@@ -66,10 +72,11 @@ export const ProfileSummaryModal = ({
             Edit Profile Summary
           </DialogTitle>
           <DialogDescription>
-            Create a compelling profile summary that showcases your expertise and career goals.
+            Create a compelling profile summary that showcases your expertise
+            and career goals.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-6 py-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -79,14 +86,14 @@ export const ProfileSummaryModal = ({
               </p>
             </div>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="bio">Professional Bio</Label>
             <Textarea
               id="bio"
               placeholder="Write a brief professional bio that highlights your background, expertise, and passion for education..."
               value={formData.bio}
-              onChange={(e) => updateField('bio', e.target.value)}
+              onChange={(e) => updateField("bio", e.target.value)}
               rows={4}
               className="resize-none"
               disabled={isLoading}
@@ -130,29 +137,34 @@ export const ProfileSummaryModal = ({
           </div> */}
 
           <div className="p-4 bg-muted/30 rounded-lg">
-            <h4 className="font-semibold text-sm mb-2">Tips for a Great Profile Summary:</h4>
+            <h4 className="font-semibold text-sm mb-2">
+              Tips for a Great Profile Summary:
+            </h4>
             <ul className="text-sm text-muted-foreground space-y-1">
               <li>• Keep your bio concise (50-100 words) and engaging</li>
-              <li>• Include specific achievements and quantifiable results in your summary</li>
+              <li>
+                • Include specific achievements and quantifiable results in your
+                summary
+              </li>
               <li>• Be specific about your teaching philosophy and methods</li>
-              <li>• Mention your preferred grade levels, subjects, and school types</li>
+              <li>
+                • Mention your preferred grade levels, subjects, and school
+                types
+              </li>
               <li>• Use action words and avoid jargon</li>
             </ul>
           </div>
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave}
-            disabled={isLoading}
-          >
+          <Button onClick={handleSave} disabled={isLoading}>
             {isLoading ? "Saving..." : "Save Summary"}
           </Button>
         </DialogFooter>

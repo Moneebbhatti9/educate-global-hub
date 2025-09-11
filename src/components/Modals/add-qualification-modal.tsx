@@ -13,7 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Award } from "lucide-react";
-import { useCreateTeacherQualification, useUpdateTeacherQualification, Qualification, QualificationRequest } from "@/apis/profiles";
+import {
+  useCreateTeacherQualification,
+  useUpdateTeacherQualification,
+  Qualification,
+  QualificationRequest,
+} from "@/apis/profiles";
 import { toast } from "sonner";
 
 interface AddQualificationModalProps {
@@ -66,12 +71,12 @@ export const AddQualificationModal = ({
     setIsLoading(true);
     try {
       let response;
-      
+
       if (editingQualification && editingQualification._id) {
         // Update existing qualification
         response = await updateQualification.mutateAsync({
           qualificationId: editingQualification._id,
-          data: formData
+          data: formData,
         });
       } else {
         // Create new qualification
@@ -80,11 +85,11 @@ export const AddQualificationModal = ({
 
       if (response.success && response.data) {
         toast.success(
-          editingQualification 
-            ? "Qualification updated successfully!" 
+          editingQualification
+            ? "Qualification updated successfully!"
             : "Qualification added successfully!"
         );
-        
+
         // Call the onSave callback with the response data
         onSave(response.data);
         onOpenChange(false);
@@ -104,10 +109,9 @@ export const AddQualificationModal = ({
         }
       }
     } catch (error) {
-      console.error("Failed to save qualification:", error);
       toast.error(
-        editingQualification 
-          ? "Failed to update qualification. Please try again." 
+        editingQualification
+          ? "Failed to update qualification. Please try again."
           : "Failed to add qualification. Please try again."
       );
     } finally {
@@ -252,9 +256,14 @@ export const AddQualificationModal = ({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!formData.title.trim() || !formData.institution.trim() || isLoading}
+            disabled={
+              !formData.title.trim() ||
+              !formData.institution.trim() ||
+              isLoading
+            }
           >
-            {isLoading ? "Saving..." : editingQualification ? "Update" : "Add"} Qualification
+            {isLoading ? "Saving..." : editingQualification ? "Update" : "Add"}{" "}
+            Qualification
           </Button>
         </DialogFooter>
       </DialogContent>

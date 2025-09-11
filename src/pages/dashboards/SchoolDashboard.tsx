@@ -779,7 +779,7 @@ const SchoolDashboard = () => {
                     </div>
                   ) : (
                     <EmptyCandidates
-                      onPostJob={() => console.log("Navigate to job posting")}
+                      onPostJob={() => }
                     />
                   )}
                 </CardContent>

@@ -140,9 +140,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
     try {
       await logout();
       navigate("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    } catch (error) {}
   };
 
   const isActive = (href: string) => location.pathname === href;
@@ -299,9 +297,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                 } ${sidebarOpen ? "justify-start" : "justify-center"}`}
                 title={!sidebarOpen ? item.name : undefined}
               >
-                <Icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
-                  active ? "scale-110" : "group-hover:scale-110"
-                }`} />
+                <Icon
+                  className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
+                    active ? "scale-110" : "group-hover:scale-110"
+                  }`}
+                />
                 {sidebarOpen && (
                   <span className="font-medium transition-all duration-300">
                     {item.name}

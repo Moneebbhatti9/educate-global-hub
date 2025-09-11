@@ -171,34 +171,26 @@ const TeacherProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user?.id) {
-        console.log("No user ID available");
         return;
       }
 
-      console.log("Fetching profile for user ID:", user.id);
       setIsLoading(true);
       setError(null);
 
       try {
         const response = await teacherProfileAPI.getById(user.id);
-        console.log("Profile API response:", response);
 
         if (response.success && response.data) {
           // Update the profile state with fetched data
           const fetchedProfile = response.data;
-          console.log("Fetched profile data:", fetchedProfile);
 
           // Map API response to profile schema
           setProfile((prevProfile) => ({
             ...prevProfile,
             personalInfo: {
               ...prevProfile.personalInfo,
-              firstName:
-                fetchedProfile.user?.firstName ||
-                "",
-              lastName:
-                fetchedProfile.user?.lastName ||
-                "",
+              firstName: fetchedProfile.user?.firstName || "",
+              lastName: fetchedProfile.user?.lastName || "",
               email: fetchedProfile.user?.email || "",
               phone: fetchedProfile.phoneNumber || "",
               avatar: fetchedProfile.user?.avatarUrl || "",
@@ -353,10 +345,8 @@ const TeacherProfile = () => {
               : []
           );
         } else {
-          console.log("API response not successful:", response);
         }
       } catch (err) {
-        console.error("Error fetching teacher profile:", err);
         setError("Failed to load profile data");
       } finally {
         setIsLoading(false);
@@ -533,9 +523,7 @@ const TeacherProfile = () => {
       setEditingItem(null);
 
       // You can add a success toast here
-      console.log("Experience saved successfully:", experience);
     } catch (error) {
-      console.error("Failed to save experience:", error);
       // You can add an error toast here
     }
   };
@@ -546,10 +534,8 @@ const TeacherProfile = () => {
 
       if (response.success) {
         // You can add a success toast here
-        console.log("Employment deleted successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to delete employment:", error);
       // You can add an error toast here
     }
   };
@@ -586,10 +572,8 @@ const TeacherProfile = () => {
         setEditingItem(null);
 
         // You can add a success toast here
-        console.log("Education saved successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to save education:", error);
       // You can add an error toast here
     }
   };
@@ -600,10 +584,8 @@ const TeacherProfile = () => {
 
       if (response.success) {
         // You can add a success toast here
-        console.log("Education deleted successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to delete education:", error);
       // You can add an error toast here
     }
   };
@@ -625,9 +607,7 @@ const TeacherProfile = () => {
       setEditingItem(null);
 
       // You can add a success toast here
-      console.log("Qualification saved successfully:", qualification);
     } catch (error) {
-      console.error("Failed to save qualification:", error);
       // You can add an error toast here
     }
   };
@@ -644,10 +624,8 @@ const TeacherProfile = () => {
           )
         );
         // You can add a success toast here
-        console.log("Qualification deleted successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to delete qualification:", error);
       // You can add an error toast here
     }
   };
@@ -684,10 +662,8 @@ const TeacherProfile = () => {
         setEditingItem(null);
 
         // You can add a success toast here
-        console.log("Referee saved successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to save referee:", error);
       // You can add an error toast here
     }
   };
@@ -702,10 +678,8 @@ const TeacherProfile = () => {
           referees.filter((r) => r._id !== refereeId && r.id !== refereeId)
         );
         // You can add a success toast here
-        console.log("Referee deleted successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to delete referee:", error);
       // You can add an error toast here
       // You can add an error toast here
     }
@@ -746,10 +720,8 @@ const TeacherProfile = () => {
         setEditingItem(null);
 
         // You can add a success toast here
-        console.log("Certification saved successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to save certification:", error);
       // You can add an error toast here
     }
   };
@@ -766,10 +738,8 @@ const TeacherProfile = () => {
           )
         );
         // You can add a success toast here
-        console.log("Certification deleted successfully:", response.data);
       }
     } catch (error) {
-      console.error("Failed to delete certification:", error);
       // You can add an error toast here
     }
   };
@@ -799,11 +769,8 @@ const TeacherProfile = () => {
           setTravelPlans([...travelPlans, dependent]);
         }
         setEditingItem(null);
-        console.log("Dependent saved successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to save dependent:", error);
-    }
+    } catch (error) {}
   };
 
   const handleSaveActivity = async (activity: Activity) => {
@@ -831,11 +798,8 @@ const TeacherProfile = () => {
           setActivities([...activities, activity]);
         }
         setEditingItem(null);
-        console.log("Activity saved successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to save activity:", error);
-    }
+    } catch (error) {}
   };
 
   const handleSaveDevelopment = async (development: Development) => {
@@ -868,11 +832,8 @@ const TeacherProfile = () => {
           setDevelopments([...developments, development]);
         }
         setEditingItem(null);
-        console.log("Development saved successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to save development:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDeleteDevelopment = async (developmentId: string) => {
@@ -884,11 +845,8 @@ const TeacherProfile = () => {
             (d) => d._id !== developmentId && d.id !== developmentId
           )
         );
-        console.log("Development deleted successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to delete development:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDeleteMembership = async (membershipId: string) => {
@@ -900,11 +858,8 @@ const TeacherProfile = () => {
             (m) => m._id !== membershipId && m.id !== membershipId
           )
         );
-        console.log("Membership deleted successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to delete membership:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDeleteDependent = async (dependentId: string) => {
@@ -916,11 +871,8 @@ const TeacherProfile = () => {
             (d) => d._id !== dependentId && d.id !== dependentId
           )
         );
-        console.log("Dependent deleted successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to delete dependent:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDeleteActivity = async (activityId: string) => {
@@ -930,11 +882,8 @@ const TeacherProfile = () => {
         setActivities(
           activities.filter((a) => a._id !== activityId && a.id !== activityId)
         );
-        console.log("Activity deleted successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to delete activity:", error);
-    }
+    } catch (error) {}
   };
 
   const handleSaveMembership = async (membership: Membership) => {
@@ -964,11 +913,8 @@ const TeacherProfile = () => {
           setMemberships([...memberships, membership]);
         }
         setEditingItem(null);
-        console.log("Membership saved successfully:", response.data);
       }
-    } catch (error) {
-      console.error("Failed to save membership:", error);
-    }
+    } catch (error) {}
   };
 
   // Helper functions for editing and removing items
@@ -1018,16 +964,18 @@ const TeacherProfile = () => {
           professionalSummary: data.professionalSummary,
           careerObjectives: data.careerObjectives,
         }));
-        
+
         // Close the modal
         setShowSummaryModal(false);
-        console.log("Profile summary updated successfully");
       } else {
         throw new Error(response.message || "Failed to update profile summary");
       }
     } catch (error) {
-      console.error("Error updating profile summary:", error);
-      setError(error instanceof Error ? error.message : "Failed to update profile summary");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update profile summary"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -1074,20 +1022,19 @@ const TeacherProfile = () => {
         setOriginalProfile(null);
         setIsEditing(false);
         // You can add a success toast here
-        console.log("Profile updated successfully");
       } else {
         throw new Error(response.message || "Failed to update profile");
       }
     } catch (error) {
-      console.error("Error saving profile:", error);
-      setError(error instanceof Error ? error.message : "Failed to save profile");
+      setError(
+        error instanceof Error ? error.message : "Failed to save profile"
+      );
       // You can add an error toast here
     } finally {
       setIsLoading(false);
     }
   };
 
-  console.log("profile", profile);
   return (
     <DashboardLayout role="teacher">
       {/* Loading State */}
@@ -1456,7 +1403,9 @@ const TeacherProfile = () => {
                             variant="hero"
                             size="sm"
                             onClick={handleSaveProfile}
-                            disabled={isLoading || updateTeacherProfile.isPending}
+                            disabled={
+                              isLoading || updateTeacherProfile.isPending
+                            }
                           >
                             {isLoading || updateTeacherProfile.isPending ? (
                               <>
@@ -2194,7 +2143,6 @@ const TeacherProfile = () => {
                   ) : (
                     <div className="space-y-4">
                       {profile.qualifications.map((qualification) => {
-                        console.log(qualification);
                         return (
                           <div
                             key={qualification._id || qualification.id}

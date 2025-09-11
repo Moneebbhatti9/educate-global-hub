@@ -7,7 +7,10 @@ import { ChangeStatusModal } from "@/components/admin/ChangeStatusModal";
 import { DeleteUserModal } from "@/components/admin/DeleteUserModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { UserManagementSkeleton } from "@/components/skeletons/user-management-skeleton";
-import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import {
+  DashboardErrorFallback,
+  SectionErrorFallback,
+} from "@/components/ui/error-fallback";
 import { EmptySearchResults } from "@/components/ui/empty-state";
 import {
   AdminUser,
@@ -112,8 +115,8 @@ const UserManagement = () => {
           role: roleFilter !== "all" ? roleFilter : undefined,
           status: statusFilter !== "all" ? statusFilter : undefined,
         });
-        console.log("API Response:", response); // Debug log
-        console.log("Users data:", response.data.data); // Debug log
+        // Debug log
+        // Debug log
         setUsers(response.data.data);
         setPagination(response.data.pagination);
         // Show success toast for first load
@@ -125,9 +128,7 @@ const UserManagement = () => {
         ) {
           // Only show toast on initial load, not on filter changes
         }
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      }
+      } catch (error) {}
     };
 
     fetchUsers();
@@ -152,7 +153,7 @@ const UserManagement = () => {
   //     window.URL.revokeObjectURL(url);
   //     document.body.removeChild(a);
   //   } catch (error) {
-  //     console.error("Failed to export users:", error);
+  //
   //   }
   // };
 
@@ -269,9 +270,7 @@ const UserManagement = () => {
       });
       setUsers(response.data.data);
       setPagination(response.data.pagination);
-    } catch (error) {
-      console.error("Failed to add user:", error);
-    }
+    } catch (error) {}
   };
 
   const handleEditUser = async (userData: any) => {
@@ -297,9 +296,7 @@ const UserManagement = () => {
           setPagination(response.data.pagination);
         }
       }
-    } catch (error) {
-      console.error("Failed to edit user:", error);
-    }
+    } catch (error) {}
   };
 
   const handleStatusChange = async (
@@ -324,9 +321,7 @@ const UserManagement = () => {
       });
       setUsers(response.data.data);
       setPagination(response.data.pagination);
-    } catch (error) {
-      console.error("Failed to change user status:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -342,9 +337,7 @@ const UserManagement = () => {
       });
       setUsers(response.data.data);
       setPagination(response.data.pagination);
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-    }
+    } catch (error) {}
   };
 
   const openViewProfile = (user: AdminUser) => {
@@ -358,14 +351,12 @@ const UserManagement = () => {
   };
 
   const openChangeStatus = (user: AdminUser) => {
-    console.log("Opening change status for user:", user); // Debug log
+    // Debug log
     setSelectedUser(user);
     setChangeStatusOpen(true);
   };
 
   const openDeleteUser = (user: AdminUser) => {
-    console.log("openDeleteUser called with user:", user);
-    console.log("User ID fields:", { id: user.id, _id: user._id });
     setSelectedUser(user);
     setDeleteUserOpen(true);
   };

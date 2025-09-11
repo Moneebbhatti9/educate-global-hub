@@ -40,13 +40,11 @@ export const DeleteUserModal = ({
 
   const handleDelete = () => {
     const userId = userData.id || userData._id;
-    console.log("DeleteUserModal - userData:", userData);
-    console.log("DeleteUserModal - extracted userId:", userId);
+
     if (userId) {
       onDelete(userId);
       onOpenChange(false);
     } else {
-      console.error("DeleteUserModal - No valid userId found:", userData);
     }
   };
 

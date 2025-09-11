@@ -180,7 +180,6 @@ export const useFormSubmission = <T extends FieldValues>(
     try {
       await onSubmit(data);
     } catch (error) {
-      console.error("Form submission error:", error);
       throw error;
     }
   });
