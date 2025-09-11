@@ -44,6 +44,7 @@ import {
   Target,
   Image as ImageIcon,
   Save,
+  CloudCog,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
@@ -227,13 +228,14 @@ const SchoolProfile = () => {
 
     // Save handlers for each section
   const handleSaveSchoolInfo = async () => {
+    console.log("Saving school info");
     try {
-      const isValid = await schoolInfoForm.trigger();
-      if (!isValid) return;
+      // const isValid = await schoolInfoForm.trigger();
+      // console.log("Is valid:", isValid);
+      // if (!isValid) return;
 
       setUpdateError(null);
       const formData = schoolInfoForm.getValues();
-      
       // Prepare the payload for the API
       const updatePayload = {
         schoolName: formData.schoolName,
@@ -249,10 +251,11 @@ const SchoolProfile = () => {
         establishedYear: formData.establishedYear,
         registrationNumber: formData.registrationNumber,
       };
+      console.log("Form data:", updatePayload);
 
       // Call the API to update the profile
       const response = await updateSchoolProfile.mutateAsync(updatePayload);
-
+      console.log("Response:", response);
       if (response.success) {
         const updatedProfile = {
           ...profile,
@@ -708,7 +711,7 @@ const SchoolProfile = () => {
                         <Building className="w-5 h-5 mr-2" />
                         School Details & Contact Information
                       </CardTitle>
-                                             <div className="flex gap-2">
+                        <div className="flex gap-2">
                          {!isEditing ? (
                            <Button
                              variant="outline"

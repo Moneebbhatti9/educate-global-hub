@@ -925,6 +925,7 @@ const EditJob = () => {
                         id="salaryMin"
                         type="number"
                         placeholder="e.g., 4000"
+                        min={1}
                         {...register("salaryMin")}
                         className={
                           isFieldInvalid("salaryMin") ? "border-red-500" : ""

@@ -14,7 +14,7 @@ const Index = () => {
         <UserTypeSection />
         <FeaturesSection />
         {/* Job Advertisement Request Section */}
-        <section className="py-16 bg-muted/30">
+        {/* <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-heading font-bold text-3xl md:text-4xl text-foreground mb-4">
@@ -26,7 +26,7 @@ const Index = () => {
             </div>
             <JobAdRequestForm />
           </div>
-        </section>
+        </section> */}
       </main>
       <Footer />
     </div>

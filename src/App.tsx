@@ -16,7 +16,12 @@ import {
   ProfileCompletionRoute,
 } from "./components/ProtectedRoute";
 import { useScrollToTop } from "./hooks/useScrollToTop";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
+import {
+  initializeSecurityMonitoring,
+  validateSecurityHeaders,
+} from "./utils/security";
+import SecurityProvider from "./components/SecurityProvider";
 
 // Lazy load components
 const Index = lazy(() => import("./pages/Index"));
@@ -62,7 +67,9 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
 const JobManagement = lazy(() => import("./pages/admin/JobManagement"));
 const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
-const JobAdvertisementManagement = lazy(() => import("./pages/admin/JobAdvertisementManagement"));
+const JobAdvertisementManagement = lazy(
+  () => import("./pages/admin/JobAdvertisementManagement")
+);
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -211,17 +218,27 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize security monitoring on app startup
+  useEffect(() => {
+    initializeSecurityMonitoring();
+    validateSecurityHeaders();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <SecurityProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </SecurityProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

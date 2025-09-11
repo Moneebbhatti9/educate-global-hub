@@ -19,6 +19,10 @@ const apiClient: AxiosInstance = axios.create({
   timeout: API_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest", // CSRF protection
+    "Cache-Control": "no-cache, no-store, must-revalidate", // Prevent caching of sensitive data
+    Pragma: "no-cache",
+    Expires: "0",
   },
 });
 
