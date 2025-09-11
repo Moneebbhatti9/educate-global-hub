@@ -29,37 +29,37 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               to="/jobs"
-              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+              className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Find Jobs
             </Link>
             <Link
               to="/resources"
-              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+              className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Resources
             </Link>
             <Link
               to="/forum"
-              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+              className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Forum
             </Link>
             <Link
               to="/pricing"
-              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+              className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Pricing
             </Link>
             <Link
               to="/about"
-              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+              className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               About Us
             </Link>
             <Link
               to="/contact"
-              className="text-foreground hover:text-brand-primary font-medium transition-colors"
+              className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               Contant Us
             </Link>
@@ -110,35 +110,35 @@ const Navigation = () => {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t">
               <Link
                 to="/jobs"
-                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-all duration-300 hover:bg-brand-primary/5 hover:translate-x-1 rounded-md"
                 onClick={toggleMenu}
               >
                 Find Jobs
               </Link>
               <Link
                 to="/resources"
-                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-all duration-300 hover:bg-brand-primary/5 hover:translate-x-1 rounded-md"
                 onClick={toggleMenu}
               >
                 Resources
               </Link>
               <Link
                 to="/forum"
-                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-all duration-300 hover:bg-brand-primary/5 hover:translate-x-1 rounded-md"
                 onClick={toggleMenu}
               >
                 Forum
               </Link>
               <Link
                 to="/about"
-                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-all duration-300 hover:bg-brand-primary/5 hover:translate-x-1 rounded-md"
                 onClick={toggleMenu}
               >
                 About
               </Link>
               <Link
                 to="/contact"
-                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-colors"
+                className="block px-3 py-2 text-foreground hover:text-brand-primary font-medium transition-all duration-300 hover:bg-brand-primary/5 hover:translate-x-1 rounded-md"
                 onClick={toggleMenu}
               >
                 Contact

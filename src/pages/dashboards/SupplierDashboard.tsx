@@ -25,6 +25,8 @@ import {
   Eye,
   FileText,
 } from "lucide-react";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyJobPostings, EmptySearchResults } from "@/components/ui/empty-state";
 
 const SupplierDashboard = () => {
   const stats = [
