@@ -316,6 +316,8 @@ const PostJob = () => {
 
       navigate("/dashboard/school/job-post-success");
     } catch (error: unknown) {
+      console.error("Error submitting job:", error);
+
       // Handle specific authentication errors
       if (error && typeof error === "object" && "response" in error) {
         const apiError = error as { response?: { status?: number } };

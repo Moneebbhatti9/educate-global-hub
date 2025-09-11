@@ -189,7 +189,9 @@ export const useAuthQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Login error:", error);
+      },
     });
   };
 
@@ -203,7 +205,9 @@ export const useAuthQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Signup error:", error);
+      },
     });
   };
 
@@ -216,6 +220,7 @@ export const useAuthQueries = () => {
         queryClient.clear();
       },
       onError: (error) => {
+        console.error("Logout error:", error);
         // Clear cache even if logout fails
         queryClient.clear();
       },
@@ -226,7 +231,9 @@ export const useAuthQueries = () => {
   const useSendOTP = () => {
     return useMutation({
       mutationFn: (email: string) => authAPI.sendOTP(email),
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Send OTP error:", error);
+      },
     });
   };
 
@@ -240,7 +247,9 @@ export const useAuthQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Verify OTP error:", error);
+      },
     });
   };
 
@@ -248,7 +257,9 @@ export const useAuthQueries = () => {
   const usePasswordReset = () => {
     return useMutation({
       mutationFn: authAPI.passwordReset,
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Password reset error:", error);
+      },
     });
   };
 
@@ -256,7 +267,9 @@ export const useAuthQueries = () => {
   const usePasswordResetConfirm = () => {
     return useMutation({
       mutationFn: authAPI.passwordResetConfirm,
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Password reset confirmation error:", error);
+      },
     });
   };
 
@@ -264,7 +277,9 @@ export const useAuthQueries = () => {
   const useChangePassword = () => {
     return useMutation({
       mutationFn: authAPI.changePassword,
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Change password error:", error);
+      },
     });
   };
 
@@ -278,7 +293,9 @@ export const useAuthQueries = () => {
           queryClient.setQueryData(["profile"], response);
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Complete profile error:", error);
+      },
     });
   };
 
@@ -292,7 +309,9 @@ export const useAuthQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Upload avatar error:", error);
+      },
     });
   };
 

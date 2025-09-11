@@ -299,6 +299,7 @@ export const AddUserModal = ({
       onSuccess?.();
     } catch (error) {
       // Error handling is done in the useAdmin hook
+      console.error("Failed to save user:", error);
     }
   };
 

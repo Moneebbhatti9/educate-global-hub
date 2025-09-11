@@ -14,10 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Briefcase } from "lucide-react";
-import {
-  useCreateTeacherExperience,
-  useUpdateTeacherExperience,
-} from "@/apis/profiles";
+import { useCreateTeacherExperience, useUpdateTeacherExperience } from "@/apis/profiles";
 import { Experience, ExperienceRequest } from "@/apis/profiles";
 import { toast } from "sonner";
 
@@ -58,7 +55,7 @@ export const AddExperienceModal = ({
           experienceId: editingExperience.id,
           data: formData,
         });
-
+        
         if (response.success && response.data) {
           onSave(response.data);
           onOpenChange(false);
@@ -69,12 +66,12 @@ export const AddExperienceModal = ({
       } else {
         // Create new experience
         const response = await createExperienceMutation.mutateAsync(formData);
-
+        
         if (response.success && response.data) {
           onSave(response.data);
           onOpenChange(false);
           toast.success("Experience added successfully");
-
+          
           // Reset form
           setFormData({
             title: "",
@@ -91,6 +88,7 @@ export const AddExperienceModal = ({
         }
       }
     } catch (error) {
+      console.error("Error saving experience:", error);
       toast.error("An error occurred while saving the experience");
     }
   };
@@ -99,8 +97,7 @@ export const AddExperienceModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const isLoading =
-    createExperienceMutation.isPending || updateExperienceMutation.isPending;
+  const isLoading = createExperienceMutation.isPending || updateExperienceMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,21 +226,14 @@ export const AddExperienceModal = ({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            disabled={
-              !formData.title.trim() || !formData.employer.trim() || isLoading
-            }
+            disabled={!formData.title.trim() || !formData.employer.trim() || isLoading}
           >
-            {isLoading ? "Saving..." : editingExperience ? "Update" : "Add"}{" "}
-            Experience
+            {isLoading ? "Saving..." : editingExperience ? "Update" : "Add"} Experience
           </Button>
         </DialogFooter>
       </DialogContent>

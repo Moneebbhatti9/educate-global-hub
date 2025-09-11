@@ -51,11 +51,7 @@ import { ProfileSummaryModal } from "@/components/Modals/profile-summary-modal";
 import { AddProgramModal } from "@/components/Modals/add-program-modal";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { z } from "zod";
-import {
-  useSchoolProfileQueries,
-  Program,
-  useUpdateSchoolProfile,
-} from "@/apis/profiles";
+import { useSchoolProfileQueries, Program, useUpdateSchoolProfile } from "@/apis/profiles";
 
 // Schema for school information validation
 const schoolInfoSchema = z.object({
@@ -73,48 +69,44 @@ const schoolInfoSchema = z.object({
   registrationNumber: z.string().min(1, "Registration number is required"),
 });
 
+
+
 const SchoolProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [programs, setPrograms] = useState<Program[]>([]);
 
   // School profile API hook
-  const {
-    useCurrentSchoolProfile,
-    useCreateSchoolProgram,
-    useUpdateSchoolProgram,
-    useDeleteSchoolProgram,
+  const { 
+    useCurrentSchoolProfile, 
+    useCreateSchoolProgram, 
+    useUpdateSchoolProgram, 
+    useDeleteSchoolProgram 
   } = useSchoolProfileQueries();
-  const {
-    data: schoolProfileData,
-    isLoading,
-    error,
-    refetch,
-  } = useCurrentSchoolProfile();
-
+  const { data: schoolProfileData, isLoading, error, refetch } = useCurrentSchoolProfile();
+  
   // Program mutations
   const createProgramMutation = useCreateSchoolProgram();
   const updateProgramMutation = useUpdateSchoolProgram();
   const deleteProgramMutation = useDeleteSchoolProgram();
-
+  
   // School profile update mutation
   const updateSchoolProfile = useUpdateSchoolProfile();
-
+  
   // Error state for profile updates
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   // Log API states for debugging
   useEffect(() => {
     if (error) {
+      console.error("School profile API error:", error);
     }
   }, [error]);
 
   // Modal states
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showProgramModal, setShowProgramModal] = useState(false);
-  const [editingProgram, setEditingProgram] = useState<Program | undefined>(
-    undefined
-  );
+  const [editingProgram, setEditingProgram] = useState<Program | undefined>(undefined);
 
   // Initial empty profile state - will be populated by API
   const [profile, setProfile] = useState<{
@@ -185,12 +177,14 @@ const SchoolProfile = () => {
 
   // Fetch school profile data on component mount
   useEffect(() => {
+    console.log("Fetching school profile data...");
     refetch();
   }, [refetch]);
 
   // Update profile state when API data is received
   useEffect(() => {
     if (schoolProfileData?.success && schoolProfileData.data) {
+      console.log("School profile data received:", schoolProfileData.data);
       const apiData = schoolProfileData.data;
 
       // Create new profile with all API data
@@ -232,11 +226,12 @@ const SchoolProfile = () => {
     }
   }, [schoolProfileData]);
 
-  // Save handlers for each section
+    // Save handlers for each section
   const handleSaveSchoolInfo = async () => {
+    console.log("Saving school info");
     try {
       // const isValid = await schoolInfoForm.trigger();
-      //
+      // console.log("Is valid:", isValid);
       // if (!isValid) return;
 
       setUpdateError(null);
@@ -256,10 +251,11 @@ const SchoolProfile = () => {
         establishedYear: formData.establishedYear,
         registrationNumber: formData.registrationNumber,
       };
+      console.log("Form data:", updatePayload);
 
       // Call the API to update the profile
       const response = await updateSchoolProfile.mutateAsync(updatePayload);
-
+      console.log("Response:", response);
       if (response.success) {
         const updatedProfile = {
           ...profile,
@@ -269,26 +265,30 @@ const SchoolProfile = () => {
             schoolWebsite: formData.schoolWebsite || "",
           },
         };
-
+        
         // Update both current and original profile
         setProfile(updatedProfile);
         setOriginalProfile(updatedProfile);
         setIsEditing(false);
+        
+        console.log("School info updated successfully");
       } else {
         throw new Error(response.message || "Failed to update school info");
       }
     } catch (error) {
-      setUpdateError(
-        error instanceof Error ? error.message : "Failed to save school info"
-      );
+      console.error("Error saving school info:", error);
+      setUpdateError(error instanceof Error ? error.message : "Failed to save school info");
     }
   };
 
   const handleSaveAcademics = async () => {
     try {
       // API call would go here
+      console.log("Saving academics data:", programs);
       // Success notification would go here
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error saving academics data:", error);
+    }
   };
 
   // Modal handlers
@@ -316,18 +316,16 @@ const SchoolProfile = () => {
           professionalSummary: data.professionalSummary,
           careerObjectives: data.careerObjectives,
         }));
-
+        
         // Close the modal
         setShowSummaryModal(false);
+        console.log("School summary updated successfully");
       } else {
         throw new Error(response.message || "Failed to update school summary");
       }
     } catch (error) {
-      setUpdateError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update school summary"
-      );
+      console.error("Error updating school summary:", error);
+      setUpdateError(error instanceof Error ? error.message : "Failed to update school summary");
     }
   };
 
@@ -337,19 +335,19 @@ const SchoolProfile = () => {
         // Update existing program
         const programId = editingProgram._id || editingProgram.id;
         if (programId) {
-          await updateProgramMutation.mutateAsync({
-            programId,
-            data: {
-              programName: program.programName,
-              educationLevel: program.educationLevel,
-              curriculum: program.curriculum,
-              ageRange: program.ageRange,
-              coreSubjects: program.coreSubjects,
-              description: program.description,
-              admissionRequirements: program.admissionRequirements,
-              isActive: program.isActive,
-            },
-          });
+                  await updateProgramMutation.mutateAsync({
+          programId,
+          data: {
+            programName: program.programName,
+            educationLevel: program.educationLevel,
+            curriculum: program.curriculum,
+            ageRange: program.ageRange,
+            coreSubjects: program.coreSubjects,
+            description: program.description,
+            admissionRequirements: program.admissionRequirements,
+            isActive: program.isActive,
+          },
+        });
         }
       } else {
         // Create new program
@@ -364,12 +362,14 @@ const SchoolProfile = () => {
           isActive: program.isActive,
         });
       }
-
+      
       setEditingProgram(undefined);
       setShowProgramModal(false);
       // Refresh profile data to get updated programs
       refetch();
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error saving program:", error);
+    }
   };
 
   const removeProgram = async (id: string) => {
@@ -379,7 +379,9 @@ const SchoolProfile = () => {
         // Refresh profile data to get updated programs
         refetch();
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error deleting program:", error);
+    }
   };
 
   const editProgram = (program: Program) => {
@@ -397,9 +399,7 @@ const SchoolProfile = () => {
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">
-                    Loading school profile...
-                  </p>
+                  <p className="text-muted-foreground">Loading school profile...</p>
                 </div>
               </div>
             </CardContent>
@@ -412,9 +412,7 @@ const SchoolProfile = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
-                  <p className="text-destructive mb-4">
-                    Failed to load school profile
-                  </p>
+                  <p className="text-destructive mb-4">Failed to load school profile</p>
                   <Button onClick={() => refetch()} variant="outline">
                     Try Again
                   </Button>
@@ -476,8 +474,7 @@ const SchoolProfile = () => {
                       </div>
                       <div className="flex items-center">
                         <Users className="w-4 h-4 mr-1" />
-                        {profile.genderType} • {profile.ageGroup.length} age
-                        groups
+                        {profile.genderType} • {profile.ageGroup.length} age groups
                       </div>
                       <div className="flex items-center">
                         <Globe className="w-4 h-4 mr-1" />
@@ -487,6 +484,7 @@ const SchoolProfile = () => {
                   </div>
 
                   <div className="flex space-x-2">
+
                     <Button variant="hero">
                       <Download className="w-4 h-4 mr-2" />
                       School Brochure
@@ -544,6 +542,7 @@ const SchoolProfile = () => {
                         {profile.aboutSchool}
                       </p>
                     </div>
+
                   </CardContent>
                 </Card>
 
@@ -557,24 +556,18 @@ const SchoolProfile = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          Established
-                        </span>
+                        <span className="text-muted-foreground">Established</span>
                         <span className="font-semibold">
                           {profile.schoolInfo.establishedYear}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Type</span>
-                        <span className="font-semibold">
-                          {profile.schoolType}
-                        </span>
+                        <span className="font-semibold">{profile.schoolType}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Size</span>
-                        <span className="font-semibold">
-                          {profile.schoolSize}
-                        </span>
+                        <span className="font-semibold">{profile.schoolSize}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">
@@ -635,8 +628,7 @@ const SchoolProfile = () => {
                       <div className="flex items-center space-x-3">
                         <MapPin className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {profile.schoolInfo.address},{" "}
-                          {profile.schoolInfo.city}
+                          {profile.schoolInfo.address}, {profile.schoolInfo.city}
                         </span>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -719,58 +711,58 @@ const SchoolProfile = () => {
                         <Building className="w-5 h-5 mr-2" />
                         School Details & Contact Information
                       </CardTitle>
-                      <div className="flex gap-2">
-                        {!isEditing ? (
-                          <Button
-                            variant="outline"
-                            onClick={() => setIsEditing(true)}
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Information
-                          </Button>
-                        ) : (
-                          <>
-                            <Button
-                              variant="outline"
-                              onClick={handleSaveSchoolInfo}
-                              disabled={updateSchoolProfile.isPending}
-                            >
-                              {updateSchoolProfile.isPending ? (
-                                <>
-                                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="w-4 h-4 mr-2" />
-                                  Save Changes
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setIsEditing(false);
-                                // Restore original values on cancel
-                                setProfile(originalProfile);
-                                schoolInfoForm.reset(
-                                  originalProfile.schoolInfo
-                                );
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                        <div className="flex gap-2">
+                         {!isEditing ? (
+                           <Button
+                             variant="outline"
+                             onClick={() => setIsEditing(true)}
+                           >
+                             <Edit className="w-4 h-4 mr-2" />
+                             Edit Information
+                           </Button>
+                         ) : (
+                           <>
+                             <Button
+                               variant="outline"
+                               onClick={handleSaveSchoolInfo}
+                               disabled={updateSchoolProfile.isPending}
+                             >
+                               {updateSchoolProfile.isPending ? (
+                                 <>
+                                   <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                                   Saving...
+                                 </>
+                               ) : (
+                                 <>
+                                   <Save className="w-4 h-4 mr-2" />
+                                   Save Changes
+                                 </>
+                               )}
+                             </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => {
+                                 setIsEditing(false);
+                                 // Restore original values on cancel
+                                 setProfile(originalProfile);
+                                 schoolInfoForm.reset(originalProfile.schoolInfo);
+                               }}
+                             >
+                               Cancel
+                             </Button>
+                           </>
+                         )}
+                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     {updateError && (
                       <div className="mb-4">
                         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm text-red-700">{updateError}</p>
+                          <p className="text-sm text-red-700">
+                            {updateError}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -782,11 +774,7 @@ const SchoolProfile = () => {
                             id="schoolName"
                             {...schoolInfoForm.register("schoolName")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("schoolName")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("schoolName") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("schoolName") && (
                             <p className="text-sm text-destructive mt-1">
@@ -802,11 +790,7 @@ const SchoolProfile = () => {
                             type="email"
                             {...schoolInfoForm.register("schoolEmail")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("schoolEmail")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("schoolEmail") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("schoolEmail") && (
                             <p className="text-sm text-destructive mt-1">
@@ -816,36 +800,22 @@ const SchoolProfile = () => {
                         </div>
 
                         <div>
-                          <Label htmlFor="schoolContactNumber">
-                            Contact Number *
-                          </Label>
+                          <Label htmlFor="schoolContactNumber">Contact Number *</Label>
                           <Input
                             id="schoolContactNumber"
                             {...schoolInfoForm.register("schoolContactNumber")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid(
-                                "schoolContactNumber"
-                              )
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("schoolContactNumber") ? "border-destructive" : ""}
                           />
-                          {schoolInfoForm.isFieldInvalid(
-                            "schoolContactNumber"
-                          ) && (
+                          {schoolInfoForm.isFieldInvalid("schoolContactNumber") && (
                             <p className="text-sm text-destructive mt-1">
-                              {schoolInfoForm.getFieldError(
-                                "schoolContactNumber"
-                              )}
+                              {schoolInfoForm.getFieldError("schoolContactNumber")}
                             </p>
                           )}
                         </div>
 
                         <div>
-                          <Label htmlFor="alternateContact">
-                            Alternate Contact
-                          </Label>
+                          <Label htmlFor="alternateContact">Alternate Contact</Label>
                           <Input
                             id="alternateContact"
                             {...schoolInfoForm.register("alternateContact")}
@@ -863,18 +833,12 @@ const SchoolProfile = () => {
                         </div>
 
                         <div>
-                          <Label htmlFor="establishedYear">
-                            Established Year *
-                          </Label>
+                          <Label htmlFor="establishedYear">Established Year *</Label>
                           <Input
                             id="establishedYear"
                             {...schoolInfoForm.register("establishedYear")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("establishedYear")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("establishedYear") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("establishedYear") && (
                             <p className="text-sm text-destructive mt-1">
@@ -886,28 +850,16 @@ const SchoolProfile = () => {
 
                       <div className="space-y-4">
                         <div>
-                          <Label htmlFor="registrationNumber">
-                            Registration Number *
-                          </Label>
+                          <Label htmlFor="registrationNumber">Registration Number *</Label>
                           <Input
                             id="registrationNumber"
                             {...schoolInfoForm.register("registrationNumber")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid(
-                                "registrationNumber"
-                              )
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("registrationNumber") ? "border-destructive" : ""}
                           />
-                          {schoolInfoForm.isFieldInvalid(
-                            "registrationNumber"
-                          ) && (
+                          {schoolInfoForm.isFieldInvalid("registrationNumber") && (
                             <p className="text-sm text-destructive mt-1">
-                              {schoolInfoForm.getFieldError(
-                                "registrationNumber"
-                              )}
+                              {schoolInfoForm.getFieldError("registrationNumber")}
                             </p>
                           )}
                         </div>
@@ -918,11 +870,7 @@ const SchoolProfile = () => {
                             id="address"
                             {...schoolInfoForm.register("address")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("address")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("address") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("address") && (
                             <p className="text-sm text-destructive mt-1">
@@ -937,11 +885,7 @@ const SchoolProfile = () => {
                             id="city"
                             {...schoolInfoForm.register("city")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("city")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("city") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("city") && (
                             <p className="text-sm text-destructive mt-1">
@@ -956,11 +900,7 @@ const SchoolProfile = () => {
                             id="state"
                             {...schoolInfoForm.register("state")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("state")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("state") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("state") && (
                             <p className="text-sm text-destructive mt-1">
@@ -975,11 +915,7 @@ const SchoolProfile = () => {
                             id="country"
                             {...schoolInfoForm.register("country")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("country")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("country") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("country") && (
                             <p className="text-sm text-destructive mt-1">
@@ -994,11 +930,7 @@ const SchoolProfile = () => {
                             id="zipCode"
                             {...schoolInfoForm.register("zipCode")}
                             disabled={!isEditing}
-                            className={
-                              schoolInfoForm.isFieldInvalid("zipCode")
-                                ? "border-destructive"
-                                : ""
-                            }
+                            className={schoolInfoForm.isFieldInvalid("zipCode") ? "border-destructive" : ""}
                           />
                           {schoolInfoForm.isFieldInvalid("zipCode") && (
                             <p className="text-sm text-destructive mt-1">
@@ -1037,114 +969,79 @@ const SchoolProfile = () => {
                   <CardContent>
                     <div className="space-y-6">
                       {programs.map((program) => (
-                        <div
-                          key={program._id || program.id}
-                          className="border rounded-lg p-4"
-                        >
+                        <div key={program._id || program.id} className="border rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg">
-                                {program.programName}
-                              </h3>
+                              <h3 className="font-semibold text-lg">{program.programName}</h3>
                               <p className="text-brand-primary font-medium">
                                 {program.curriculum} • {program.educationLevel}
                               </p>
                               <p className="text-sm text-muted-foreground mb-2">
-                                Age Range: {program.ageRange} • Education Level:{" "}
-                                {program.educationLevel}
+                                Age Range: {program.ageRange} • Education Level: {program.educationLevel}
                               </p>
                               {program.isActive !== undefined && (
                                 <div className="flex items-center mb-2">
-                                  <Badge
-                                    variant={
-                                      program.isActive ? "default" : "secondary"
-                                    }
-                                    className={
-                                      program.isActive
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-gray-100 text-gray-800"
-                                    }
+                                  <Badge 
+                                    variant={program.isActive ? "default" : "secondary"}
+                                    className={program.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
                                   >
                                     {program.isActive ? "Active" : "Inactive"}
                                   </Badge>
                                 </div>
                               )}
-                              <p className="text-sm mb-3">
-                                {program.description}
-                              </p>
+                              <p className="text-sm mb-3">{program.description}</p>
 
-                              {program.coreSubjects &&
-                                program.coreSubjects.length > 0 && (
-                                  <div className="mb-3">
-                                    <h4 className="font-medium text-sm mb-2">
-                                      Core Subjects:
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1">
-                                      {program.coreSubjects.map(
-                                        (subject, idx) => (
-                                          <Badge
-                                            key={idx}
-                                            variant="secondary"
-                                            className="text-xs"
-                                          >
-                                            {subject}
-                                          </Badge>
-                                        )
-                                      )}
-                                    </div>
+                              {program.coreSubjects && program.coreSubjects.length > 0 && (
+                                <div className="mb-3">
+                                  <h4 className="font-medium text-sm mb-2">Core Subjects:</h4>
+                                  <div className="flex flex-wrap gap-1">
+                                    {program.coreSubjects.map((subject, idx) => (
+                                      <Badge key={idx} variant="secondary" className="text-xs">
+                                        {subject}
+                                      </Badge>
+                                    ))}
                                   </div>
-                                )}
+                                </div>
+                              )}
 
-                              {program.admissionRequirements &&
-                                program.admissionRequirements.length > 0 && (
-                                  <div>
-                                    <h4 className="font-medium text-sm mb-2">
-                                      Admission Requirements:
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1">
-                                      {program.admissionRequirements.map(
-                                        (req, idx) => (
-                                          <Badge
-                                            key={idx}
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            {req}
-                                          </Badge>
-                                        )
-                                      )}
-                                    </div>
+                              {program.admissionRequirements && program.admissionRequirements.length > 0 && (
+                                <div>
+                                  <h4 className="font-medium text-sm mb-2">Admission Requirements:</h4>
+                                  <div className="flex flex-wrap gap-1">
+                                    {program.admissionRequirements.map((req, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">
+                                        {req}
+                                      </Badge>
+                                    ))}
                                   </div>
-                                )}
+                                </div>
+                              )}
                             </div>
-                            <div className="flex space-x-2 ml-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => editProgram(program)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="text-destructive"
-                                size="sm"
-                                onClick={() =>
-                                  removeProgram(program._id || program.id || "")
-                                }
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                              <div className="flex space-x-2 ml-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => editProgram(program)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="text-destructive"
+                                  size="sm"
+                                  onClick={() => removeProgram(program._id || program.id || "")}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                           </div>
+                          
                         </div>
                       ))}
                       {programs.length === 0 && (
                         <div className="text-center py-12">
                           <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                          <h3 className="font-semibold mb-2">
-                            No academic programs
-                          </h3>
+                          <h3 className="font-semibold mb-2">No academic programs</h3>
                           <p className="text-muted-foreground mb-4">
                             Add your school's academic programs and curricula.
                           </p>
@@ -1175,16 +1072,13 @@ const SchoolProfile = () => {
                       School Media & Gallery
                     </CardTitle>
                     <CardDescription>
-                      Upload photos, videos, and other media showcasing your
-                      school.
+                      Upload photos, videos, and other media showcasing your school.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                       <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="font-semibold mb-2">
-                        Upload School Media
-                      </h3>
+                      <h3 className="font-semibold mb-2">Upload School Media</h3>
                       <p className="text-muted-foreground mb-4">
                         Add photos of campus, classrooms, events, and facilities
                       </p>

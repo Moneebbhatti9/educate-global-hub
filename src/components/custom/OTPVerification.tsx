@@ -68,6 +68,7 @@ const OTPVerification = ({
       try {
         await onVerify(otpString);
       } catch (error) {
+        console.error("OTP verification error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -84,7 +85,9 @@ const OTPVerification = ({
     if (onResend) {
       try {
         await onResend();
-      } catch (error) {}
+      } catch (error) {
+        console.error("Resend OTP error:", error);
+      }
     }
   };
 

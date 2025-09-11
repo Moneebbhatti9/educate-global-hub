@@ -3,16 +3,23 @@ import { STORAGE_KEYS } from "../types/auth";
 
 // Debug utility to check storage state
 export const debugStorage = () => {
+  console.log("🔍 Debugging storage state...");
+
   Object.values(STORAGE_KEYS).forEach((key) => {
     try {
       const secureValue = secureLocalStorage.getItem(key);
       const localValue = localStorage.getItem(key);
 
+      console.log(`Key: ${key}`);
+      console.log(`  Secure Storage:`, secureValue);
+      console.log(`  Local Storage:`, localValue);
       console.log(
         `  Local Storage (parsed):`,
         localValue ? JSON.parse(localValue) : null
       );
-    } catch (error) {}
+    } catch (error) {
+      console.error(`Error reading key ${key}:`, error);
+    }
   });
 };
 
@@ -27,12 +34,14 @@ const clearCorruptedData = () => {
           JSON.parse(oldValue);
         } catch {
           // If parsing fails, remove the corrupted data
-
+          console.log(`Removing corrupted data for key: ${key}`);
           localStorage.removeItem(key);
         }
       }
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error clearing corrupted data:", error);
+  }
 };
 
 // Test secure storage functionality
@@ -46,6 +55,7 @@ const testSecureStorage = () => {
     const retrievedValue = secureLocalStorage.getItem(testKey);
 
     if (JSON.stringify(retrievedValue) === JSON.stringify(testValue)) {
+      console.log("✅ Secure storage is working correctly");
     } else {
       console.warn(
         "⚠️ Secure storage test failed, falling back to localStorage"
@@ -54,7 +64,9 @@ const testSecureStorage = () => {
 
     // Clean up test data
     secureLocalStorage.removeItem(testKey);
-  } catch (error) {}
+  } catch (error) {
+    console.error("❌ Secure storage test failed:", error);
+  }
 };
 
 // Clear corrupted data on module load
@@ -82,10 +94,13 @@ export const secureStorage = {
         secureLocalStorage.setItem(key, JSON.stringify(value));
       }
     } catch (error) {
+      console.error("Error setting secure storage item:", error);
       // Fallback to regular localStorage if secure storage fails
       try {
         localStorage.setItem(key, JSON.stringify(value));
-      } catch (fallbackError) {}
+      } catch (fallbackError) {
+        console.error("Fallback storage also failed:", fallbackError);
+      }
     }
   },
 
@@ -95,11 +110,13 @@ export const secureStorage = {
       const value = secureLocalStorage.getItem(key);
       return value as T;
     } catch (error) {
+      console.error("Error getting secure storage item:", error);
       // Fallback to regular localStorage
       try {
         const value = localStorage.getItem(key);
         return value ? JSON.parse(value) : null;
       } catch (fallbackError) {
+        console.error("Fallback storage retrieval also failed:", fallbackError);
         return null;
       }
     }
@@ -110,10 +127,13 @@ export const secureStorage = {
     try {
       secureLocalStorage.removeItem(key);
     } catch (error) {
+      console.error("Error removing secure storage item:", error);
       // Fallback to regular localStorage
       try {
         localStorage.removeItem(key);
-      } catch (fallbackError) {}
+      } catch (fallbackError) {
+        console.error("Fallback storage removal also failed:", fallbackError);
+      }
     }
   },
 
@@ -142,7 +162,9 @@ export const sessionStorage = {
       const stringValue =
         typeof value === "string" ? value : JSON.stringify(value);
       window.sessionStorage.setItem(key, stringValue);
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error setting session storage item:", error);
+    }
   },
 
   getItem: <T = unknown>(key: string): T | null => {
@@ -150,6 +172,7 @@ export const sessionStorage = {
       const value = window.sessionStorage.getItem(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
+      console.error("Error getting session storage item:", error);
       return null;
     }
   },
@@ -157,12 +180,16 @@ export const sessionStorage = {
   removeItem: (key: string): void => {
     try {
       window.sessionStorage.removeItem(key);
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error removing session storage item:", error);
+    }
   },
 
   clear: (): void => {
     try {
       window.sessionStorage.clear();
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error clearing session storage:", error);
+    }
   },
 };

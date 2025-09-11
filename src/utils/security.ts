@@ -126,6 +126,8 @@ export class SecurityLogger {
     activity: string,
     details?: Record<string, unknown>
   ): void {
+    console.error(`🚨 Suspicious Activity: ${activity}`, details);
+
     // In production, immediately alert security team
     // Example: alertSecurityTeam(activity, details);
   }

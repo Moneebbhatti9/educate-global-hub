@@ -148,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }
       } catch (error) {
+        console.error("Auth initialization error:", error);
         // Clear all auth data on error
         secureStorage.clearAuth();
         dispatch({
@@ -222,6 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await authAPI.logout();
     } catch (error) {
+      console.error("Logout API error:", error);
     } finally {
       secureStorage.clearAuth();
       dispatch({ type: "LOGOUT" });
@@ -266,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Debug: Log the full response
       if (import.meta.env.DEV) {
+        console.log("🔐 OTP Verification - Full response:", response);
       }
 
       if (response.success) {
@@ -275,6 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // Debug: Log the tokens received from OTP verification
           if (import.meta.env.DEV) {
+            console.log("🔐 OTP Verification - Tokens received:");
             console.log(
               "  Access Token:",
               accessToken ? "received" : "missing"
@@ -283,6 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               "  Refresh Token:",
               refreshToken ? "received" : "missing"
             );
+            console.log("  User:", user ? "received" : "missing");
           }
 
           secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
@@ -297,7 +302,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const storedRefreshToken = secureStorage.getItem<string>(
               STORAGE_KEYS.REFRESH_TOKEN
             );
-
+            console.log("💾 Tokens stored in storage:");
+            console.log("  Access Token stored:", storedToken ? "yes" : "no");
             console.log(
               "  Refresh Token stored:",
               storedRefreshToken ? "yes" : "no"

@@ -790,13 +790,7 @@ export interface Program {
   id?: string;
   schoolId?: string;
   programName: string;
-  educationLevel:
-    | "Early Years"
-    | "Elementary"
-    | "Primary"
-    | "Secondary"
-    | "High School"
-    | "All Levels";
+  educationLevel: "Early Years" | "Elementary" | "Primary" | "Secondary" | "High School" | "All Levels";
   curriculum: string;
   ageRange: string;
   coreSubjects: string[];
@@ -811,13 +805,7 @@ export interface Program {
 
 export interface ProgramRequest {
   programName: string;
-  educationLevel:
-    | "Early Years"
-    | "Elementary"
-    | "Primary"
-    | "Secondary"
-    | "High School"
-    | "All Levels";
+  educationLevel: "Early Years" | "Elementary" | "Primary" | "Secondary" | "High School" | "All Levels";
   curriculum: string;
   ageRange: string;
   coreSubjects: string[];
@@ -1003,7 +991,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-search"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create/Update teacher profile error:", error);
+      },
     });
   };
 
@@ -1019,7 +1009,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-search"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update teacher profile error:", error);
+      },
     });
   };
 
@@ -1037,7 +1029,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create teacher experience error:", error);
+      },
     });
   };
 
@@ -1061,7 +1055,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update teacher experience error:", error);
+      },
     });
   };
 
@@ -1079,7 +1075,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Delete teacher experience error:", error);
+      },
     });
   };
 
@@ -1097,7 +1095,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create teacher education error:", error);
+      },
     });
   };
 
@@ -1115,7 +1115,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Delete teacher education error:", error);
+      },
     });
   };
 
@@ -1133,7 +1135,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create teacher qualification error:", error);
+      },
     });
   };
 
@@ -1157,7 +1161,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update teacher qualification error:", error);
+      },
     });
   };
 
@@ -1175,7 +1181,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Delete teacher qualification error:", error);
+      },
     });
   };
 
@@ -1193,7 +1201,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create teacher referee error:", error);
+      },
     });
   };
 
@@ -1217,7 +1227,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update teacher referee error:", error);
+      },
     });
   };
 
@@ -1235,7 +1247,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Delete teacher referee error:", error);
+      },
     });
   };
 
@@ -1253,7 +1267,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create teacher certification error:", error);
+      },
     });
   };
 
@@ -1277,7 +1293,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update teacher certification error:", error);
+      },
     });
   };
 
@@ -1295,7 +1313,9 @@ export const useTeacherProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Delete teacher certification error:", error);
+      },
     });
   };
 
@@ -1559,7 +1579,9 @@ export const useSchoolProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["school-search"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create/Update school profile error:", error);
+      },
     });
   };
 
@@ -1575,7 +1597,9 @@ export const useSchoolProfileQueries = () => {
           queryClient.invalidateQueries({ queryKey: ["school-search"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update school profile error:", error);
+      },
     });
   };
 
@@ -1586,34 +1610,29 @@ export const useSchoolProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current school profile to refresh programs
-          queryClient.invalidateQueries({
-            queryKey: ["school-profile", "current"],
-          });
+          queryClient.invalidateQueries({ queryKey: ["school-profile", "current"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Create school program error:", error);
+      },
     });
   };
 
   // Update school program mutation
   const useUpdateSchoolProgram = () => {
     return useMutation({
-      mutationFn: ({
-        programId,
-        data,
-      }: {
-        programId: string;
-        data: ProgramRequest;
-      }) => schoolProfileAPI.updateProgram(programId, data),
+      mutationFn: ({ programId, data }: { programId: string; data: ProgramRequest }) =>
+        schoolProfileAPI.updateProgram(programId, data),
       onSuccess: (response) => {
         if (response.success && response.data) {
           // Invalidate current school profile to refresh programs
-          queryClient.invalidateQueries({
-            queryKey: ["school-profile", "current"],
-          });
+          queryClient.invalidateQueries({ queryKey: ["school-profile", "current"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Update school program error:", error);
+      },
     });
   };
 
@@ -1624,12 +1643,12 @@ export const useSchoolProfileQueries = () => {
       onSuccess: (response) => {
         if (response.success) {
           // Invalidate current school profile to refresh programs
-          queryClient.invalidateQueries({
-            queryKey: ["school-profile", "current"],
-          });
+          queryClient.invalidateQueries({ queryKey: ["school-profile", "current"] });
         }
       },
-      onError: (error) => {},
+      onError: (error) => {
+        console.error("Delete school program error:", error);
+      },
     });
   };
 
@@ -1664,7 +1683,9 @@ export const useCreateTeacherEducation = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Create teacher education error:", error);
+    },
   });
 };
 
@@ -1683,7 +1704,9 @@ export const useDeleteTeacherEducation = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Delete teacher education error:", error);
+    },
   });
 };
 
@@ -1708,7 +1731,9 @@ export const useUpdateTeacherEducation = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update teacher education error:", error);
+    },
   });
 };
 
@@ -1728,7 +1753,9 @@ export const useCreateTeacherExperience = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Create teacher experience error:", error);
+    },
   });
 };
 
@@ -1753,7 +1780,9 @@ export const useUpdateTeacherExperience = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update teacher experience error:", error);
+    },
   });
 };
 
@@ -1772,7 +1801,9 @@ export const useDeleteTeacherExperience = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Delete teacher experience error:", error);
+    },
   });
 };
 
@@ -1792,7 +1823,9 @@ export const useCreateTeacherQualification = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Create teacher qualification error:", error);
+    },
   });
 };
 
@@ -1817,7 +1850,9 @@ export const useUpdateTeacherQualification = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update teacher qualification error:", error);
+    },
   });
 };
 
@@ -1836,7 +1871,9 @@ export const useDeleteTeacherQualification = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Delete teacher qualification error:", error);
+    },
   });
 };
 
@@ -1856,7 +1893,9 @@ export const useCreateTeacherReferee = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Create teacher referee error:", error);
+    },
   });
 };
 
@@ -1881,7 +1920,9 @@ export const useUpdateTeacherReferee = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update teacher referee error:", error);
+    },
   });
 };
 
@@ -1900,7 +1941,9 @@ export const useDeleteTeacherReferee = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Delete teacher referee error:", error);
+    },
   });
 };
 
@@ -1920,7 +1963,9 @@ export const useCreateTeacherCertification = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Create teacher certification error:", error);
+    },
   });
 };
 
@@ -1945,7 +1990,9 @@ export const useUpdateTeacherCertification = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-profile"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update teacher certification error:", error);
+    },
   });
 };
 
@@ -2153,7 +2200,9 @@ export const useUpdateSchoolProfile = () => {
         queryClient.invalidateQueries({ queryKey: ["school-search"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update school profile error:", error);
+    },
   });
 };
 
@@ -2170,6 +2219,8 @@ export const useUpdateTeacherProfile = () => {
         queryClient.invalidateQueries({ queryKey: ["teacher-search"] });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Update teacher profile error:", error);
+    },
   });
 };

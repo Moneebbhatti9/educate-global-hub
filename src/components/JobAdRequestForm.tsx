@@ -122,9 +122,9 @@ const JobAdRequestForm = () => {
     setter: (value: string) => void
   ) => {
     if (item.trim()) {
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
-        [field]: [...prev[field], item.trim()],
+        [field]: [...prev[field], item.trim()]
       }));
       setter("");
     }
@@ -134,19 +134,19 @@ const JobAdRequestForm = () => {
     index: number,
     field: "subjects" | "benefits" | "requirements"
   ) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index),
+      [field]: prev[field].filter((_, i) => i !== index)
     }));
   };
 
   const handleCountryChange = (country: Country) => {
-    setFormData((prev) => ({ ...prev, country: country.name }));
+    setFormData(prev => ({ ...prev, country: country.name }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+    console.log("Job Ad Request Submitted:", formData);
     // Handle form submission
   };
 
@@ -162,8 +162,7 @@ const JobAdRequestForm = () => {
           Request Job Advertisement
         </CardTitle>
         <CardDescription>
-          Submit your job posting request with advertisement preferences. Our
-          team will review and publish your listing.
+          Submit your job posting request with advertisement preferences. Our team will review and publish your listing.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -180,12 +179,7 @@ const JobAdRequestForm = () => {
                 <Input
                   id="contactName"
                   value={formData.contactName}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      contactName: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, contactName: e.target.value }))}
                   placeholder="Your full name"
                 />
               </div>
@@ -195,12 +189,7 @@ const JobAdRequestForm = () => {
                   id="applicantEmail"
                   type="email"
                   value={formData.applicantEmail}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      applicantEmail: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, applicantEmail: e.target.value }))}
                   placeholder="contact@school.com"
                 />
               </div>
@@ -209,12 +198,7 @@ const JobAdRequestForm = () => {
                 <Input
                   id="contactPhone"
                   value={formData.contactPhone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      contactPhone: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
                   placeholder="+971 50 123 4567"
                 />
               </div>
@@ -223,12 +207,7 @@ const JobAdRequestForm = () => {
                 <Input
                   id="organization"
                   value={formData.organization}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      organization: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, organization: e.target.value }))}
                   placeholder="School or Institution Name"
                 />
               </div>
@@ -247,9 +226,7 @@ const JobAdRequestForm = () => {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, title: e.target.value }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Mathematics Teacher - Secondary"
                 />
               </div>
@@ -257,12 +234,7 @@ const JobAdRequestForm = () => {
                 <Label htmlFor="positionCategory">Position Category *</Label>
                 <Select
                   value={formData.positionCategory}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      positionCategory: value,
-                    }))
-                  }
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, positionCategory: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -283,9 +255,7 @@ const JobAdRequestForm = () => {
                 <Label htmlFor="educationLevel">Education Level *</Label>
                 <Select
                   value={formData.educationLevel}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, educationLevel: value }))
-                  }
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, educationLevel: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select level" />
@@ -303,9 +273,7 @@ const JobAdRequestForm = () => {
                 <Label htmlFor="jobType">Job Type *</Label>
                 <Select
                   value={formData.jobType}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, jobType: value }))
-                  }
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, jobType: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -326,12 +294,7 @@ const JobAdRequestForm = () => {
                   type="number"
                   min="0"
                   value={formData.minExperience}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      minExperience: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, minExperience: e.target.value }))}
                   placeholder="0"
                 />
               </div>
@@ -357,9 +320,7 @@ const JobAdRequestForm = () => {
                 <Input
                   id="city"
                   value={formData.city}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, city: e.target.value }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
                   placeholder="Enter city name"
                 />
               </div>
@@ -371,11 +332,7 @@ const JobAdRequestForm = () => {
             <Label>Subjects/Specializations</Label>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.subjects.map((subject, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="flex items-center space-x-1"
-                >
+                <Badge key={index} variant="secondary" className="flex items-center space-x-1">
                   <span>{subject}</span>
                   <Button
                     type="button"
@@ -394,11 +351,7 @@ const JobAdRequestForm = () => {
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
                 placeholder="Enter subject"
-                onKeyPress={(e) =>
-                  e.key === "Enter" &&
-                  (e.preventDefault(),
-                  addItem(newSubject, "subjects", setNewSubject))
-                }
+                onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addItem(newSubject, "subjects", setNewSubject))}
               />
               <Button
                 type="button"
@@ -416,12 +369,7 @@ const JobAdRequestForm = () => {
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Describe the role, responsibilities, and working environment..."
               rows={6}
             />
@@ -432,11 +380,7 @@ const JobAdRequestForm = () => {
             <Label>Requirements</Label>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.requirements.map((requirement, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="flex items-center space-x-1"
-                >
+                <Badge key={index} variant="secondary" className="flex items-center space-x-1">
                   <span>{requirement}</span>
                   <Button
                     type="button"
@@ -455,18 +399,12 @@ const JobAdRequestForm = () => {
                 value={newRequirement}
                 onChange={(e) => setNewRequirement(e.target.value)}
                 placeholder="Enter requirement"
-                onKeyPress={(e) =>
-                  e.key === "Enter" &&
-                  (e.preventDefault(),
-                  addItem(newRequirement, "requirements", setNewRequirement))
-                }
+                onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addItem(newRequirement, "requirements", setNewRequirement))}
               />
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  addItem(newRequirement, "requirements", setNewRequirement)
-                }
+                onClick={() => addItem(newRequirement, "requirements", setNewRequirement)}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -483,12 +421,7 @@ const JobAdRequestForm = () => {
               <Checkbox
                 id="salaryDisclose"
                 checked={formData.salaryDisclose}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    salaryDisclose: checked as boolean,
-                  }))
-                }
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, salaryDisclose: checked as boolean }))}
               />
               <Label htmlFor="salaryDisclose">Disclose salary range</Label>
             </div>
@@ -499,9 +432,7 @@ const JobAdRequestForm = () => {
                   <CurrencySelect
                     name="currency"
                     value={formData.currency}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, currency: value }))
-                    }
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}
                   />
                 </div>
                 <div className="space-y-2">
@@ -510,12 +441,7 @@ const JobAdRequestForm = () => {
                     id="salaryMin"
                     type="number"
                     value={formData.salaryMin}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        salaryMin: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setFormData(prev => ({ ...prev, salaryMin: e.target.value }))}
                     placeholder="0"
                   />
                 </div>
@@ -525,12 +451,7 @@ const JobAdRequestForm = () => {
                     id="salaryMax"
                     type="number"
                     value={formData.salaryMax}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        salaryMax: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setFormData(prev => ({ ...prev, salaryMax: e.target.value }))}
                     placeholder="0"
                   />
                 </div>
@@ -549,15 +470,9 @@ const JobAdRequestForm = () => {
                     checked={formData.benefits.includes(benefit)}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          benefits: [...prev.benefits, benefit],
-                        }));
+                        setFormData(prev => ({ ...prev, benefits: [...prev.benefits, benefit] }));
                       } else {
-                        setFormData((prev) => ({
-                          ...prev,
-                          benefits: prev.benefits.filter((b) => b !== benefit),
-                        }));
+                        setFormData(prev => ({ ...prev, benefits: prev.benefits.filter(b => b !== benefit) }));
                       }
                     }}
                   />
@@ -572,11 +487,7 @@ const JobAdRequestForm = () => {
                 value={newBenefit}
                 onChange={(e) => setNewBenefit(e.target.value)}
                 placeholder="Add custom benefit"
-                onKeyPress={(e) =>
-                  e.key === "Enter" &&
-                  (e.preventDefault(),
-                  addItem(newBenefit, "benefits", setNewBenefit))
-                }
+                onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addItem(newBenefit, "benefits", setNewBenefit))}
               />
               <Button
                 type="button"
@@ -599,9 +510,7 @@ const JobAdRequestForm = () => {
                 <Label htmlFor="adType">Advertisement Type</Label>
                 <Select
                   value={formData.adType}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, adType: value }))
-                  }
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, adType: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -618,23 +527,15 @@ const JobAdRequestForm = () => {
                 <Label htmlFor="adSize">Advertisement Size</Label>
                 <Select
                   value={formData.adSize}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, adSize: value }))
-                  }
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, adSize: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="small">
-                      Small (7 days highlight)
-                    </SelectItem>
-                    <SelectItem value="medium">
-                      Medium (15 days feature)
-                    </SelectItem>
-                    <SelectItem value="large">
-                      Large (30 days premium)
-                    </SelectItem>
+                    <SelectItem value="small">Small (7 days highlight)</SelectItem>
+                    <SelectItem value="medium">Medium (15 days feature)</SelectItem>
+                    <SelectItem value="large">Large (30 days premium)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -642,9 +543,7 @@ const JobAdRequestForm = () => {
                 <Label htmlFor="adDuration">Duration (days)</Label>
                 <Select
                   value={formData.adDuration}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, adDuration: value }))
-                  }
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, adDuration: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select duration" />
@@ -668,17 +567,10 @@ const JobAdRequestForm = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="applicationDeadline">
-                  Application Deadline
-                </Label>
+                <Label htmlFor="applicationDeadline">Application Deadline</Label>
                 <DatePicker
                   value={formData.applicationDeadline}
-                  onValueChange={(date) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      applicationDeadline: date,
-                    }))
-                  }
+                  onValueChange={(date) => setFormData(prev => ({ ...prev, applicationDeadline: date }))}
                 />
               </div>
               <div className="space-y-2">
@@ -686,12 +578,7 @@ const JobAdRequestForm = () => {
                 <Input
                   id="qualification"
                   value={formData.qualification}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      qualification: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, qualification: e.target.value }))}
                   placeholder="e.g., Bachelor's in Education"
                 />
               </div>
@@ -701,27 +588,15 @@ const JobAdRequestForm = () => {
                 <Checkbox
                   id="visaSponsorship"
                   checked={formData.visaSponsorship}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      visaSponsorship: checked as boolean,
-                    }))
-                  }
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, visaSponsorship: checked as boolean }))}
                 />
-                <Label htmlFor="visaSponsorship">
-                  Visa sponsorship available
-                </Label>
+                <Label htmlFor="visaSponsorship">Visa sponsorship available</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="quickApply"
                   checked={formData.quickApply}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      quickApply: checked as boolean,
-                    }))
-                  }
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, quickApply: checked as boolean }))}
                 />
                 <Label htmlFor="quickApply">Enable quick apply</Label>
               </div>
@@ -734,12 +609,7 @@ const JobAdRequestForm = () => {
             <Textarea
               id="specialRequests"
               value={formData.specialRequests}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  specialRequests: e.target.value,
-                }))
-              }
+              onChange={(e) => setFormData(prev => ({ ...prev, specialRequests: e.target.value }))}
               placeholder="Any specific requirements for the advertisement placement or special instructions..."
               rows={4}
             />

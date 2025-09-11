@@ -6,10 +6,8 @@ import type { TeacherProfileRequest } from "@/types/profiles";
 export const teacherProfileQueryKeys = {
   all: ["teacher-profile"] as const,
   current: () => [...teacherProfileQueryKeys.all, "current"] as const,
-  byId: (teacherId: string) =>
-    [...teacherProfileQueryKeys.all, teacherId] as const,
-  search: (params: any) =>
-    [...teacherProfileQueryKeys.all, "search", params] as const,
+  byId: (teacherId: string) => [...teacherProfileQueryKeys.all, teacherId] as const,
+  search: (params: any) => [...teacherProfileQueryKeys.all, "search", params] as const,
 };
 
 // Hook to get teacher profile by ID
@@ -56,12 +54,12 @@ export const useCreateOrUpdateTeacherProfile = () => {
         // Update current teacher profile in cache
         queryClient.setQueryData(teacherProfileQueryKeys.current(), response);
         // Invalidate search results
-        queryClient.invalidateQueries({
-          queryKey: teacherProfileQueryKeys.search([]),
-        });
+        queryClient.invalidateQueries({ queryKey: teacherProfileQueryKeys.search([]) });
       }
     },
-    onError: (error) => {},
+    onError: (error) => {
+      console.error("Create/Update teacher profile error:", error);
+    },
   });
 };
 

@@ -178,6 +178,7 @@ const JobApplication = () => {
         throw new Error("Upload failed - no URL returned");
       }
     } catch (error) {
+      console.error("Upload error:", error);
       throw new Error("Failed to upload document");
     }
   };
@@ -447,6 +448,7 @@ const JobApplication = () => {
       customToast.success("Application submitted successfully!");
       navigate("/dashboard/teacher/applications");
     } catch (error) {
+      console.error("Error submitting application:", error);
       customToast.error("Failed to submit application. Please try again.");
     } finally {
       setIsSubmitting(false);

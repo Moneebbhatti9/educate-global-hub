@@ -75,7 +75,7 @@ const SchoolProfileForm = ({
   } = useFormValidation({
     schema: schoolProfileFormSchema,
     mode: "onTouched",
-    defaultValues: {
+     defaultValues: {
       schoolName: initialData?.schoolName || "",
       schoolEmail: initialData?.schoolEmail || "",
       schoolContactNumber: initialData?.schoolContactNumber || "",
@@ -93,6 +93,8 @@ const SchoolProfileForm = ({
       aboutSchool: initialData?.aboutSchool || "",
     },
   });
+
+
 
   const formData = watch();
 
@@ -231,6 +233,7 @@ const SchoolProfileForm = ({
       // Call the onComplete callback - navigation will be handled by ProfileCompletionPage
       onComplete(data);
     } catch (error) {
+      console.error("Error creating school profile:", error);
       customToast.error(
         "Profile Creation Failed",
         "There was an error creating your profile. Please try again."
@@ -309,7 +312,7 @@ const SchoolProfileForm = ({
           ))}
         </div>
 
-        {/*        
+{/*        
         <div className="flex items-center w-full mb-4">
           <div className="flex-1 h-0.5 bg-muted"></div>
           <div className="flex-1 h-0.5 bg-muted"></div>

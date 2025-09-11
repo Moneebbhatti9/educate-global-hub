@@ -503,7 +503,7 @@ const TeacherDashboard = () => {
                     ))
                   ) : (
                     <EmptyRecommendations
-                      onUpdateProfile={() => }
+                      onUpdateProfile={() => console.log("Navigate to profile")}
                     />
                   )}
                 </CardContent>
@@ -564,7 +564,7 @@ const TeacherDashboard = () => {
                   ) : (
                     <div className="text-center py-4">
                       <EmptyApplications
-                        onBrowseJobs={() => }
+                        onBrowseJobs={() => console.log("Navigate to jobs")}
                       />
                     </div>
                   )}
@@ -693,7 +693,7 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 <EmptyApplications
-                  onBrowseJobs={() => }
+                  onBrowseJobs={() => console.log("Navigate to jobs")}
                 />
               )}
             </CardContent>
@@ -775,7 +775,7 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 <EmptySavedJobs
-                  onBrowseJobs={() => }
+                  onBrowseJobs={() => console.log("Navigate to jobs")}
                 />
               )}
             </CardContent>
