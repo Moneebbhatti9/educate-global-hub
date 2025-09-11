@@ -23,6 +23,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyForumPosts, EmptyNotifications } from "@/components/ui/empty-state";
 
 const AdminDashboard = () => {
   const stats = [
