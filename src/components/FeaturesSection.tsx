@@ -103,7 +103,7 @@ const FeaturesSection = () => {
             return (
               <Card
                 key={feature.title}
-                className="group relative overflow-hidden border hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card-hover transform hover:scale-105 bg-gradient-card"
+                className="group relative overflow-hidden border hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card-hover transform hover:scale-105 bg-gradient-card hover-lift"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CardHeader className="space-y-4">
@@ -152,7 +152,7 @@ const FeaturesSection = () => {
             return (
               <div
                 key={benefit.title}
-                className="flex items-start space-x-4 p-6 rounded-xl bg-background border border-border/50 hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card group"
+                className="flex items-start space-x-4 p-6 rounded-xl bg-background border border-border/50 hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card group hover-lift"
                 style={{ animationDelay: `${(index + 4) * 100}ms` }}
               >
                 <div className="w-12 h-12 rounded-lg bg-brand-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
@@ -179,10 +179,10 @@ const FeaturesSection = () => {
             who are already part of our global community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg" asChild>
+            <Button variant="hero" size="lg" asChild className="hover-lift">
               <Link to="/register">Join Our Community</Link>
             </Button>
-            {/* <Button variant="hero-outline" size="lg" asChild>
+            {/* <Button variant="hero-outline" size="lg" asChild className="hover-lift">
               <Link to="/demo">Request a Demo</Link>
             </Button> */}
           </div>

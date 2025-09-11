@@ -247,61 +247,102 @@ const ForumManagement = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Card>
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500/20">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <MessageCircle className="w-4 h-4 text-blue-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-blue-500 transition-colors duration-300">
                     Total Discussions
                   </p>
-                  <p className="text-xl font-bold">{stats.totalDiscussions}</p>
+                  <p className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">{stats.totalDiscussions}</p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <MessageCircle className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-all duration-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-green-500/20">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Active</p>
-                  <p className="text-xl font-bold">{stats.activeDiscussions}</p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-green-500 transition-colors duration-300">Active</p>
+                  <p className="text-2xl font-bold text-green-500 group-hover:scale-110 transition-transform duration-300">{stats.activeDiscussions}</p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-green-500 rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats.totalDiscussions ? (stats.activeDiscussions / stats.totalDiscussions) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <CheckCircle className="w-8 h-8 text-green-500 group-hover:scale-110 transition-all duration-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-red-500/20">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Flag className="w-4 h-4 text-red-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Reported</p>
-                  <p className="text-xl font-bold">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-red-500 transition-colors duration-300">Reported</p>
+                  <p className="text-2xl font-bold text-red-500 group-hover:scale-110 transition-transform duration-300">
                     {stats.reportedDiscussions}
                   </p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats.totalDiscussions ? (stats.reportedDiscussions / stats.totalDiscussions) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <Flag className="w-8 h-8 text-red-500 group-hover:scale-110 transition-all duration-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-orange-500/20">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Pin className="w-4 h-4 text-orange-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Pinned</p>
-                  <p className="text-xl font-bold">{stats.pinnedDiscussions}</p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-orange-500 transition-colors duration-300">Pinned</p>
+                  <p className="text-2xl font-bold text-orange-500 group-hover:scale-110 transition-transform duration-300">{stats.pinnedDiscussions}</p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-orange-500 rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats.totalDiscussions ? (stats.pinnedDiscussions / stats.totalDiscussions) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <Pin className="w-8 h-8 text-orange-500 group-hover:scale-110 transition-all duration-300" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-purple-500/20">
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-4 h-4 text-purple-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Replies</p>
-                  <p className="text-xl font-bold">{stats.totalReplies}</p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-purple-500 transition-colors duration-300">Total Replies</p>
+                  <p className="text-2xl font-bold text-purple-500 group-hover:scale-110 transition-transform duration-300">{stats.totalReplies}</p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-purple-500 rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats.totalDiscussions ? Math.min((stats.totalReplies / stats.totalDiscussions) * 10, 100) : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <TrendingUp className="w-8 h-8 text-purple-500 group-hover:scale-110 transition-all duration-300" />
                 </div>
               </div>
             </CardContent>
@@ -385,7 +426,7 @@ const ForumManagement = () => {
               {discussions.map((discussion) => (
                 <div
                   key={discussion.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-all duration-300 hover:shadow-md hover:scale-[1.01] group"
                 >
                   <div className="flex items-start space-x-4 flex-1">
                     <Avatar className="w-10 h-10">
@@ -401,13 +442,13 @@ const ForumManagement = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
                         {discussion.isPinned && (
-                          <Pin className="w-4 h-4 text-orange-500" />
+                          <Pin className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                         )}
                         {discussion.isLocked && (
-                          <Lock className="w-4 h-4 text-gray-500" />
+                          <Lock className="w-4 h-4 text-gray-500 group-hover:scale-110 transition-transform duration-300" />
                         )}
                         {discussion.reports > 0 && (
-                          <Flag className="w-4 h-4 text-red-500" />
+                          <Flag className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform duration-300" />
                         )}
                         <Badge variant="outline" className="text-xs">
                           {discussion.category}
@@ -423,31 +464,31 @@ const ForumManagement = () => {
 
                       <Link
                         to={`/forum/${discussion.id}`}
-                        className="font-medium text-foreground hover:text-primary transition-colors block truncate"
+                        className="font-medium text-foreground hover:text-primary transition-colors block truncate group-hover:scale-105 transition-transform duration-300"
                       >
                         {discussion.title}
                       </Link>
 
-                      <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
-                        <span>by {discussion.author.name}</span>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3" />
+                      <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                        <span className="group-hover:text-brand-primary transition-colors duration-300">by {discussion.author.name}</span>
+                        <div className="flex items-center space-x-1 group-hover:scale-105 transition-transform duration-300">
+                          <Calendar className="w-3 h-3 group-hover:text-brand-primary transition-colors duration-300" />
                           <span>{formatDate(discussion.createdAt)}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <MessageCircle className="w-3 h-3" />
+                        <div className="flex items-center space-x-1 group-hover:scale-105 transition-transform duration-300">
+                          <MessageCircle className="w-3 h-3 group-hover:text-brand-primary transition-colors duration-300" />
                           <span>{discussion.replies}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <ThumbsUp className="w-3 h-3" />
+                        <div className="flex items-center space-x-1 group-hover:scale-105 transition-transform duration-300">
+                          <ThumbsUp className="w-3 h-3 group-hover:text-brand-primary transition-colors duration-300" />
                           <span>{discussion.likes}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-3 h-3" />
+                        <div className="flex items-center space-x-1 group-hover:scale-105 transition-transform duration-300">
+                          <Eye className="w-3 h-3 group-hover:text-brand-primary transition-colors duration-300" />
                           <span>{discussion.views}</span>
                         </div>
                         {discussion.reports > 0 && (
-                          <div className="flex items-center space-x-1 text-red-500">
+                          <div className="flex items-center space-x-1 text-red-500 group-hover:scale-105 transition-transform duration-300">
                             <Flag className="w-3 h-3" />
                             <span>{discussion.reports} reports</span>
                           </div>
@@ -458,8 +499,8 @@ const ForumManagement = () => {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
+                      <Button variant="ghost" size="sm" className="group-hover:bg-brand-primary/10 group-hover:scale-110 transition-all duration-300">
+                        <MoreHorizontal className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

@@ -264,66 +264,107 @@ const JobManagement = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-brand-primary/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Jobs</p>
-                  <p className="text-2xl font-bold">{stats?.totalJobs || 0}</p>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-brand-primary transition-colors duration-300">Total Jobs</p>
+                  <p className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">{stats?.totalJobs || 0}</p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-brand-primary rounded-full transition-all duration-1000 ease-out" style={{ width: '100%' }}></div>
+                  </div>
                 </div>
-                <Briefcase className="w-8 h-8 text-brand-primary" />
+                <div className="relative">
+                  <Briefcase className="w-8 h-8 text-brand-primary group-hover:scale-110  transition-all duration-300" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-brand-accent-green/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active</p>
-                  <p className="text-2xl font-bold text-brand-accent-green">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-brand-accent-green transition-colors duration-300">Active</p>
+                  <p className="text-2xl font-bold text-brand-accent-green group-hover:scale-110 transition-transform duration-300">
                     {stats?.activeJobs || 0}
                   </p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-brand-accent-green rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats?.totalJobs ? (stats.activeJobs / stats.totalJobs) * 100 : 0}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <CheckCircle className="w-8 h-8 text-brand-accent-green" />
+                <div className="relative">
+                  <CheckCircle className="w-8 h-8 text-brand-accent-green group-hover:scale-110  transition-all duration-300" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-brand-accent-orange/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Draft</p>
-                  <p className="text-2xl font-bold text-brand-accent-orange">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-brand-accent-orange transition-colors duration-300">Draft</p>
+                  <p className="text-2xl font-bold text-brand-accent-orange group-hover:scale-110 transition-transform duration-300">
                     {stats?.pendingJobs || 0}
                   </p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-brand-accent-orange rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats?.totalJobs ? (stats.pendingJobs / stats.totalJobs) * 100 : 0}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <Clock className="w-8 h-8 text-brand-accent-orange" />
+                <div className="relative">
+                  <Clock className="w-8 h-8 text-brand-accent-orange group-hover:scale-110  transition-all duration-300" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-500/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Closed</p>
-                  <p className="text-2xl font-bold text-gray-500">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-gray-500 transition-colors duration-300">Closed</p>
+                  <p className="text-2xl font-bold text-gray-500 group-hover:scale-110 transition-transform duration-300">
                     {stats?.suspendedJobs || 0}
                   </p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gray-500 rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats?.totalJobs ? (stats.suspendedJobs / stats.totalJobs) * 100 : 0}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <Archive className="w-8 h-8 text-gray-500" />
+                <div className="relative">
+                  <Archive className="w-8 h-8 text-gray-500 group-hover:scale-110  transition-all duration-300" />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          
+          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-red-500/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Expired</p>
-                  <p className="text-2xl font-bold text-red-500">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground group-hover:text-red-500 transition-colors duration-300">Expired</p>
+                  <p className="text-2xl font-bold text-red-500 group-hover:scale-110 transition-transform duration-300">
                     {stats?.expiredJobs || 0}
                   </p>
+                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${stats?.totalJobs ? (stats.expiredJobs / stats.totalJobs) * 100 : 0}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+                <div className="relative">
+                  <AlertTriangle className="w-8 h-8 text-red-500 group-hover:scale-110  transition-all duration-300" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -420,15 +461,15 @@ const JobManagement = () => {
                       const daysPosted = getDaysPosted(job.createdAt);
 
                       return (
-                        <TableRow key={job._id}>
+                        <TableRow key={job._id} className="group hover:bg-muted/50 transition-all duration-300 hover:shadow-sm">
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium">{job.title}</div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="font-medium group-hover:text-brand-primary transition-colors duration-300">{job.title}</div>
+                              <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
                                 {job.organization}
                               </div>
-                              <div className="flex items-center text-xs text-muted-foreground">
-                                <MapPin className="w-3 h-3 mr-1" />
+                              <div className="flex items-center text-xs text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                                <MapPin className="w-3 h-3 mr-1 group-hover:scale-110 transition-transform duration-300" />
                                 {job.city}, {job.country}
                               </div>
                             </div>
@@ -447,12 +488,12 @@ const JobManagement = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center space-x-1">
-                              <Users className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">
+                            <div className="flex items-center space-x-1 group-hover:scale-105 transition-transform duration-300">
+                              <Users className="w-4 h-4 text-muted-foreground group-hover:text-brand-primary transition-colors duration-300" />
+                              <span className="font-medium group-hover:text-brand-primary transition-colors duration-300">
                                 {job.applicantsCount || 0}
                               </span>
-                              <span className="text-muted-foreground">
+                              <span className="text-muted-foreground group-hover:text-foreground transition-colors duration-300">
                                 ({job.viewsCount || 0} views)
                               </span>
                             </div>
@@ -460,15 +501,15 @@ const JobManagement = () => {
                           <TableCell className="text-sm">
                             {formatSalaryRange(job)}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
+                          <TableCell className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                            <div className="flex items-center group-hover:scale-105 transition-transform duration-300">
+                              <Calendar className="w-3 h-3 mr-1 group-hover:text-brand-primary transition-colors duration-300" />
                               {daysPosted}d ago
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
+                          <TableCell className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                            <div className="flex items-center group-hover:scale-105 transition-transform duration-300">
+                              <Calendar className="w-3 h-3 mr-1 group-hover:text-brand-primary transition-colors duration-300" />
                               {job.applicationDeadline
                                 ? new Date(
                                     job.applicationDeadline
@@ -479,8 +520,8 @@ const JobManagement = () => {
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
+                                <Button variant="ghost" size="sm" className="group-hover:bg-brand-primary/10 group-hover:scale-110 transition-all duration-300">
+                                  <MoreHorizontal className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -547,6 +588,7 @@ const JobManagement = () => {
                         size="sm"
                         onClick={() => setCurrentPage(pagination.page - 1)}
                         disabled={!pagination.hasPrevPage}
+                        className="hover:bg-brand-primary/10 hover:border-brand-primary hover:scale-105 transition-all duration-300"
                       >
                         Previous
                       </Button>
@@ -555,6 +597,7 @@ const JobManagement = () => {
                         size="sm"
                         onClick={() => setCurrentPage(pagination.page + 1)}
                         disabled={!pagination.hasNextPage}
+                        className="hover:bg-brand-primary/10 hover:border-brand-primary hover:scale-105 transition-all duration-300"
                       >
                         Next
                       </Button>

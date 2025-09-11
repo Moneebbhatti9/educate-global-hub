@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const stats = [
@@ -100,6 +101,8 @@ const AdminDashboard = () => {
         return <Shield className="w-4 h-4 text-brand-primary" />;
     }
   };
+
+  const navigate = useNavigate();
 
   return (
     <DashboardLayout role="admin">
@@ -200,6 +203,7 @@ const AdminDashboard = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={() => navigate("users")}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Manage Users
@@ -208,6 +212,7 @@ const AdminDashboard = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={() => navigate("jobs")}
                 >
                   <Briefcase className="w-4 h-4 mr-2" />
                   Job Management
@@ -216,25 +221,10 @@ const AdminDashboard = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={() => navigate("forum")}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  Forum Moderation
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start"
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Analytics
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  System Settings
+                  Forum Management
                 </Button>
               </CardContent>
             </Card>
