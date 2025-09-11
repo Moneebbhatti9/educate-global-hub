@@ -366,7 +366,10 @@ const TermsConditions = () => {
                     details are removed from the site after use but not from the
                     third party payment gateway supplier (Stripe). Educate Link
                     still holds the ability to charge the card manually in the
-                    event there is an outstanding balance.
+                    event there is an outstanding balance. For any further
+                    questions, please contact Educate Link Client support. If
+                    you wish to erase your card details from the payment gateway
+                    supplier, please contact Stripe directly.
                   </p>
 
                   <p>
@@ -374,7 +377,46 @@ const TermsConditions = () => {
                     the products or services stated on the offer and cannot be
                     used for any other products or services. The reduced offer
                     can only be used once per Client whilst the price is
-                    advertised on the website.
+                    advertised on the website. This offer cannot be combined
+                    with any other ongoing promotions, discounts, or offers
+                    unless clearly stated on the website or in the terms and
+                    conditions. The offer is only available to Clients who have
+                    received the offer. We reserve the right to change pricing,
+                    the broader offer, or these Terms and Conditions at any
+                    time.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Credential-on-File */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Credential-on-File</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    The Client may provide Educate Link with a recurring payment
+                    authority to enable Educate Link to take regular payments
+                    from the Client's nominated card for payment of the
+                    Services. Such authority must be provided to Educate Link's
+                    sales team by phone or online through the Client's Recruiter
+                    account. When a recurring payment authority has been
+                    provided, Educate Link will store the Client's payment
+                    credentials (primary account number and expiration date),
+                    and will be entitled to take regular payments for the
+                    Services from the nominated card without the need to obtain
+                    individual authorisation for every payment.
+                  </p>
+                  <p>
+                    The Client may cancel or update a recurring payment
+                    authority at any time by calling Educate Link's sales team
+                    or online in the Client's Recruiter account, and Educate
+                    Link will delete the Client's payment credentials. The
+                    Client will remain liable for any outstanding fees (if any)
+                    in the event that a recurring payment authority is cancelled
+                    prior to paying for all Services provided.
                   </p>
                 </div>
               </CardContent>
@@ -392,7 +434,7 @@ const TermsConditions = () => {
                     cancellation of the Educate Link Services: Refunds will be
                     given however deduction of administration and 3rd Party
                     charges may apply. Any outstanding invoices shall remain
-                    payable.
+                    payable. Without prejudice to the foregoing:
                   </p>
 
                   <p>
@@ -401,7 +443,18 @@ const TermsConditions = () => {
                     termination, no refunds will be given due to the nature of
                     the product and services, outstanding invoices shall remain
                     payable, and the fees in respect of any outstanding minimum
-                    term shall become payable.
+                    term shall become payable. These services will either
+                    automatically renew or with permission from the Client for a
+                    further minimum term of 3, 6, 9 or 12 months on the terms
+                    and fees as are applicable on the date immediately prior to
+                    the relevant anniversary date, unless either party gives the
+                    other written notice to terminate at least 28 days prior to
+                    such anniversary. In the event of reducing the minimum term
+                    from the original agreed term the Client shall give 28 days
+                    notice and Educate Link shall reduce the term, however
+                    Educate Link reserves the right to charge administration
+                    fees and other fees based on usage. A 3 month original term
+                    shall not be reduced further.
                   </p>
 
                   <p>
@@ -483,6 +536,164 @@ const TermsConditions = () => {
               </CardContent>
             </Card>
 
+            {/* Service Modifications & Changes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Service Modifications & Changes</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    Educate Link may, in its sole and absolute discretion, add
+                    to, modify or discontinue any of the Services from time to
+                    time. However, this will not affect any Order Confirmation,
+                    from Educate Link prior to any change or withdrawal of the
+                    relevant Service.
+                  </p>
+                  <p>
+                    Educate Link reserves the right to change the fees and/or
+                    these Terms from time to time, provided that no change shall
+                    be retrospective.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Good Faith Usage */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Good Faith Usage</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    The Client agrees to use the Website and the Services in
+                    'good faith' i.e. to post authentic, impartial and unique
+                    jobs of reasonable quality, which provide both adequate and
+                    accurate job details. The Client also agrees that any abuse
+                    of the Services, Website or these Terms can result in the
+                    Client's access to the Services being removed, and its
+                    account terminated.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Intellectual Property Rights */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Intellectual Property Rights</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    All intellectual property rights connected with the Services
+                    and/or the Website shall remain vested in Educate Link or
+                    HUSNAZ Ltd or any third party from whom such rights are
+                    licensed. The Client shall not reproduce, copy, modify,
+                    adapt, publish, transmit, distribute or in any way
+                    commercially exploit any material which is subject to any
+                    such intellectual property rights.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Force Majeure & Virus Protection */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Force Majeure & Virus Protection</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    Educate Link shall not be in breach of these Terms if events
+                    beyond its reasonable control prevent Educate Link from
+                    performing the Services.
+                  </p>
+                  <p>
+                    It is the Client's responsibility to protect their computers
+                    against any viruses and malware.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Employee Solicitation */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Employee Solicitation</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    The Client undertakes not to solicit, or endeavour to
+                    solicit, for employment or engagement with itself or any
+                    associated company or organisation, any employee of Educate
+                    Link or of any member of the Educate Link Group. Breach of
+                    this clause shall be a material breach and will entitle
+                    Educate Link, without prejudice to any other remedies it may
+                    have, to terminate the Client's account and Services
+                    immediately.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Claims Limitation */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Claims Limitation</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    The Client will not be entitled to bring any claim or legal
+                    proceedings in respect of any refund or other repayment,
+                    howsoever arising, 4 years after the date on which
+                    entitlement to such refund or repayment arose. For the
+                    avoidance of doubt, the Website terms and conditions apply
+                    in addition to the above Terms.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Service Reselling */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Service Reselling</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    The Client shall not resell any Services without the express
+                    written permission of Educate Link. Educate Link reserves
+                    the right to impose any restrictions it deems fit should it
+                    provide permission for the reselling of any of the Services.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Service Monitoring & Promotion */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Service Monitoring & Promotion</CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    From time to time Educate Link will contact Clients in order
+                    to evaluate the service they receive and also to promote
+                    Educate Link's services and products. Educate Link monitors
+                    the quality of vacancies from time to time in order to
+                    provide a better service to candidates.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Job Postings */}
             <Card>
               <CardHeader>
@@ -538,12 +749,140 @@ const TermsConditions = () => {
                   </p>
 
                   <p>
+                    Applicants' responses will be forwarded by Educate Link by
+                    e-mail subject to any filtering and ranking. The Client is
+                    responsible for verifying the information contained in
+                    applicants' responses and Educate Link accepts no
+                    responsibility for the content of any such application. In
+                    particular, but without limitation, the Client is
+                    responsible for verifying the applicant's identity,
+                    eligibility to work, experience, training, qualifications
+                    and authorisations required by the Client, by law or by any
+                    relevant professional body for the vacancy.
+                  </p>
+
+                  <p>
+                    All and any subsequent dealings between the Client and any
+                    applicant in connection with the applicant's response to the
+                    job posting are the responsibility of the Client, and
+                    Educate Link accepts no liability whatsoever therewith. The
+                    Client will indemnify Educate Link against any Losses in
+                    connection therewith.
+                  </p>
+
+                  <p>
                     The Client will comply with all applicable laws, including
                     without limitation: current data protection legislation and
                     the Equality Act 2010. By submitting a vacancy to the
                     Website, the Client thereby confirms that the content of the
                     vacancy complies with the Code of Practice on Employment
                     provided by the Equality and Human Rights Commission.
+                  </p>
+
+                  <p>
+                    The Client, if an employment agency or an employment
+                    business, will comply with the provisions of the Conduct of
+                    Employment Agencies and Businesses Regulations 2003 ("the
+                    Regulations") and the Employment Agencies Act 1973 in
+                    relation to all vacancies posted on Educate Link's site,
+                    communications with applicants and management of applicants'
+                    details. The Client shall indemnify Educate Link against any
+                    Losses in connection therewith.
+                  </p>
+
+                  <p>The Client shall not post any vacancy where:</p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>
+                      there is a risk to the health and safety of any applicant
+                      at the location where the work is to be performed, unless
+                      the Client undertakes to inform the candidates of such
+                      risks and the steps taken to prevent or control such risks
+                    </li>
+                    <li>
+                      the role involves working with vulnerable persons,
+                      including without limitation persons under the age of 18
+                      or persons in need of care and attention by reason of old
+                      age, infirmity or any other circumstances, unless the
+                      Client undertakes, in respect of the candidate to be
+                      placed, (i) to obtain copies of any relevant
+                      qualifications or authorisations of the candidate; (ii) to
+                      obtain two references from persons who are not relatives
+                      of the candidate; and (iii) to take all other reasonably
+                      practicable steps, including without limitation complying
+                      with all relevant laws, codes of practices and guidelines
+                      issued by relevant authorities, to confirm that the
+                      candidate is not unsuitable for the position concerned
+                    </li>
+                  </ul>
+
+                  <p>
+                    By posting any vacancy set out in sub-clauses above, the
+                    Client is deemed to give the relevant undertakings. Where
+                    the Client is an employment business or agency, the Client
+                    shall offer copies of the documents obtained under
+                    sub-clauses (i) and (ii) to the hirer.
+                  </p>
+
+                  <p>
+                    The Client accepts responsibility for any detriment which it
+                    may suffer or incur in respect of the engagement of an
+                    applicant and shall hold Educate Link harmless against any
+                    Losses in connection therewith. The Client shall use all
+                    reasonable endeavours to ascertain that it will not be
+                    detrimental to the interests of the applicant it intends to
+                    engage (if any) to work for the Client in the vacancy
+                    posted.
+                  </p>
+
+                  <p>
+                    Educate Link reserves the right in its sole and absolute
+                    discretion to remove any vacancy at any time without reason.
+                    Examples of vacancies that may be removed include, but are
+                    not limited to:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>
+                      those that Educate Link considers illegal, inappropriate
+                      or fraudulent
+                    </li>
+                    <li>
+                      those that directly or indirectly require or ask for
+                      application or registration fees
+                    </li>
+                    <li>
+                      those that advertise, pyramid, network marketing or
+                      get-rich-quick schemes
+                    </li>
+                    <li>
+                      those that have been indiscriminately posted or duplicated
+                      across multiple sectors
+                    </li>
+                    <li>
+                      those that advertise websites, services, businesses,
+                      business opportunities and/or contact details
+                    </li>
+                    <li>
+                      those of Clients who solicit staff from any member of the
+                      Educate Link Group
+                    </li>
+                  </ul>
+
+                  <p>
+                    Free job postings (if any) under Recruitment are allocated
+                    to the Client as a company, firm or other organisation,
+                    rather than to individual users or business units.
+                    Franchised businesses are allocated free job postings
+                    centrally - to be shared amongst its franchisees - and not
+                    to each franchised operation.
+                  </p>
+
+                  <p>
+                    Free job postings under free Recruitment are at the
+                    discretion of Educate Link. Breach by the Client of any of
+                    these Terms may result in the Recruitment Services being
+                    withdrawn from the Client. In the event that the Client has
+                    any outstanding debt owing to Educate Link, the free
+                    Recruitment Services shall be withdrawn.
                   </p>
                 </div>
               </CardContent>
