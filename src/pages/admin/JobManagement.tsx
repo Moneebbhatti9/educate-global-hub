@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { AdminJobManagementSkeleton } from "@/components/skeletons";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyJobPostings, EmptySearchResults } from "@/components/ui/empty-state";
 import {
   Card,
   CardContent,

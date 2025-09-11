@@ -59,6 +59,8 @@ import {
   Archive,
 } from "lucide-react";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyForumPosts, EmptySearchResults } from "@/components/ui/empty-state";
 
 const ForumManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
