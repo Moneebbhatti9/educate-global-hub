@@ -26,6 +26,8 @@ import {
   Target,
   Award,
 } from "lucide-react";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyJobPostings, EmptyCandidates, EmptyApplications } from "@/components/ui/empty-state";
 
 const RecruiterDashboard = () => {
   const stats = [

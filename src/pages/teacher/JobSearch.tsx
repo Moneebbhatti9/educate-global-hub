@@ -39,6 +39,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { useJobs } from "@/hooks/useJobs";
+import { JobListingsSkeleton } from "@/components/skeletons";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptySearchResults } from "@/components/ui/empty-state";
 import {
   useSaveJob,
   useRemoveSavedJob,
@@ -46,6 +49,7 @@ import {
 } from "@/hooks/useSavedJobs";
 import { customToast } from "@/components/ui/sonner";
 import type { JobSearchParams, Job } from "@/types/job";
+import { CountryDropdown } from "@/components/ui/country-dropdown";
 
 // Interface for the actual API response structure
 interface JobSearchResponse {
@@ -259,10 +263,12 @@ const JobSearch = () => {
   if (error) {
     return (
       <DashboardLayout role="teacher">
-        <div className="text-center p-8">
-          <p className="text-red-500 mb-4">Failed to load jobs</p>
-          <Button onClick={() => refetch()}>Try Again</Button>
-        </div>
+        <DashboardErrorFallback 
+          error={error}
+          onRetry={refetch}
+          title="Job Search Unavailable"
+          description="We're having trouble loading job listings. This could be due to a temporary network issue."
+        />
       </DashboardLayout>
     );
   }
@@ -280,8 +286,19 @@ const JobSearch = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Location Filter */}
+
+
+              {/* Country Filter */}
               <div className="space-y-2">
+                <Label>Country</Label>
+                <CountryDropdown
+                  defaultValue={filters.country || "any"}
+                  onChange={(value) => handleFilterChange("country", value.name === "any" ? "" : value.name)}
+                />
+                  </div>
+
+              {/* Location Filter */}
+              {/* <div className="space-y-2">
                 <Label>Location</Label>
                 <Select
                   value={filters.location || "any"}
@@ -301,7 +318,7 @@ const JobSearch = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* Education Level Filter */}
               <div className="space-y-2">
@@ -381,23 +398,55 @@ const JobSearch = () => {
               {/* Salary Range */}
               <div className="space-y-3">
                 <Label>Salary Range (USD)</Label>
-                <div className="px-2">
-                  <Slider
-                    value={[filters.salaryMin || 0, filters.salaryMax || 10000]}
-                    onValueChange={(value) => {
-                      handleFilterChange("salaryMin", value[0]);
-                      handleFilterChange("salaryMax", value[1]);
-                    }}
-                    max={10000}
-                    min={0}
-                    step={500}
-                    className="w-full"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="salaryMin" className="text-sm text-muted-foreground">
+                      Min Salary
+                    </Label>
+                    <Input
+                      id="salaryMin"
+                      type="number"
+                      placeholder="1"
+                      value={filters.salaryMin || ""}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : undefined;
+                        if (value !== undefined && filters.salaryMax && value > filters.salaryMax) {
+                          customToast.error("Minimum salary cannot be greater than maximum salary");
+                          return;
+                        }
+                        handleFilterChange("salaryMin", value);
+                      }}
+                      min={1}
+                      max={filters.salaryMax || 100000}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="salaryMax" className="text-sm text-muted-foreground">
+                      Max Salary
+                    </Label>
+                    <Input
+                      id="salaryMax"
+                      type="number"
+                      placeholder="10000"
+                      value={filters.salaryMax || ""}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : undefined;
+                        if (value !== undefined && filters.salaryMin && value < filters.salaryMin) {
+                          customToast.error("Maximum salary cannot be less than minimum salary");
+                          return;
+                        }
+                        handleFilterChange("salaryMax", value);
+                      }}
+                      min={filters.salaryMin || 1}
+                      max={100000}
+                    />
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>${(filters.salaryMin || 0).toLocaleString()}</span>
-                  <span>${(filters.salaryMax || 10000).toLocaleString()}</span>
-                </div>
+                {(filters.salaryMin || filters.salaryMax) && (
+                  <div className="text-sm text-muted-foreground">
+                    Range: ${(filters.salaryMin || 0).toLocaleString()} - ${(filters.salaryMax || 100000).toLocaleString()}
+                  </div>
+                )}
               </div>
 
               {/* Checkboxes */}
@@ -507,13 +556,12 @@ const JobSearch = () => {
           {!isLoading && (
             <div className="space-y-6">
               {jobs.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <div className="text-muted-foreground">
-                    <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                    <p className="text-lg font-medium mb-2">No jobs found</p>
-                    <p>Try adjusting your filters or search terms</p>
-                  </div>
-                </Card>
+                <EmptySearchResults
+                  onClearSearch={() => {
+                    setSearchTerm("");
+                    setFilters(prev => ({ ...prev, q: undefined }));
+                  }}
+                />
               ) : (
                 jobs.map((job: Job) => (
                   <Card

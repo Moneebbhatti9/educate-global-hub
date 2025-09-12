@@ -58,6 +58,8 @@ import {
 import { customToast } from "@/components/ui/sonner";
 import type { JobStatus, Job, PaginatedResponse } from "@/types/job";
 import { JobPostingsSkeleton } from "@/components/skeletons/job-postings-skeleton";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyJobPostings, EmptySearchResults } from "@/components/ui/empty-state";
 
 // Custom type for your API response structure
 interface SchoolJobsResponse {

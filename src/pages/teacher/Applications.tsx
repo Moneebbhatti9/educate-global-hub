@@ -46,6 +46,9 @@ import {
   ExternalLink,
   Download,
 } from "lucide-react";
+import { ApplicationsTabSkeleton } from "@/components/skeletons";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyApplications, EmptySearchResults } from "@/components/ui/empty-state";
 import {
   useMyApplications,
   useWithdrawApplication,
@@ -272,10 +275,12 @@ const Applications = () => {
   if (error) {
     return (
       <DashboardLayout role="teacher">
-        <div className="text-center p-8">
-          <p className="text-red-500 mb-4">Failed to load applications</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
-        </div>
+        <DashboardErrorFallback 
+          error={error}
+          onRetry={() => window.location.reload()}
+          title="Applications Unavailable"
+          description="We're having trouble loading your applications. This could be due to a temporary network issue."
+        />
       </DashboardLayout>
     );
   }
@@ -406,24 +411,9 @@ const Applications = () => {
             </div>
           ) : applications.length === 0 ? (
             // Empty state
-            <Card className="p-8 text-center">
-              <div className="text-muted-foreground">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                <p className="text-lg font-medium mb-2">
-                  No applications found
-                </p>
-                <p className="mb-4">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your search or filters"
-                    : "You haven't submitted any job applications yet"}
-                </p>
-                {!searchTerm && statusFilter === "all" && (
-                  <Link to="/dashboard/teacher/jobs">
-                    <Button>Browse Available Jobs</Button>
-                  </Link>
-                )}
-              </div>
-            </Card>
+            <EmptyApplications
+              onBrowseJobs={() => window.location.href = "/dashboard/teacher/jobs"}
+            />
           ) : (
             <div className="space-y-6">
               {/* Applications list */}

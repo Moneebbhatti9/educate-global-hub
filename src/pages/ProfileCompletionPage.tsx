@@ -33,7 +33,7 @@ const ProfileCompletionPage = () => {
   }, []);
 
   // Redirect if no state data (user came directly to this route)
-  if (!state?.role) {
+  if (!state || !state.role) {
     navigate("/signup");
     return null;
   }
@@ -65,10 +65,9 @@ const ProfileCompletionPage = () => {
         logout();
 
         // Redirect to login page
-        navigate("/login", {
+        navigate(`/dashboard/${state.role}`, {
           state: {
-            message:
-              "Profile completed successfully! Please log in to access your dashboard.",
+            message: "Profile completed successfully!",
             email: state.email,
             role: state.role,
           },
@@ -81,14 +80,7 @@ const ProfileCompletionPage = () => {
   };
 
   const handleBack = () => {
-    navigate("/otp-verification", {
-      state: {
-        email: state.email,
-        role: state.role,
-        firstName: state.firstName,
-        lastName: state.lastName,
-      },
-    });
+    navigate("/login");
   };
 
   return (
