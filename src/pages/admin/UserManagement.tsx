@@ -674,13 +674,13 @@ const UserManagement = () => {
           open={editUserOpen}
           onOpenChange={setEditUserOpen}
           onSave={handleEditUser}
-          userId={selectedUser ? selectedUser.id || selectedUser._id : null}
+          userId={selectedUser ? (selectedUser.id || (selectedUser as any)._id) : null}
         />
 
         <ViewProfileModal
           open={viewProfileOpen}
           onOpenChange={setViewProfileOpen}
-          userData={selectedUser}
+          userData={selectedUser as any}
         />
 
         <ChangeStatusModal
