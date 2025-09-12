@@ -112,7 +112,7 @@ const UserTypeSection = () => {
             return (
               <Card
                 key={type.title}
-                className="group relative overflow-hidden border-2 hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card-hover transform hover:scale-105"
+                className="group relative overflow-hidden border-2 hover:border-brand-primary/20 transition-all duration-300 hover:shadow-card-hover transform hover:scale-105 hover-lift"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CardHeader className="space-y-4">
@@ -173,7 +173,7 @@ const UserTypeSection = () => {
           <p className="text-lg text-muted-foreground mb-6">
             Not sure which option is right for you?
           </p>
-          <Button variant="hero-outline" size="lg" asChild>
+          <Button variant="hero-outline" size="lg" asChild className="hover-lift">
             <Link to="/about">Learn More About Our Platform</Link>
           </Button>
         </div>

@@ -55,6 +55,8 @@ import { applicationsAPI } from "@/apis/applications";
 import { customToast } from "@/components/ui/sonner";
 import type { ApplicationStatus } from "@/types/job";
 import { CandidatesSkeleton } from "@/components/skeletons/candidates-skeleton";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyCandidates, EmptySearchResults } from "@/components/ui/empty-state";
 
 const Candidates = () => {
   const navigate = useNavigate();

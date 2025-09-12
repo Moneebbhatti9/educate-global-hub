@@ -56,6 +56,8 @@ import { useRemoveSavedJob } from "@/hooks/useSavedJobs";
 import { customToast } from "@/components/ui/sonner";
 import { useTeacherRecommendedJobs } from "@/hooks/useJobs";
 import { TeacherDashboardSkeleton } from "@/components/skeletons";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyApplications, EmptySavedJobs, EmptyRecommendations } from "@/components/ui/empty-state";
 
 // Interface for the actual API response structure
 interface TeacherApplicationResponse {
@@ -177,17 +179,12 @@ const TeacherDashboard = () => {
   if (hasErrors) {
     return (
       <DashboardLayout role="teacher">
-        <div className="space-y-6">
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-destructive mb-4">
-              Something went wrong
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              We encountered an error while loading your dashboard data.
-            </p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
-          </div>
-        </div>
+        <DashboardErrorFallback 
+          error="Failed to load dashboard data"
+          onRetry={() => window.location.reload()}
+          title="Teacher Dashboard Unavailable"
+          description="We're having trouble loading your dashboard data. This could be due to a temporary network issue or server maintenance."
+        />
       </DashboardLayout>
     );
   }
@@ -505,14 +502,9 @@ const TeacherDashboard = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No recommended jobs yet</p>
-                      <p className="text-sm">
-                        Complete your profile to get personalized job
-                        recommendations
-                      </p>
-                    </div>
+                    <EmptyRecommendations
+                      onUpdateProfile={() => console.log("Navigate to profile")}
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -570,8 +562,10 @@ const TeacherDashboard = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No applications yet
+                    <div className="text-center py-4">
+                      <EmptyApplications
+                        onBrowseJobs={() => console.log("Navigate to jobs")}
+                      />
                     </div>
                   )}
 
@@ -698,13 +692,9 @@ const TeacherDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No applications yet</p>
-                  <p className="text-sm">
-                    Start applying to jobs to see them here
-                  </p>
-                </div>
+                <EmptyApplications
+                  onBrowseJobs={() => console.log("Navigate to jobs")}
+                />
               )}
             </CardContent>
           </Card>
@@ -784,13 +774,9 @@ const TeacherDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Bookmark className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No saved jobs yet</p>
-                  <p className="text-sm">
-                    Save interesting jobs to review them later
-                  </p>
-                </div>
+                <EmptySavedJobs
+                  onBrowseJobs={() => console.log("Navigate to jobs")}
+                />
               )}
             </CardContent>
           </Card>

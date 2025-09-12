@@ -5,26 +5,26 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden group ripple-effect",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:scale-105 active:scale-95",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg hover:scale-105 active:scale-95",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-brand-primary/50 hover:shadow-md hover:scale-105 active:scale-95",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-lg hover:scale-105 active:scale-95",
+        ghost: "hover:bg-accent hover:text-accent-foreground hover:shadow-sm hover:scale-105 active:scale-95",
+        link: "text-primary underline-offset-4 hover:underline hover:text-brand-primary transition-colors duration-200",
         // Educate Link custom variants
-        hero: "bg-gradient-button text-white font-semibold shadow-card hover:shadow-card-hover transform hover:scale-105 transition-all duration-300",
-        "hero-outline": "border-2 border-brand-primary text-brand-primary bg-transparent hover:bg-brand-primary hover:text-white font-semibold transition-all duration-300",
-        teachers: "bg-brand-primary text-white hover:bg-brand-primary/90 font-medium",
-        schools: "bg-brand-accent-green text-white hover:bg-brand-accent-green/90 font-medium",
-        recruiters: "bg-brand-secondary text-white hover:bg-brand-secondary/90 font-medium",
-        suppliers: "bg-brand-accent-orange text-white hover:bg-brand-accent-orange/90 font-medium",
+        hero: "bg-gradient-button text-white font-semibold shadow-card hover:shadow-card-hover transform hover:scale-105 active:scale-95 transition-all duration-300 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/0 before:via-white/20 before:to-white/0 before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700 before:ease-out",
+        "hero-outline": "border-2 border-brand-primary text-brand-primary bg-transparent hover:bg-brand-primary hover:text-white font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 relative before:absolute before:inset-0 before:bg-brand-primary before:scale-x-0 hover:before:scale-x-100 before:transition-transform before:duration-300 before:origin-left before:-z-10",
+        teachers: "bg-brand-primary text-white hover:bg-brand-primary/90 font-medium hover:shadow-lg hover:scale-105 active:scale-95 relative before:absolute before:inset-0 before:bg-white/10 before:scale-x-0 hover:before:scale-x-100 before:transition-transform before:duration-300 before:origin-left",
+        schools: "bg-brand-accent-green text-white hover:bg-brand-accent-green/90 font-medium hover:shadow-lg hover:scale-105 active:scale-95 relative before:absolute before:inset-0 before:bg-white/10 before:scale-x-0 hover:before:scale-x-100 before:transition-transform before:duration-300 before:origin-left",
+        recruiters: "bg-brand-secondary text-white hover:bg-brand-secondary/90 font-medium hover:shadow-lg hover:scale-105 active:scale-95 relative before:absolute before:inset-0 before:bg-white/10 before:scale-x-0 hover:before:scale-x-100 before:transition-transform before:duration-300 before:origin-left",
+        suppliers: "bg-brand-accent-orange text-white hover:bg-brand-accent-orange/90 font-medium hover:shadow-lg hover:scale-105 active:scale-95 relative before:absolute before:inset-0 before:bg-white/10 before:scale-x-0 hover:before:scale-x-100 before:transition-transform before:duration-300 before:origin-left",
       },
       size: {
         default: "h-10 px-4 py-2",

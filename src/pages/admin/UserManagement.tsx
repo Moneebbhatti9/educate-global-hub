@@ -7,6 +7,8 @@ import { ChangeStatusModal } from "@/components/admin/ChangeStatusModal";
 import { DeleteUserModal } from "@/components/admin/DeleteUserModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { UserManagementSkeleton } from "@/components/skeletons/user-management-skeleton";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptySearchResults } from "@/components/ui/empty-state";
 import {
   AdminUser,
   AdminCreateUserRequest,

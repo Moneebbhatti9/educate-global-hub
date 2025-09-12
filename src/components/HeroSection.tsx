@@ -42,26 +42,26 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               {isAuthenticated && user ? (
                 <>
-                  <Button variant="hero" size="xl" asChild>
+                  <Button variant="hero" size="xl" asChild className="hover-lift">
                     <Link to={`/dashboard/${user.role}`} className="group">
-                      <LayoutDashboard className="mr-2 h-5 w-5" />
+                      <LayoutDashboard className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
                       Go to Dashboard
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
                     </Link>
                   </Button>
-                  <Button variant="hero-outline" size="xl" asChild>
+                  <Button variant="hero-outline" size="xl" asChild className="hover-lift">
                     <Link to="/jobs">Browse Jobs</Link>
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="hero" size="xl" asChild>
+                  <Button variant="hero" size="xl" asChild className="hover-lift">
                     <Link to="/register" className="group">
                       Get Started Today
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
                     </Link>
                   </Button>
-                  <Button variant="hero-outline" size="xl" asChild>
+                  <Button variant="hero-outline" size="xl" asChild className="hover-lift">
                     <Link to="/jobs">Browse Jobs</Link>
                   </Button>
                 </>
@@ -70,32 +70,32 @@ const HeroSection = () => {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-border/50">
-              <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-primary/10">
-                  <Users className="w-6 h-6 text-brand-primary" />
+              <div className="text-center group hover-lift cursor-pointer">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-primary/10 group-hover:bg-brand-primary/20 transition-colors duration-300">
+                  <Users className="w-6 h-6 text-brand-primary group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <div className="text-2xl font-bold text-foreground">10K+</div>
+                <div className="text-2xl font-bold text-foreground group-hover:text-brand-primary transition-colors duration-300">10K+</div>
                 <div className="text-sm text-muted-foreground">Teachers</div>
               </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-accent-green/10">
-                  <BookOpen className="w-6 h-6 text-brand-accent-green" />
+              <div className="text-center group hover-lift cursor-pointer">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-accent-green/10 group-hover:bg-brand-accent-green/20 transition-colors duration-300">
+                  <BookOpen className="w-6 h-6 text-brand-accent-green group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <div className="text-2xl font-bold text-foreground">5K+</div>
+                <div className="text-2xl font-bold text-foreground group-hover:text-brand-accent-green transition-colors duration-300">5K+</div>
                 <div className="text-sm text-muted-foreground">Schools</div>
               </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-secondary/10">
-                  <MessageSquare className="w-6 h-6 text-brand-secondary" />
+              <div className="text-center group hover-lift cursor-pointer">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-secondary/10 group-hover:bg-brand-secondary/20 transition-colors duration-300">
+                  <MessageSquare className="w-6 h-6 text-brand-secondary group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <div className="text-2xl font-bold text-foreground">1K+</div>
+                <div className="text-2xl font-bold text-foreground group-hover:text-brand-secondary transition-colors duration-300">1K+</div>
                 <div className="text-sm text-muted-foreground">Discussions</div>
               </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-accent-orange/10">
-                  <Package className="w-6 h-6 text-brand-accent-orange" />
+              <div className="text-center group hover-lift cursor-pointer">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2 rounded-lg bg-brand-accent-orange/10 group-hover:bg-brand-accent-orange/20 transition-colors duration-300">
+                  <Package className="w-6 h-6 text-brand-accent-orange group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <div className="text-2xl font-bold text-foreground">500+</div>
+                <div className="text-2xl font-bold text-foreground group-hover:text-brand-accent-orange transition-colors duration-300">500+</div>
                 <div className="text-sm text-muted-foreground">Suppliers</div>
               </div>
             </div>

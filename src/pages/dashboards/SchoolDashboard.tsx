@@ -58,6 +58,8 @@ import { useShortlistApplication } from "@/hooks/useApplications";
 import { useMoveToReviewing } from "@/hooks/useApplications";
 import { customToast } from "@/components/ui/sonner";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptyJobPostings, EmptyCandidates } from "@/components/ui/empty-state";
 
 // Interface for the recent candidates API response
 interface RecentCandidate {
@@ -148,11 +150,34 @@ const SchoolDashboard = () => {
     recentCandidatesLoading ||
     jobApplicationsLoading;
 
+  // Check for errors
+  const hasErrors = 
+    schoolJobs?.error ||
+    schoolCardsCount?.error ||
+    notificationStats?.error ||
+    unreadNotifications?.error ||
+    recentCandidates?.error ||
+    jobApplications?.error;
+
   // Show skeleton loading state while data is loading
   if (isLoading) {
     return (
       <DashboardLayout role="school">
         <DashboardSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  // Show error fallback if there are errors
+  if (hasErrors) {
+    return (
+      <DashboardLayout role="school">
+        <DashboardErrorFallback 
+          error="Failed to load school dashboard data"
+          onRetry={() => window.location.reload()}
+          title="School Dashboard Unavailable"
+          description="We're having trouble loading your dashboard data. This could be due to a temporary network issue or server maintenance."
+        />
       </DashboardLayout>
     );
   }
@@ -540,13 +565,9 @@ const SchoolDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No job postings yet</p>
-                    <p className="text-sm">
-                      Create your first job posting to get started
-                    </p>
-                  </div>
+                  <EmptyJobPostings
+                    onCreateJob={() => navigate("/dashboard/school/post-job")}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -757,10 +778,9 @@ const SchoolDashboard = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No applications yet for this position</p>
-                    </div>
+                    <EmptyCandidates
+                      onPostJob={() => console.log("Navigate to job posting")}
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -844,10 +864,10 @@ const SchoolDashboard = () => {
                     )
                   )
                 ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm font-medium">No recent candidates</p>
-                    <p className="text-xs">New applications will appear here</p>
+                  <div className="text-center py-4">
+                    <EmptyCandidates
+                      onPostJob={() => navigate("/dashboard/school/post-job")}
+                    />
                   </div>
                 )}
 

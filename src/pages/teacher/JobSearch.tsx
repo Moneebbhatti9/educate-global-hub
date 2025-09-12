@@ -39,6 +39,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { useJobs } from "@/hooks/useJobs";
+import { JobListingsSkeleton } from "@/components/skeletons";
+import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import { EmptySearchResults } from "@/components/ui/empty-state";
 import {
   useSaveJob,
   useRemoveSavedJob,
@@ -260,10 +263,12 @@ const JobSearch = () => {
   if (error) {
     return (
       <DashboardLayout role="teacher">
-        <div className="text-center p-8">
-          <p className="text-red-500 mb-4">Failed to load jobs</p>
-          <Button onClick={() => refetch()}>Try Again</Button>
-        </div>
+        <DashboardErrorFallback 
+          error={error}
+          onRetry={refetch}
+          title="Job Search Unavailable"
+          description="We're having trouble loading job listings. This could be due to a temporary network issue."
+        />
       </DashboardLayout>
     );
   }
@@ -551,13 +556,12 @@ const JobSearch = () => {
           {!isLoading && (
             <div className="space-y-6">
               {jobs.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <div className="text-muted-foreground">
-                    <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                    <p className="text-lg font-medium mb-2">No jobs found</p>
-                    <p>Try adjusting your filters or search terms</p>
-                  </div>
-                </Card>
+                <EmptySearchResults
+                  onClearSearch={() => {
+                    setSearchTerm("");
+                    setFilters(prev => ({ ...prev, q: undefined }));
+                  }}
+                />
               ) : (
                 jobs.map((job: Job) => (
                   <Card
