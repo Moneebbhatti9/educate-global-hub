@@ -217,37 +217,46 @@ const Forum = () => {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="font-heading font-bold text-3xl sm:text-4xl text-foreground mb-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-4">
+            <div className="flex-1">
+              <h1 className="font-heading font-bold text-2xl sm:text-3xl lg:text-4xl text-foreground mb-4">
                 Education Forum
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl">
+              <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl">
                 Connect with educators worldwide. Share knowledge, ask
                 questions, and grow together as a global education community.
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="hero" className="ml-4">
+                <Button
+                  variant="hero"
+                  className="ml-0 sm:ml-4 w-full sm:w-auto"
+                >
                   <Plus className="w-4 h-4 mr-2" />
-                  New Discussion
+                  <span className="sm:inline">New Discussion</span>
+                  <span className="sm:hidden">New Post</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="font-heading text-xl">
+              <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto sm:w-full sm:max-w-2xl">
+                <DialogHeader className="pb-4">
+                  <DialogTitle className="font-heading text-lg sm:text-xl">
                     Start a New Discussion
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-sm sm:text-base">
                     Share your thoughts, ask questions, or start a conversation
                     with the community.
                   </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleCreateDiscussion} className="space-y-4">
+                <form
+                  onSubmit={handleCreateDiscussion}
+                  className="space-y-4 sm:space-y-6"
+                >
                   <div className="space-y-2">
-                    <Label htmlFor="title">Discussion Title *</Label>
+                    <Label htmlFor="title" className="text-sm font-medium">
+                      Discussion Title *
+                    </Label>
                     <Input
                       id="title"
                       placeholder="Enter a clear, descriptive title for your discussion"
@@ -258,19 +267,22 @@ const Forum = () => {
                           title: e.target.value,
                         })
                       }
+                      className="w-full"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
+                    <Label htmlFor="category" className="text-sm font-medium">
+                      Category *
+                    </Label>
                     <Select
                       value={newDiscussion.category}
                       onValueChange={(value) =>
                         setNewDiscussion({ ...newDiscussion, category: value })
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -291,7 +303,9 @@ const Forum = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="content">Content *</Label>
+                    <Label htmlFor="content" className="text-sm font-medium">
+                      Content *
+                    </Label>
                     <Textarea
                       id="content"
                       placeholder="Share your thoughts, ask your question, or describe your topic in detail..."
@@ -302,13 +316,16 @@ const Forum = () => {
                           content: e.target.value,
                         })
                       }
-                      rows={6}
+                      rows={4}
+                      className="w-full resize-none sm:resize-y min-h-[100px] sm:min-h-[120px]"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="tags">Tags</Label>
+                    <Label htmlFor="tags" className="text-sm font-medium">
+                      Tags
+                    </Label>
                     <div className="relative">
                       <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -321,25 +338,31 @@ const Forum = () => {
                             tags: e.target.value,
                           })
                         }
-                        className="pl-10"
+                        className="pl-10 w-full"
                       />
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Add relevant tags to help others find your discussion
                     </p>
                   </div>
 
-                  <div className="flex justify-end space-x-3 pt-4">
+                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 sm:pt-6">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setIsDialogOpen(false)}
+                      className="w-full sm:w-auto order-2 sm:order-1"
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" variant="hero">
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      className="w-full sm:w-auto order-1 sm:order-2"
+                    >
                       <Send className="w-4 h-4 mr-2" />
-                      Start Discussion
+                      <span className="sm:inline">Start Discussion</span>
+                      <span className="sm:hidden">Start</span>
                     </Button>
                   </div>
                 </form>

@@ -9,26 +9,31 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Global Education Brand Colors */
-    --brand-primary: 213 94% 47%;        /* Professional blue */
-    --brand-primary-light: 213 94% 85%;  /* Light blue */
-    --brand-secondary: 273 87% 65%;      /* Purple accent */
-    --brand-accent-green: 142 76% 46%;   /* Success green */
-    --brand-accent-orange: 31 100% 62%;  /* Energy orange */
-    
+    --brand-primary: 213 94% 47%;
+    /* Professional blue */
+    --brand-primary-light: 213 94% 85%;
+    /* Light blue */
+    --brand-secondary: 273 87% 65%;
+    /* Purple accent */
+    --brand-accent-green: 142 76% 46%;
+    /* Success green */
+    --brand-accent-orange: 31 100% 62%;
+    /* Energy orange */
+
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-secondary)) 100%);
     --gradient-card: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
     --gradient-button: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(273 87% 55%) 100%);
-    
+
     /* Shadows */
     --shadow-card: 0 4px 6px -1px hsl(var(--brand-primary) / 0.1), 0 2px 4px -1px hsl(var(--brand-primary) / 0.06);
     --shadow-card-hover: 0 10px 15px -3px hsl(var(--brand-primary) / 0.15), 0 4px 6px -2px hsl(var(--brand-primary) / 0.08);
     --shadow-hero: 0 25px 50px -12px hsl(var(--brand-primary) / 0.25);
-    
+
     /* Typography */
     --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
     --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-    
+
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -129,15 +134,53 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 640px) {
+    html {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Prevent horizontal scroll on mobile */
+    .min-h-screen {
+      overflow-x: hidden;
+    }
+
+    /* Better touch targets for mobile */
+    button,
+    a,
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Improve text readability on mobile */
+    p,
+    span,
+    div {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+  }
 }
 
 @layer utilities {
+
   /* Custom animations for microinteractions */
   @keyframes slide-in-from-top {
     from {
       opacity: 0;
       transform: translateY(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -149,6 +192,7 @@ All colors MUST be HSL.
       opacity: 0;
       transform: translateX(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -160,6 +204,7 @@ All colors MUST be HSL.
       opacity: 0;
       transform: translateX(10px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -170,6 +215,7 @@ All colors MUST be HSL.
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -180,6 +226,7 @@ All colors MUST be HSL.
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -187,18 +234,24 @@ All colors MUST be HSL.
   }
 
   @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-10px);
     }
   }
 
   @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
       box-shadow: 0 0 5px hsl(var(--brand-primary) / 0.3);
     }
+
     50% {
       box-shadow: 0 0 20px hsl(var(--brand-primary) / 0.6);
     }
@@ -208,6 +261,7 @@ All colors MUST be HSL.
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
@@ -243,12 +297,10 @@ All colors MUST be HSL.
   }
 
   .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      hsl(var(--brand-primary) / 0.1),
-      transparent
-    );
+    background: linear-gradient(90deg,
+        transparent,
+        hsl(var(--brand-primary) / 0.1),
+        transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
@@ -273,12 +325,10 @@ All colors MUST be HSL.
 
   /* Loading states */
   .loading-shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 25%,
-      hsl(var(--muted) / 0.5) 50%,
-      hsl(var(--muted)) 75%
-    );
+    background: linear-gradient(90deg,
+        hsl(var(--muted)) 25%,
+        hsl(var(--muted) / 0.5) 50%,
+        hsl(var(--muted)) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
@@ -301,6 +351,7 @@ All colors MUST be HSL.
     from {
       transform: rotate(0deg);
     }
+
     to {
       transform: rotate(360deg);
     }
@@ -315,6 +366,7 @@ All colors MUST be HSL.
     0% {
       stroke-dashoffset: 100;
     }
+
     100% {
       stroke-dashoffset: 0;
     }
@@ -332,12 +384,15 @@ All colors MUST be HSL.
       transform: scale(0.3);
       opacity: 0;
     }
+
     50% {
       transform: scale(1.05);
     }
+
     70% {
       transform: scale(0.9);
     }
+
     100% {
       transform: scale(1);
       opacity: 1;
@@ -354,6 +409,7 @@ All colors MUST be HSL.
       transform: translateX(100%);
       opacity: 0;
     }
+
     to {
       transform: translateX(0);
       opacity: 1;
@@ -366,10 +422,13 @@ All colors MUST be HSL.
 
   /* Pulse animation for important elements */
   @keyframes pulse-important {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: scale(1);
       box-shadow: 0 0 0 0 hsl(var(--brand-primary) / 0.7);
     }
+
     50% {
       transform: scale(1.05);
       box-shadow: 0 0 0 10px hsl(var(--brand-primary) / 0);
@@ -386,6 +445,7 @@ All colors MUST be HSL.
       transform: scale(0);
       opacity: 1;
     }
+
     100% {
       transform: scale(4);
       opacity: 0;
