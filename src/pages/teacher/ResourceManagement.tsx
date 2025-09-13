@@ -11,6 +11,7 @@ import {
   SortAsc,
   SortDesc,
 } from "lucide-react";
+import ResourceStatsModal from "@/components/Modals/resource-stats-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,6 +92,8 @@ export default function ResourceManagement() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("uploadDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedResource, setSelectedResource] = useState<typeof mockResources[0] | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -284,7 +287,12 @@ export default function ResourceManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedResource(resource);
+                              setIsStatsModalOpen(true);
+                            }}
+                          >
                             <Eye className="mr-2 h-4 w-4" />
                             View Stats
                           </DropdownMenuItem>
@@ -314,6 +322,16 @@ export default function ResourceManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Resource Stats Modal */}
+      <ResourceStatsModal
+        isOpen={isStatsModalOpen}
+        onClose={() => {
+          setIsStatsModalOpen(false);
+          setSelectedResource(null);
+        }}
+        resource={selectedResource}
+      />
     </div>
   );
 }
