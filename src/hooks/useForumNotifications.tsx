@@ -8,7 +8,8 @@ export const useForumNotifications = () => {
   useEffect(() => {
     if (socket) {
       // Listen for new discussions
-      const handleNewDiscussion = (data: { title: string; author: string }) => {
+      const handleNewDiscussion = (...args: unknown[]) => {
+        const data = args[0] as { title: string; author: string };
         toast({
           title: "New Discussion",
           description: `${data.author} started a new discussion: "${data.title}"`,
@@ -17,21 +18,20 @@ export const useForumNotifications = () => {
       };
 
       // Listen for new replies to discussions you're following
-      const handleNewReply = (data: {
-        discussionTitle: string;
-        author: string;
-        content: string;
-        discussionId: string;
-      }) => {
+      const handleNewReply = (...args: unknown[]) => {
+        const data = args[0] as {
+          discussionTitle: string;
+          author: string;
+          content: string;
+          discussionId: string;
+        };
         toast({
           title: "New Reply",
           description: `${data.author} replied to "${data.discussionTitle}"`,
           duration: 5000,
           action: (
             <button
-              onClick={() =>
-                (window.location.href = `/forum/${data.discussionId}`)
-              }
+              onClick={() => (window.location.href = `/forum/${data.discussionId}`)}
               className="text-sm underline"
             >
               View
@@ -41,12 +41,13 @@ export const useForumNotifications = () => {
       };
 
       // Listen for likes on your discussions/replies
-      const handleLike = (data: {
-        type: "discussion" | "reply";
-        title: string;
-        author: string;
-        discussionId: string;
-      }) => {
+      const handleLike = (...args: unknown[]) => {
+        const data = args[0] as {
+          type: "discussion" | "reply";
+          title: string;
+          author: string;
+          discussionId: string;
+        };
         toast({
           title: "New Like",
           description: `${data.author} liked your ${data.type}: "${data.title}"`,
@@ -55,12 +56,13 @@ export const useForumNotifications = () => {
       };
 
       // Listen for mentions
-      const handleMention = (data: {
-        author: string;
-        content: string;
-        discussionId: string;
-        replyId?: string;
-      }) => {
+      const handleMention = (...args: unknown[]) => {
+        const data = args[0] as {
+          author: string;
+          content: string;
+          discussionId: string;
+          replyId?: string;
+        };
         toast({
           title: "You were mentioned",
           description: `${data.author} mentioned you in a reply`,

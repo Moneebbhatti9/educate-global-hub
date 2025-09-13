@@ -61,8 +61,6 @@ const ProfileCompletionPage = () => {
 
       // Logout the user and redirect to login
       setTimeout(() => {
-        // Logout the user
-        logout();
 
         // Redirect to login page
         navigate(`/dashboard/${state.role}`, {

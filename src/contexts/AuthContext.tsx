@@ -289,7 +289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             );
             console.log("  User:", user ? "received" : "missing");
           }
-
+          console.log("🔐 OTP Verification - Tokens received:", user);
           secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
           secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
           secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);
