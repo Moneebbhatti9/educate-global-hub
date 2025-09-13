@@ -20,7 +20,6 @@ import {
   LogOut,
   Bell,
   Search,
-  Globe,
   Menu,
   User,
   Building2,
@@ -38,6 +37,7 @@ import {
   DollarSign,
   FolderOpen,
 } from "lucide-react";
+import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useNotifications,
@@ -286,19 +286,17 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         {/* Logo & Role */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center flex-shrink-0">
-                <Globe className="w-5 h-5 text-white" />
+            <Link to="/" className="flex flex-col items-center space-x-3">
+              <div className="h-16 w-48 flex items-center justify-center flex-shrink-0">
+                <img
+                  src={EducateLink2}
+                  alt="Educate Link"
+                  className="h-full w-full object-contain"
+                />
               </div>
               {sidebarOpen && (
                 <div className="min-w-0">
-                  <div className="font-heading font-bold text-lg">
-                    Educate Link
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={`${config.color} text-xs mt-1`}
-                  >
+                  <Badge className={`${config.color} text-xs`}>
                     {config.name} Portal
                   </Badge>
                 </div>

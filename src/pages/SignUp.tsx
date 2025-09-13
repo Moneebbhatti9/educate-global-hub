@@ -16,7 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
-  Globe,
   Mail,
   Lock,
   Eye,
@@ -29,6 +28,7 @@ import {
   Truck,
   Check,
 } from "lucide-react";
+import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
@@ -176,12 +176,16 @@ const SignUp = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-hero flex items-center justify-center">
-                <Globe className="w-8 h-8 text-white" />
+              <div className="h-24 w-64 flex items-center justify-center">
+                <img
+                  src={EducateLink2}
+                  alt="Educate Link"
+                  className="h-full w-full object-contain"
+                />
               </div>
             </div>
             <h1 className="font-heading font-bold text-3xl text-foreground mb-2">
-              Join Educate Link
+              Join Us
             </h1>
             <p className="text-muted-foreground">
               Create your account and become part of the global education
@@ -476,8 +480,7 @@ const SignUp = () => {
                 </Button>
               </form>
 
-              {/* Divider */}
-              <div className="my-6">
+              {/* <div className="my-6">
                 <Separator />
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
@@ -486,7 +489,7 @@ const SignUp = () => {
                 </div>
               </div>
 
-              {/* Social Sign Up */}
+              
               <div className="grid grid-cols-2 gap-4">
                 <Button variant="outline" className="w-full">
                   <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
@@ -519,7 +522,7 @@ const SignUp = () => {
                   </svg>
                   Facebook
                 </Button>
-              </div>
+              </div> */}
 
               {/* Sign In Link */}
               <div className="mt-6 text-center">
