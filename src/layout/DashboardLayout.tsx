@@ -34,6 +34,9 @@ import {
   CheckCircle,
   AlertCircle,
   MessagesSquare,
+  Upload,
+  DollarSign,
+  FolderOpen,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -81,9 +84,29 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: FileText,
         },
         {
+          name: "Upload Resource",
+          href: `/dashboard/teacher/upload-resource`,
+          icon: Upload,
+        },
+        {
+          name: "My Resources",
+          href: `/dashboard/teacher/resource-management`,
+          icon: FolderOpen,
+        },
+        {
+          name: "Earnings & Withdraw",
+          href: `/dashboard/teacher/withdraw`,
+          icon: DollarSign,
+        },
+        {
           name: "Profile",
           href: `/dashboard/teacher/teacher-profile`,
           icon: User,
+        },
+        {
+          name: "Settings",
+          href: `/dashboard/teacher/settings`,
+          icon: Settings,
         },
       ],
     },
@@ -113,6 +136,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           href: `/dashboard/school/profile`,
           icon: User,
         },
+        {
+          name: "Settings",
+          href: `/dashboard/school/settings`,
+          icon: Settings,
+        },
       ],
     },
 
@@ -128,6 +156,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           name: "Forum",
           href: `/dashboard/admin/forum`,
           icon: MessagesSquare,
+        },
+        {
+          name: "Resources",
+          href: `/dashboard/admin/resources`,
+          icon: FolderOpen,
         },
       ],
     },
@@ -299,9 +332,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                 } ${sidebarOpen ? "justify-start" : "justify-center"}`}
                 title={!sidebarOpen ? item.name : undefined}
               >
-                <Icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
-                  active ? "scale-110" : "group-hover:scale-110"
-                }`} />
+                <Icon
+                  className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
+                    active ? "scale-110" : "group-hover:scale-110"
+                  }`}
+                />
                 {sidebarOpen && (
                   <span className="font-medium transition-all duration-300">
                     {item.name}

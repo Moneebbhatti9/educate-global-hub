@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  BarChart3, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  BarChart3,
   Eye,
   SortAsc,
-  SortDesc 
+  SortDesc,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,7 @@ const mockResources = [
     uploadDate: "2024-01-15",
   },
   {
-    id: "2", 
+    id: "2",
     title: "Science Lab Safety Worksheet",
     thumbnail: "/api/placeholder/100/60",
     price: 0,
@@ -61,8 +61,8 @@ const mockResources = [
   {
     id: "3",
     title: "Creative Writing Prompts Bundle",
-    thumbnail: "/api/placeholder/100/60", 
-    price: 7.50,
+    thumbnail: "/api/placeholder/100/60",
+    price: 7.5,
     status: "Draft" as const,
     salesCount: 0,
     uploadDate: "2024-01-20",
@@ -81,8 +81,8 @@ const mockResources = [
 const mockStats = {
   totalResources: 24,
   totalSales: 1567,
-  currentBalance: 234.50,
-  royaltyTier: "Silver" as const
+  currentBalance: 234.5,
+  royaltyTier: "Silver" as const,
 };
 
 export default function ResourceManagement() {
@@ -109,7 +109,7 @@ export default function ResourceManagement() {
     switch (tier) {
       case "Bronze":
         return "text-amber-600";
-      case "Silver": 
+      case "Silver":
         return "text-slate-600";
       case "Gold":
         return "text-yellow-600";
@@ -118,9 +118,12 @@ export default function ResourceManagement() {
     }
   };
 
-  const filteredResources = mockResources.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || resource.status.toLowerCase() === statusFilter;
+  const filteredResources = mockResources.filter((resource) => {
+    const matchesSearch = resource.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || resource.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -130,9 +133,14 @@ export default function ResourceManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Resources</h1>
-          <p className="text-muted-foreground">Manage your uploaded teaching resources</p>
+          <p className="text-muted-foreground">
+            Manage your uploaded teaching resources
+          </p>
         </div>
-        <Button onClick={() => navigate("/teacher/upload-resource")} className="flex items-center gap-2">
+        <Button
+          onClick={() => navigate("/dashboard/teacher/upload-resource")}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Create New Resource
         </Button>
@@ -204,8 +212,8 @@ export default function ResourceManagement() {
                 <TableRow>
                   <TableHead className="w-[100px]">Thumbnail</TableHead>
                   <TableHead>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="h-auto p-0 font-medium"
                       onClick={() => {
                         setSortBy("title");
@@ -213,9 +221,12 @@ export default function ResourceManagement() {
                       }}
                     >
                       Resource Title
-                      {sortBy === "title" && (
-                        sortOrder === "asc" ? <SortAsc className="ml-2 w-4 h-4" /> : <SortDesc className="ml-2 w-4 h-4" />
-                      )}
+                      {sortBy === "title" &&
+                        (sortOrder === "asc" ? (
+                          <SortAsc className="ml-2 w-4 h-4" />
+                        ) : (
+                          <SortDesc className="ml-2 w-4 h-4" />
+                        ))}
                     </Button>
                   </TableHead>
                   <TableHead>Price</TableHead>
@@ -240,9 +251,13 @@ export default function ResourceManagement() {
                     </TableCell>
                     <TableCell>
                       {resource.price === 0 ? (
-                        <Badge className="bg-green-100 text-green-800">Free</Badge>
+                        <Badge className="bg-green-100 text-green-800">
+                          Free
+                        </Badge>
                       ) : (
-                        <span className="font-medium">£{resource.price.toFixed(2)}</span>
+                        <span className="font-medium">
+                          £{resource.price.toFixed(2)}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>{getStatusBadge(resource.status)}</TableCell>
@@ -259,7 +274,11 @@ export default function ResourceManagement() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
                             <span className="sr-only">Open menu</span>
-                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <svg
+                              className="h-4 w-4"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
                               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                             </svg>
                           </Button>
@@ -288,7 +307,9 @@ export default function ResourceManagement() {
 
           {filteredResources.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No resources found matching your criteria.</p>
+              <p className="text-muted-foreground">
+                No resources found matching your criteria.
+              </p>
             </div>
           )}
         </CardContent>
