@@ -67,8 +67,8 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
 const JobManagement = lazy(() => import("./pages/admin/JobManagement"));
 const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
-const JobAdvertisementManagement = lazy(
-  () => import("./pages/admin/JobAdvertisementManagement")
+const AdminResourceManagement = lazy(
+  () => import("./pages/admin/ResourceManagement")
 );
 
 // New Public Pages
@@ -77,6 +77,18 @@ const ContactUs = lazy(() => import("./pages/ContactUs"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const TeacherSettings = lazy(() => import("./pages/teacher/TeacherSettings"));
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
+
+// Resource and Download Pages
+const ResourceDetail = lazy(() => import("./pages/ResourceDetail"));
+const DownloadPage = lazy(() => import("./pages/DownloadPage"));
+const UploadResource = lazy(() => import("./pages/teacher/UploadResource"));
+const Withdraw = lazy(() => import("./pages/teacher/Withdraw"));
+const WithdrawalHistory = lazy(
+  () => import("./pages/teacher/WithdrawalHistory")
+);
+const TeacherResourceManagement = lazy(
+  () => import("./pages/teacher/ResourceManagement")
+);
 
 // Loading component
 const LoadingSpinner = () => (
@@ -118,6 +130,8 @@ const AppRoutes = () => {
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumDetail />} />
         <Route path="/resources" element={<Resources />} />
+        <Route path="/resources/:id" element={<ResourceDetail />} />
+        <Route path="/download/:id" element={<DownloadPage />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -170,6 +184,13 @@ const AppRoutes = () => {
           <Route path="profile" element={<TeacherProfile />} />
           <Route path="teacher-profile" element={<TeacherProfile />} />
           <Route path="settings" element={<TeacherSettings />} />
+          <Route path="upload-resource" element={<UploadResource />} />
+          <Route
+            path="resource-management"
+            element={<TeacherResourceManagement />}
+          />
+          <Route path="withdraw" element={<Withdraw />} />
+          <Route path="withdrawal-history" element={<WithdrawalHistory />} />
         </Route>
 
         {/* ======================================== */}
@@ -205,7 +226,7 @@ const AppRoutes = () => {
           <Route path="users" element={<UserManagement />} />
           <Route path="jobs" element={<JobManagement />} />
           <Route path="forum" element={<ForumManagement />} />
-          <Route path="job-ads" element={<JobAdvertisementManagement />} />
+          <Route path="resources" element={<AdminResourceManagement />} />
         </Route>
 
         {/* ======================================== */}
