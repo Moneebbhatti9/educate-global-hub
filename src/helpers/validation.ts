@@ -173,7 +173,7 @@ export const teacherProfileFormSchema = z.object({
   country: z.string().min(1, "Country is required"),
   city: z.string().min(1, "City is required"),
   province: z.string().min(1, "Province/State is required"),
-  zipCode: z.string().min(1, "ZIP code is required"),
+  zipCode: z.string().optional(),
   address: z.string().min(5, "Address must be at least 5 characters long"),
   qualification: z.enum(
     ["Bachelor", "Master", "PhD", "Diploma", "Certificate", "Other"],
@@ -210,7 +210,7 @@ export const schoolProfileFormSchema = z.object({
   country: z.string().min(1, "Country is required"),
   city: z.string().min(1, "City is required"),
   province: z.string().min(1, "Province/State is required"),
-  zipCode: z.string().min(1, "ZIP code is required"),
+  zipCode: z.string().optional(),
   address: z.string().min(5, "Address must be at least 5 characters long"),
   curriculum: z.array(z.string()).min(1, "At least one curriculum is required"),
   schoolSize: z.enum(

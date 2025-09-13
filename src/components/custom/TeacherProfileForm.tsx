@@ -180,7 +180,6 @@ const TeacherProfileForm = ({
         currentFormData.country &&
         currentFormData.city &&
         currentFormData.province &&
-        currentFormData.zipCode &&
         currentFormData.address &&
         currentFormData.qualification &&
         currentFormData.subject &&
@@ -210,7 +209,6 @@ const TeacherProfileForm = ({
         !currentFormData.country ||
         !currentFormData.city ||
         !currentFormData.province ||
-        !currentFormData.zipCode ||
         !currentFormData.address ||
         !currentFormData.qualification ||
         !currentFormData.subject ||
@@ -482,7 +480,7 @@ const TeacherProfileForm = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">ZIP Code *</Label>
+                  <Label htmlFor="zipCode">ZIP Code</Label>
                   <Input
                     id="zipCode"
                     placeholder="Enter your ZIP code"
@@ -812,15 +810,15 @@ const TeacherProfileForm = ({
           )}
 
           {/* Navigation */}
-          <div className="flex justify-between pt-6">
-            <Button
+          <div className="flex justify-end pt-6">
+            {/* <Button
               variant="outline"
               onClick={handleBack}
               disabled={currentStep === 1 && !onBack}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
-            </Button>
+            </Button> */}
 
             <Button
               onClick={handleNext}

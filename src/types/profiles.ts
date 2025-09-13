@@ -31,7 +31,7 @@ export interface TeacherProfile extends BaseProfile {
   country: string;
   city: string;
   province: string;
-  zipCode: string;
+  zipCode?: string;
   address: string;
   qualification:
     | "Bachelor"
@@ -91,7 +91,7 @@ export interface TeacherProfileRequest {
   country: string;
   city: string;
   province: string;
-  zipCode: string;
+  zipCode?: string;
   address: string;
   qualification:
     | "Bachelor"
@@ -119,7 +119,7 @@ export interface SchoolProfile extends BaseProfile {
   country: string;
   city: string;
   province: string;
-  zipCode: string;
+  zipCode?: string;
   address: string;
   curriculum: string[];
   schoolSize:
@@ -154,7 +154,7 @@ export interface SchoolProfileRequest {
   country: string;
   city: string;
   province: string;
-  zipCode: string;
+  zipCode?: string;
   address: string;
   curriculum: string[];
   schoolSize:
