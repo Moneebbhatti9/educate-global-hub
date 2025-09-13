@@ -150,7 +150,6 @@ const SchoolProfileForm = ({
         currentFormData.country &&
         currentFormData.city &&
         currentFormData.province &&
-        currentFormData.zipCode &&
         currentFormData.address &&
         currentFormData.curriculum.length > 0 &&
         currentFormData.schoolSize &&
@@ -180,7 +179,6 @@ const SchoolProfileForm = ({
         !currentFormData.country ||
         !currentFormData.city ||
         !currentFormData.province ||
-        !currentFormData.zipCode ||
         !currentFormData.address ||
         currentFormData.curriculum.length === 0 ||
         !currentFormData.schoolSize ||
@@ -474,7 +472,7 @@ const SchoolProfileForm = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">ZIP Code *</Label>
+                  <Label htmlFor="zipCode">ZIP Code</Label>
                   <Input
                     id="zipCode"
                     placeholder="Enter your ZIP code"

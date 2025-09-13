@@ -180,7 +180,6 @@ const TeacherProfileForm = ({
         currentFormData.country &&
         currentFormData.city &&
         currentFormData.province &&
-        currentFormData.zipCode &&
         currentFormData.address &&
         currentFormData.qualification &&
         currentFormData.subject &&
@@ -210,7 +209,6 @@ const TeacherProfileForm = ({
         !currentFormData.country ||
         !currentFormData.city ||
         !currentFormData.province ||
-        !currentFormData.zipCode ||
         !currentFormData.address ||
         !currentFormData.qualification ||
         !currentFormData.subject ||
@@ -481,7 +479,7 @@ const TeacherProfileForm = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">ZIP Code *</Label>
+                  <Label htmlFor="zipCode">ZIP Code</Label>
                   <Input
                     id="zipCode"
                     placeholder="Enter your ZIP code"
