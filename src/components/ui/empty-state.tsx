@@ -12,7 +12,8 @@ import {
   Settings,
   Calendar,
   Archive,
-  Database
+  Database,
+  DollarSign
 } from "lucide-react";
 
 interface EmptyStateProps {
@@ -211,6 +212,32 @@ export const EmptyAnalytics = () => (
     title="Insufficient Data"
     description="Not enough data available yet to generate meaningful analytics. Data will appear here as your activity increases."
     compact
+  />
+);
+
+export const EmptyWithdrawals = ({ onMakeWithdrawal }: { onMakeWithdrawal: () => void }) => (
+  <EmptyState
+    icon={DollarSign}
+    title="No Withdrawals Yet"
+    description="You haven't made any withdrawals yet. Start earning and withdraw your funds when you're ready."
+    action={{
+      label: "Make Your First Withdrawal",
+      onClick: onMakeWithdrawal,
+      variant: "outline"
+    }}
+  />
+);
+
+export const EmptyTransactions = ({ onUploadResource }: { onUploadResource: () => void }) => (
+  <EmptyState
+    icon={DollarSign}
+    title="No Recent Sales"
+    description="You haven't made any sales recently. Upload quality resources to start earning."
+    action={{
+      label: "Upload Resources",
+      onClick: onUploadResource,
+      variant: "outline"
+    }}
   />
 );
 

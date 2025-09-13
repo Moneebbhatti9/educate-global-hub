@@ -3,7 +3,6 @@ import HeroSection from "@/components/HeroSection";
 import UserTypeSection from "@/components/UserTypeSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import Footer from "@/components/Footer";
-import JobAdRequestForm from "@/components/JobAdRequestForm";
 
 const Index = () => {
   return (

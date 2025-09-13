@@ -30,6 +30,9 @@ interface UserData {
   avatar?: string;
   createdAt: string;
   updatedAt: string;
+  location?: string;
+  joinDate?: string;
+  lastActive?: string;
   // Additional fields based on role
   phoneNumber?: string;
   country?: string;

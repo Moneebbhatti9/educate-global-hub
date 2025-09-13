@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Globe, Twitter, Linkedin, Instagram, Mail } from "lucide-react";
+import { Twitter, Linkedin, Instagram, Mail } from "lucide-react";
+import EducateLink2 from "@/assets/Educate-Link-2.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -12,7 +13,7 @@ const Footer = () => {
         { name: "Resources", href: "/resources" },
         { name: "Forum", href: "/forum" },
         { name: "Suppliers", href: "/suppliers" },
-      ]
+      ],
     },
     {
       title: "For Users",
@@ -21,7 +22,7 @@ const Footer = () => {
         { name: "Schools", href: "/schools" },
         { name: "Recruiters", href: "/recruiters" },
         { name: "Suppliers", href: "/suppliers-info" },
-      ]
+      ],
     },
     {
       title: "Resources",
@@ -30,7 +31,7 @@ const Footer = () => {
         { name: "Blog", href: "/blog" },
         { name: "Help Center", href: "/help" },
         { name: "Contact", href: "/contact" },
-      ]
+      ],
     },
     {
       title: "Legal",
@@ -39,8 +40,8 @@ const Footer = () => {
         { name: "Terms of Service", href: "/terms" },
         { name: "Cookie Policy", href: "/cookies" },
         { name: "GDPR", href: "/gdpr" },
-      ]
-    }
+      ],
+    },
   ];
 
   return (
@@ -50,17 +51,18 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
+            <Link to="/" className="flex items-center mb-4">
+              <div className="h-16 w-48 flex items-center justify-center">
+                <img
+                  src={EducateLink2}
+                  alt="Educate Link"
+                  className="h-full w-full object-contain"
+                />
               </div>
-              <span className="font-heading font-bold text-xl text-foreground">
-                Educate Link
-              </span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Connecting the global education community. Find opportunities, share resources, 
-              and build the future of education together.
+              Connecting the global education community. Find opportunities,
+              share resources, and build the future of education together.
             </p>
             <div className="flex space-x-4">
               <a
@@ -119,7 +121,8 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-muted-foreground text-sm">
-            © {currentYear} Educate Link. All rights reserved. Connecting global education since 2024.
+            © {currentYear} Educate Link. All rights reserved. Connecting global
+            education since 2024.
           </div>
           <div className="flex items-center space-x-6 text-sm">
             <Link
@@ -136,7 +139,9 @@ const Footer = () => {
             </Link>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 rounded-full bg-brand-accent-green"></div>
-              <span className="text-muted-foreground">All systems operational</span>
+              <span className="text-muted-foreground">
+                All systems operational
+              </span>
             </div>
           </div>
         </div>

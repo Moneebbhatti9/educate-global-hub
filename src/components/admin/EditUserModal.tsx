@@ -150,38 +150,38 @@ export const EditUserModal = ({
         const formData = {
           firstName: user.firstName || "",
           lastName: user.lastName || "",
-          phoneNumber: profile?.phoneNumber || "",
-          country: profile?.country || "",
-          city: profile?.city || "",
-          province: profile?.province || "",
-          zipCode: profile?.zipCode || "",
-          address: profile?.address || "",
+          phoneNumber: (profile as any)?.phoneNumber || "",
+          country: (profile as any)?.country || "",
+          city: (profile as any)?.city || "",
+          province: (profile as any)?.province || "",
+          zipCode: (profile as any)?.zipCode || "",
+          address: (profile as any)?.address || "",
           // Teacher fields
-          qualification: profile?.qualification || "",
-          subject: profile?.subject || "",
-          pgce: profile?.pgce || false,
-          yearsOfTeachingExperience: profile?.yearsOfTeachingExperience || 0,
-          professionalBio: profile?.professionalBio || "",
-          keyAchievements: profile?.keyAchievements || [],
-          certifications: profile?.certifications || [],
-          additionalQualifications: profile?.additionalQualifications || [],
+          qualification: (profile as any)?.qualification || "",
+          subject: (profile as any)?.subject || "",
+          pgce: (profile as any)?.pgce || false,
+          yearsOfTeachingExperience: (profile as any)?.yearsOfTeachingExperience || 0,
+          professionalBio: (profile as any)?.professionalBio || "",
+          keyAchievements: (profile as any)?.keyAchievements || [],
+          certifications: (profile as any)?.certifications || [],
+          additionalQualifications: (profile as any)?.additionalQualifications || [],
           // School fields
-          schoolName: profile?.schoolName || "",
-          schoolEmail: profile?.schoolEmail || "",
-          schoolContactNumber: profile?.schoolContactNumber || "",
-          curriculum: profile?.curriculum || [],
-          schoolSize: profile?.schoolSize || "",
-          schoolType: profile?.schoolType || "",
-          genderType: profile?.genderType || "",
-          ageGroup: profile?.ageGroup || [],
-          schoolWebsite: profile?.schoolWebsite || "",
-          aboutSchool: profile?.aboutSchool || "",
+          schoolName: (profile as any)?.schoolName || "",
+          schoolEmail: (profile as any)?.schoolEmail || "",
+          schoolContactNumber: (profile as any)?.schoolContactNumber || "",
+          curriculum: (profile as any)?.curriculum || [],
+          schoolSize: (profile as any)?.schoolSize || "",
+          schoolType: (profile as any)?.schoolType || "",
+          genderType: (profile as any)?.genderType || "",
+          ageGroup: (profile as any)?.ageGroup || [],
+          schoolWebsite: (profile as any)?.schoolWebsite || "",
+          aboutSchool: (profile as any)?.aboutSchool || "",
           // Recruiter/Supplier fields
-          companyName: profile?.companyName || "",
-          industry: profile?.industry || "",
-          position: profile?.position || "",
-          products: profile?.products || [],
-          website: profile?.website || "",
+          companyName: (profile as any)?.companyName || "",
+          industry: (profile as any)?.industry || "",
+          position: (profile as any)?.position || "",
+          products: (profile as any)?.products || [],
+          website: (profile as any)?.website || "",
         };
 
         form.reset(formData);
@@ -722,7 +722,7 @@ export const EditUserModal = ({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => {
-                                          const newValues = field.value.filter(
+                                          const newValues = (field.value || []).filter(
                                             (_, i) => i !== index
                                           );
                                           field.onChange(newValues);
@@ -866,7 +866,7 @@ export const EditUserModal = ({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => {
-                                          const newValues = field.value.filter(
+                                          const newValues = (field.value || []).filter(
                                             (_, i) => i !== index
                                           );
                                           field.onChange(newValues);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -44,10 +44,25 @@ import {
 } from "lucide-react";
 
 const Resources = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
+
+  const handleResourceClick = (resourceId: number) => {
+    navigate(`/resources/${resourceId}`);
+  };
+
+  const handlePreviewClick = (resourceId: number) => {
+    navigate(`/resources/${resourceId}`);
+  };
+
+  const handlePurchaseClick = (resourceId: number) => {
+    // For now, navigate to resource detail page
+    // In a real app, this would handle the purchase flow
+    navigate(`/resources/${resourceId}`);
+  };
 
   const subjects = [
     {
@@ -281,8 +296,14 @@ const Resources = () => {
               </p>
             </div>
             <div className="flex space-x-2 ml-4">
-              <Button variant="hero-outline">Upload Resource</Button>
-              <Button variant="hero">Become a Seller</Button>
+              <Button variant="hero-outline" asChild>
+                <Link to="/dashboard/teacher/upload-resource">
+                  Upload Resource
+                </Link>
+              </Button>
+              <Button variant="hero" asChild>
+                <Link to="/register">Become a Seller</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -454,7 +475,8 @@ const Resources = () => {
                       return (
                         <Card
                           key={resource.id}
-                          className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20 overflow-hidden"
+                          className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20 overflow-hidden cursor-pointer"
+                          onClick={() => handleResourceClick(resource.id)}
                         >
                           <div className="relative">
                             <img
@@ -495,7 +517,7 @@ const Resources = () => {
                           <CardHeader className="pb-2">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <CardTitle className="font-heading text-lg leading-tight group-hover:text-brand-primary transition-colors cursor-pointer line-clamp-2">
+                                <CardTitle className="font-heading text-lg leading-tight group-hover:text-brand-primary transition-colors line-clamp-2">
                                   {resource.title}
                                 </CardTitle>
                                 <div className="flex items-center space-x-2 mt-2">
@@ -574,7 +596,14 @@ const Resources = () => {
 
                             <div className="flex space-x-2 pt-2">
                               {resource.price === 0 ? (
-                                <Button variant="teachers" className="flex-1">
+                                <Button
+                                  variant="teachers"
+                                  className="flex-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResourceClick(resource.id);
+                                  }}
+                                >
                                   <Download className="w-4 h-4 mr-2" />
                                   Download
                                 </Button>
@@ -583,10 +612,21 @@ const Resources = () => {
                                   <Button
                                     variant="hero-outline"
                                     className="flex-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePreviewClick(resource.id);
+                                    }}
                                   >
                                     Preview
                                   </Button>
-                                  <Button variant="teachers" className="flex-1">
+                                  <Button
+                                    variant="teachers"
+                                    className="flex-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePurchaseClick(resource.id);
+                                    }}
+                                  >
                                     Buy Now
                                   </Button>
                                 </>

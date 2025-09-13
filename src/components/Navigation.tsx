@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import EducateLink2 from "@/assets/Educate-Link-2.png";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,13 +17,14 @@ const Navigation = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-              <Globe className="w-5 h-5 text-white" />
+          <Link to="/" className="flex items-center">
+            <div className="h-16 w-48 flex items-center justify-center">
+              <img
+                src={EducateLink2}
+                alt="Educate Link"
+                className="h-full w-full object-contain"
+              />
             </div>
-            <span className="font-heading font-bold text-xl text-foreground">
-              Educate Link
-            </span>
           </Link>
 
           {/* Desktop Navigation */}
