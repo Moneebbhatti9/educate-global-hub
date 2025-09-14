@@ -95,10 +95,20 @@ export const errorHandler = {
           ];
         }
 
-        if (responseData.errors && typeof responseData.errors === "object") {
-          const firstError = Object.values(responseData.errors)[0];
-          if (Array.isArray(firstError) && firstError.length > 0) {
-            return firstError[0] as string;
+        if (responseData.errors) {
+          // Handle array format: { "errors": ["error1", "error2"] }
+          if (
+            Array.isArray(responseData.errors) &&
+            responseData.errors.length > 0
+          ) {
+            return responseData.errors[0] as string;
+          }
+          // Handle object format: { "errors": { "field": ["error1"] } }
+          else if (typeof responseData.errors === "object") {
+            const firstError = Object.values(responseData.errors)[0];
+            if (Array.isArray(firstError) && firstError.length > 0) {
+              return firstError[0] as string;
+            }
           }
         }
       }
@@ -140,8 +150,16 @@ export const errorHandler = {
         if (typeof responseData.code === "string") {
           code = responseData.code;
         }
-        if (responseData.errors && typeof responseData.errors === "object") {
-          details = responseData.errors as Record<string, string[]>;
+        if (responseData.errors) {
+          // Handle array format: { "errors": ["error1", "error2"] }
+          if (Array.isArray(responseData.errors)) {
+            // Convert array to object format for consistency
+            details = { general: responseData.errors };
+          }
+          // Handle object format: { "errors": { "field": ["error1"] } }
+          else if (typeof responseData.errors === "object") {
+            details = responseData.errors as Record<string, string[]>;
+          }
         }
       }
     } catch {

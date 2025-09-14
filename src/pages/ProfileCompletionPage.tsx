@@ -32,9 +32,8 @@ const ProfileCompletionPage = () => {
     }
   }, []);
 
-  // Redirect if no state data (user came directly to this route)
+  // Don't render if no state data
   if (!state || !state.role) {
-    navigate("/signup");
     return null;
   }
 
@@ -56,22 +55,69 @@ const ProfileCompletionPage = () => {
       // Show success toast
       customToast.success(
         "Profile completed successfully!",
-        "Welcome to Educate Global Hub. Please log in again to access your dashboard."
+        "Welcome to Educate Global Hub. Please sign in to access your dashboard."
       );
 
-      // Logout the user and redirect to login
+      // Handle different flows based on user role
       setTimeout(() => {
-        // Logout the user
-        logout();
+        if (import.meta.env.DEV) {
+          console.log("🎯 Profile completion - User role:", state.role);
+        }
 
-        // Redirect to login page
-        navigate(`/dashboard/${state.role}`, {
-          state: {
-            message: "Profile completed successfully!",
-            email: state.email,
-            role: state.role,
-          },
-        });
+        if (state.role === "school") {
+          // For school users, logout first then redirect to school approval page
+          if (import.meta.env.DEV) {
+            console.log(
+              "🏫 School user profile completed - logging out first, then redirecting to school approval"
+            );
+          }
+          // Logout first (skip navigation), then redirect
+          logout(true).then(() => {
+            navigate("/school-approval", {
+              state: {
+                message: "Profile completed successfully!",
+                email: state.email,
+                role: state.role,
+                firstName: state.firstName,
+                lastName: state.lastName,
+              },
+            });
+          });
+        } else if (state.role === "teacher") {
+          // For teacher users, logout first then redirect to login
+          if (import.meta.env.DEV) {
+            console.log(
+              "👨‍🏫 Teacher user profile completed - logging out first, then redirecting to login"
+            );
+          }
+          // Logout first (skip navigation), then redirect
+          logout(true).then(() => {
+            navigate("/login", {
+              state: {
+                message: "Profile completed successfully!",
+                email: state.email,
+                role: state.role,
+              },
+            });
+          });
+        } else {
+          // For other users, logout first then redirect to login
+          if (import.meta.env.DEV) {
+            console.log(
+              "👤 Logging out non-school/teacher user first, then redirecting to login page"
+            );
+          }
+          // Logout first (skip navigation), then redirect
+          logout(true).then(() => {
+            navigate("/login", {
+              state: {
+                message: "Profile completed successfully!",
+                email: state.email,
+                role: state.role,
+              },
+            });
+          });
+        }
       }, 1500);
     } catch (error) {
       handleError(error, "Profile completion failed");
