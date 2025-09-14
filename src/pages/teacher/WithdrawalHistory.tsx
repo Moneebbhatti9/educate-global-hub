@@ -196,7 +196,7 @@ const WithdrawalHistory = () => {
 
   return (
     <DashboardLayout role="teacher">
-      <div className="max-w-7xl mx-auto">
+      <div className="space-y-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">

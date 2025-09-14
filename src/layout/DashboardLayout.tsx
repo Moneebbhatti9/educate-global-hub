@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useRef } from "react";
+import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +20,6 @@ import {
   LogOut,
   Bell,
   Search,
-  Globe,
   Menu,
   User,
   Building2,
@@ -38,6 +37,7 @@ import {
   DollarSign,
   FolderOpen,
 } from "lucide-react";
+import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useNotifications,
@@ -53,7 +53,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
@@ -180,13 +180,28 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
 
   const isActive = (href: string) => location.pathname === href;
 
-  // Close sidebar on mobile when navigating
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(!sidebarOpen);
+    // Add visual feedback
+    const button = document.querySelector("[data-sidebar-toggle]");
+    if (button) {
+      button.classList.add("scale-95");
+      setTimeout(() => button.classList.remove("scale-95"), 150);
+    }
+  }, [sidebarOpen]);
+
+  // Close sidebar on mobile when navigating and set initial state
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
       }
     };
+
+    // Set initial state based on screen size
+    handleResize();
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -203,17 +218,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-    // Add visual feedback
-    const button = document.querySelector("[data-sidebar-toggle]");
-    if (button) {
-      button.classList.add("scale-95");
-      setTimeout(() => button.classList.remove("scale-95"), 150);
-    }
-  };
+  }, [toggleSidebar]);
 
   const toggleNotifications = () => {
     setNotificationsOpen(!notificationsOpen);
@@ -280,25 +285,28 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
       {/* Collapsible Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-full bg-white border-r border-border shadow-sm transition-all duration-300 ease-in-out z-50 ${
-          sidebarOpen ? "w-64" : "w-16"
+          sidebarOpen ? "w-64 lg:w-64" : "w-16"
+        } ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         {/* Logo & Role */}
-        <div className="p-4 border-b border-border">
+        <div className="p-2 sm:p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center flex-shrink-0">
-                <Globe className="w-5 h-5 text-white" />
+            <Link
+              to="/"
+              className="flex flex-col items-center space-x-2 sm:space-x-3"
+            >
+              <div className="h-8 w-24 sm:h-12 sm:w-32 lg:h-16 lg:w-48 flex items-center justify-center flex-shrink-0">
+                <img
+                  src={EducateLink2}
+                  alt="Educate Link"
+                  className="h-full w-full object-contain"
+                />
               </div>
               {sidebarOpen && (
                 <div className="min-w-0">
-                  <div className="font-heading font-bold text-lg">
-                    Educate Link
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={`${config.color} text-xs mt-1`}
-                  >
+                  <Badge className={`${config.color} text-xs`}>
                     {config.name} Portal
                   </Badge>
                 </div>
@@ -316,7 +324,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-2">
+        <nav className="p-2 sm:p-4 space-y-1 sm:space-y-2">
           {config.navigation.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -325,7 +333,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-300 group relative ${
+                className={`flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-all duration-300 group relative ${
                   active
                     ? "bg-brand-primary text-white shadow-lg"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-md hover:scale-105"
@@ -333,18 +341,15 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                 title={!sidebarOpen ? item.name : undefined}
               >
                 <Icon
-                  className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
+                  className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 transition-transform duration-300 ${
                     active ? "scale-110" : "group-hover:scale-110"
                   }`}
                 />
                 {sidebarOpen && (
-                  <span className="font-medium transition-all duration-300">
+                  <span className="font-medium transition-all duration-300 text-sm sm:text-base">
                     {item.name}
                   </span>
                 )}
-                {/* {!active && (
-                  <div className="absolute ml-0 left-0 top-0 bottom-0 w-1 bg-brand-primary scale-y-0 group-hover:scale-y-100 ml-0 transition-transform duration-300 origin-center rounded-r-full" />
-                )} */}
               </Link>
             );
           })}
@@ -354,44 +359,56 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
       {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "ml-64" : "ml-16"
+          sidebarOpen ? "ml-0 lg:ml-64" : "ml-0 lg:ml-16"
         }`}
       >
         {/* Fixed Top Bar */}
-        <header className="sticky top-0 h-16 bg-white border-b border-border px-6 flex items-center justify-between z-40">
-          <div className="flex items-center space-x-4">
+        <header className="sticky top-0 h-14 sm:h-16 bg-white border-b border-border px-3 sm:px-6 flex items-center justify-between z-40">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleSidebar}
               data-sidebar-toggle
               title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+              className="lg:hidden"
             >
-              <Menu />
+              <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
 
-            <div className="relative group">
+            {/* Mobile Search Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="sm:hidden p-2"
+              title="Search"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+
+            {/* Desktop Search Input */}
+            <div className="relative group hidden sm:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors duration-300 group-focus-within:text-brand-primary" />
               <input
                 type="text"
                 placeholder="Search..."
-                className="pl-9 pr-4 py-2 w-96 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all duration-300 hover:border-brand-primary/50 focus:shadow-lg focus:scale-105"
+                className="pl-9 pr-4 py-2 w-64 sm:w-80 lg:w-96 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all duration-300 hover:border-brand-primary/50 focus:shadow-lg focus:scale-105"
               />
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Notifications Dropdown */}
             <div className="relative" ref={notificationsRef}>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleNotifications}
-                className="relative hover:bg-brand-primary/10 hover:scale-110 transition-all duration-300"
+                className="relative hover:bg-brand-primary/10 hover:scale-110 transition-all duration-300 p-2"
               >
-                <Bell className="w-5 h-5 transition-transform duration-300 hover:rotate-12" />
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 hover:rotate-12" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -399,10 +416,12 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
 
               {/* Notifications Panel */}
               {notificationsOpen && (
-                <div className="absolute right-0 top-12 w-96 bg-white border border-border rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2 duration-300">
-                  <div className="p-4 border-b border-border">
+                <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white border border-border rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2 duration-300 max-h-[80vh] overflow-hidden">
+                  <div className="p-3 sm:p-4 border-b border-border">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg">Notifications</h3>
+                      <h3 className="font-semibold text-base sm:text-lg">
+                        Notifications
+                      </h3>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -413,17 +432,17 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                     </div>
                   </div>
 
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-64 sm:max-h-96 overflow-y-auto">
                     {notifications?.data?.data &&
                     notifications.data.data.length > 0 ? (
                       notifications.data.data.map((notification) => (
                         <div
                           key={notification._id}
-                          className={`p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-all duration-300 hover:shadow-md hover:scale-[1.02] cursor-pointer ${
+                          className={`p-3 sm:p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-all duration-300 hover:shadow-md hover:scale-[1.02] cursor-pointer ${
                             !notification.isRead ? "bg-blue-50" : ""
                           }`}
                         >
-                          <div className="flex items-start space-x-3">
+                          <div className="flex items-start space-x-2 sm:space-x-3">
                             <div
                               className={`mt-1 ${getNotificationColor(
                                 notification.priority
@@ -433,7 +452,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-foreground">
+                                <p className="text-xs sm:text-sm font-medium text-foreground">
                                   {notification.title}
                                 </p>
                                 <span className="text-xs text-muted-foreground">
@@ -442,7 +461,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                                   ).toLocaleDateString()}
                                 </span>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                                 {notification.message}
                               </p>
                               {notification.actionRequired &&
@@ -450,7 +469,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="mt-2"
+                                    className="mt-2 text-xs"
                                     onClick={() => {
                                       window.open(
                                         notification.actionUrl,
@@ -467,10 +486,12 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                         </div>
                       ))
                     ) : (
-                      <div className="p-8 text-center text-muted-foreground">
-                        <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>No notifications yet</p>
-                        <p className="text-sm">
+                      <div className="p-6 sm:p-8 text-center text-muted-foreground">
+                        <Bell className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 opacity-50" />
+                        <p className="text-sm sm:text-base">
+                          No notifications yet
+                        </p>
+                        <p className="text-xs sm:text-sm">
                           We'll notify you when something important happens
                         </p>
                       </div>
@@ -479,7 +500,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
 
                   {notifications?.data?.data &&
                     notifications.data.data.length > 0 && (
-                      <div className="p-4 border-t border-border">
+                      <div className="p-3 sm:p-4 border-t border-border">
                         <Link
                           to={`/dashboard/${
                             role === "teacher"
@@ -488,7 +509,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                               ? "school"
                               : "admin"
                           }/notifications`}
-                          className="text-sm text-brand-primary hover:underline"
+                          className="text-xs sm:text-sm text-brand-primary hover:underline"
                           onClick={() => setNotificationsOpen(false)}
                         >
                           View all notifications
@@ -503,9 +524,9 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center space-x-3 px-3 py-2"
+                  className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2"
                 >
-                  <Avatar className="w-8 h-8">
+                  <Avatar className="w-6 h-6 sm:w-8 sm:h-8">
                     <AvatarImage
                       src={
                         user?.avatarUrl ||
@@ -513,14 +534,14 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                         "/api/placeholder/32/32"
                       }
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-xs">
                       {displayName
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="text-left">
+                  <div className="text-left hidden sm:block">
                     <div className="text-sm font-medium">{displayName}</div>
                     <div className="text-xs text-muted-foreground">
                       {displayEmail}
@@ -528,7 +549,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-48 sm:w-56">
                 <DropdownMenuItem asChild>
                   <Link
                     to={`/dashboard/${
@@ -573,7 +594,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         </header>
 
         {/* Scrollable Page Content */}
-        <main className="flex-1 p-6 bg-background overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-6 bg-background overflow-y-auto">
           {children}
         </main>
       </div>
