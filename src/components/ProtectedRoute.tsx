@@ -39,8 +39,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check email verification
   if (!user.isEmailVerified) {
-    return <Navigate to="/verify-email" replace />;
+    return <Navigate to="/otp-verification" replace />;
   }
+
+  // Note: User status validation is now handled server-side
+  // No client-side status checks needed
 
   return <>{children}</>;
 };
@@ -91,7 +94,7 @@ export const PublicRoute: React.FC<{ children: React.ReactNode }> = ({
   // If user is authenticated, redirect based on their state
   if (isAuthenticated && user) {
     if (!user.isEmailVerified) {
-      return <Navigate to="/verify-email" replace />;
+      return <Navigate to="/otp-verification" replace />;
     } else if (!user.isProfileComplete) {
       return <Navigate to="/profile-completion" replace />;
     } else {
