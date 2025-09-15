@@ -58,7 +58,10 @@ import { useShortlistApplication } from "@/hooks/useApplications";
 import { useMoveToReviewing } from "@/hooks/useApplications";
 import { customToast } from "@/components/ui/sonner";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
-import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
+import {
+  DashboardErrorFallback,
+  SectionErrorFallback,
+} from "@/components/ui/error-fallback";
 import { EmptyJobPostings, EmptyCandidates } from "@/components/ui/empty-state";
 
 // Interface for the recent candidates API response
@@ -151,7 +154,7 @@ const SchoolDashboard = () => {
     jobApplicationsLoading;
 
   // Check for errors
-  const hasErrors = 
+  const hasErrors =
     schoolJobs?.error ||
     schoolCardsCount?.error ||
     notificationStats?.error ||
@@ -172,7 +175,7 @@ const SchoolDashboard = () => {
   if (hasErrors) {
     return (
       <DashboardLayout role="school">
-        <DashboardErrorFallback 
+        <DashboardErrorFallback
           error="Failed to load school dashboard data"
           onRetry={() => window.location.reload()}
           title="School Dashboard Unavailable"
@@ -779,7 +782,7 @@ const SchoolDashboard = () => {
                     </div>
                   ) : (
                     <EmptyCandidates
-                      onPostJob={() => console.log("Navigate to job posting")}
+                      onPostJob={() => navigate("/dashboard/school/post-job")}
                     />
                   )}
                 </CardContent>
