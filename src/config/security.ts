@@ -16,6 +16,7 @@ export interface SecurityConfig {
     clickjackingProtection: boolean;
     mimeTypeSniffingProtection: boolean;
     referrerPolicy: boolean;
+    allowUserInteractions: boolean; // Allow right-click, text selection, and copy functionality
   };
 }
 
@@ -32,6 +33,7 @@ const developmentConfig: SecurityConfig = {
     clickjackingProtection: true,
     mimeTypeSniffingProtection: true,
     referrerPolicy: true,
+    allowUserInteractions: true, // Enable user interactions in development
   },
 };
 
@@ -49,6 +51,7 @@ const productionConfig: SecurityConfig = {
     clickjackingProtection: true,
     mimeTypeSniffingProtection: true,
     referrerPolicy: true,
+    allowUserInteractions: true, // Enable user interactions in production for better UX
   },
 };
 
@@ -65,6 +68,7 @@ const testConfig: SecurityConfig = {
     clickjackingProtection: true,
     mimeTypeSniffingProtection: true,
     referrerPolicy: true,
+    allowUserInteractions: true, // Enable user interactions in test environment
   },
 };
 

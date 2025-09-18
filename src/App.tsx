@@ -38,6 +38,7 @@ const OTPVerificationPage = lazy(() => import("./pages/OTPVerificationPage"));
 const ProfileCompletionPage = lazy(
   () => import("./pages/ProfileCompletionPage")
 );
+const SchoolApproval = lazy(() => import("./pages/SchoolApproval"));
 const TeacherDashboard = lazy(
   () => import("./pages/dashboards/TeacherDashboard")
 );
@@ -171,6 +172,8 @@ const AppRoutes = () => {
             </ProfileCompletionRoute>
           }
         />
+
+        <Route path="/school-approval" element={<SchoolApproval />} />
 
         {/* ======================================== */}
         {/* TEACHER DASHBOARD ROUTES - PROTECTED */}

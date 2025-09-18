@@ -24,6 +24,7 @@ import {
   PasswordResetConfirmData,
   ChangePasswordData,
   ProfileCompletionData,
+  UserStatusResponse,
   STORAGE_KEYS,
 } from "../types/auth";
 
@@ -97,7 +98,7 @@ const initialState: AuthState = {
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (credentials: SignupCredentials) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (skipNavigation?: boolean) => Promise<void>;
   verifyOTP: (data: OTPVerificationData) => Promise<void>;
   sendOTP: (email: string) => Promise<void>;
   passwordReset: (data: PasswordResetData) => Promise<void>;
@@ -107,6 +108,10 @@ interface AuthContextType extends AuthState {
   uploadAvatar: (file: File) => Promise<void>;
   refreshToken: () => Promise<void>;
   updateUser: (user: User) => void;
+  checkUserStatus: () => Promise<{
+    redirectTo: string;
+    requiresStatusApproval?: boolean;
+  }>;
 }
 
 // Create context
@@ -139,6 +144,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             type: "INITIALIZE",
             payload: { user, token },
           });
+          if (import.meta.env.DEV) {
+            console.log("🔐 Auth initialized with existing user:", {
+              email: user.email,
+              role: user.role,
+              isProfileComplete: user.isProfileComplete,
+              status: user.status,
+            });
+          }
         } else {
           // Clear any corrupted or invalid data
           secureStorage.clearAuth();
@@ -146,6 +159,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             type: "INITIALIZE",
             payload: { user: null, token: null },
           });
+          if (import.meta.env.DEV) {
+            console.log(
+              "🔐 Auth initialized with no user (cleared invalid data)"
+            );
+          }
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
@@ -203,6 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               },
             });
           } else {
+            // Profile is complete, navigate to dashboard
             navigate(`/dashboard/${user.role}`);
           }
         } else {
@@ -219,17 +238,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   // Logout function
-  const logout = useCallback(async () => {
-    try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error("Logout API error:", error);
-    } finally {
-      secureStorage.clearAuth();
-      dispatch({ type: "LOGOUT" });
-      navigate("/login");
-    }
-  }, [navigate]);
+  const logout = useCallback(
+    async (skipNavigation: boolean = false) => {
+      try {
+        await authAPI.logout();
+      } catch (error) {
+        console.error("Logout API error:", error);
+      } finally {
+        secureStorage.clearAuth();
+        dispatch({ type: "LOGOUT" });
+        if (!skipNavigation) {
+          navigate("/login");
+        }
+      }
+    },
+    [navigate]
+  );
 
   // Signup function
   const signup = useCallback(async (credentials: SignupCredentials) => {
@@ -237,17 +261,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       dispatch({ type: "SET_LOADING", payload: true });
 
       const response = await authAPI.signup(credentials);
-      if (response.success && response.data) {
-        const { user, accessToken, refreshToken } = response.data;
-
-        secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
-        secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-        secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);
-
-        dispatch({
-          type: "LOGIN_SUCCESS",
-          payload: { user, token: accessToken },
-        });
+      if (response.success) {
+        // Signup successful - no tokens generated yet
+        // User will be redirected to OTP verification
+        if (import.meta.env.DEV) {
+          console.log("✅ Signup successful, user needs to verify email");
+        }
       } else {
         throw new Error(response.message || "Signup failed");
       }
@@ -272,7 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (response.success) {
-        // If response.data exists, use it (for immediate login)
+        // If response.data exists, use it (tokens generated after email verification)
         if (response.data) {
           const { user, accessToken, refreshToken } = response.data;
 
@@ -288,6 +307,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               refreshToken ? "received" : "missing"
             );
             console.log("  User:", user ? "received" : "missing");
+            console.log("  User Status:", user?.status);
+            console.log(
+              "  Requires Status Approval:",
+              response.data.requiresStatusApproval
+            );
           }
           console.log("🔐 OTP Verification - Tokens received:", user);
           secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
@@ -314,6 +338,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             type: "LOGIN_SUCCESS",
             payload: { user, token: accessToken },
           });
+
+          // Debug: Log the dispatch action
+          if (import.meta.env.DEV) {
+            console.log("🚀 OTP Verification - Dispatch LOGIN_SUCCESS:", {
+              user: {
+                email: user.email,
+                role: user.role,
+                isProfileComplete: user.isProfileComplete,
+                status: user.status,
+              },
+              hasToken: !!accessToken,
+            });
+          }
         } else {
           // If no data in response, just return success (user will complete profile first)
           // This is the case where OTP is verified but user needs to complete profile
@@ -479,6 +516,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               updatedUser,
               isProfileComplete: updatedUser.isProfileComplete,
               role: updatedUser.role,
+              status: updatedUser.status,
             });
           }
 
@@ -495,8 +533,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             });
           }
 
-          // Navigation is now handled manually in ProfileCompletionPage
-          // No automatic navigation here
+          // Profile completion successful - user will be redirected based on role
+          // School users go to school approval page, others go to signin
+          // No automatic navigation here, handled by ProfileCompletionPage
         } else {
           throw new Error(response.message || "Failed to complete profile");
         }
@@ -570,6 +609,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  // Check user status function
+  const checkUserStatus = useCallback(async () => {
+    try {
+      const response = await authAPI.checkUserStatus();
+      if (response.success && response.data) {
+        return {
+          redirectTo: response.data.redirectTo,
+          requiresStatusApproval: response.data.requiresStatusApproval,
+        };
+      } else {
+        throw new Error(response.message || "Failed to check user status");
+      }
+    } catch (error) {
+      errorHandler.logError(error, "User Status Check Error");
+      throw error;
+    }
+  }, []);
+
   const contextValue: AuthContextType = {
     ...state,
     login,
@@ -584,6 +641,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     uploadAvatar,
     refreshToken,
     updateUser,
+    checkUserStatus,
   };
 
   return (
