@@ -48,14 +48,19 @@ const resourceSchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
-    .max(45, "Aim for 35-45 characters for your title"),
-  description: z.string().min(1, "Description is required"),
+    .max(140, "Title must be under 140 characters"),
+  shortDescription: z
+    .string()
+    .min(140, "Short description must be at least 140 characters")
+    .max(300, "Short description must be under 300 characters"),
+  fullDescription: z.string().min(1, "Full description is required"),
   resourceType: z.string().min(1, "Resource type is required"),
-  mainAgeRange: z.string().min(1, "Main age range is required"),
-  additionalAgeRange: z.string().optional(),  
-  curriculum: z.string().min(1, "Curriculum is required"),
-  curriculumType: z.string().min(1, "Curriculum type is required"),
-  mainSubject: z.string().min(1, "Subject is required"),
+  subjects: z.array(z.string()).min(1, "At least one subject is required"),
+  ageGroups: z.array(z.string()).min(1, "At least one age group is required"),
+  curriculum: z.string().optional(),
+  language: z.string().min(1, "Language is required"),
+  pages: z.number().optional(),
+  lessonTime: z.number().optional(),
   isFree: z.enum(["free", "paid"]),
   price: z.number().optional(),
   currency: z.string().optional(),
@@ -70,158 +75,40 @@ const resourceSchema = z.object({
 type ResourceFormData = z.infer<typeof resourceSchema>;
 
 const RESOURCE_TYPES = [
-  { value: "Assembly", label: "Assembly" },
-  { value: "Assessment and revision", label: "Assessment and revision" },
-  { value: "Game/puzzle/quiz", label: "Game/puzzle/quiz" },
-  { value: "Audio, music & video", label: "Audio, music & video" },
-  { value: "Lesson (complete)", label: "Lesson (complete)" },
-  { value: "Other", label: "Other" },
-  { value: "Unit of work", label: "Unit of work" },
-  { value: "Visual aid/Display", label: "Visual aid/Display" },
-  { value: "Worksheet/Activity", label: "Worksheet/Activity" }
-];
-
-const AGE_RANGES = [
-  { value: "3-5", label: "3-5" },
-  { value: "5-7", label: "5-7" },
-  { value: "7-11", label: "7-11" },
-  { value: "11-14", label: "11-14" }, 
-  { value: "14-16", label: "14-16" },
-  { value: "16+", label: "16+" },
-  { value: "Age not applicable", label: "Age not applicable" }
-];
-
-const CURRICULUMS = [
-  { value: "No curriculum", label: "No curriculum" },
-  { value: "American", label: "American" },
-  { value: "Australian", label: "Australian" },
-  { value: "Canadian", label: "Canadian" },
-  { value: "English", label: "English" },
-  { value: "International", label: "International" },
-  { value: "Irish", label: "Irish" },
-  { value: "New Zealand", label: "New Zealand" },
-  { value: "Northern Irish", label: "Northern Irish" },
-  { value: "Scottish", label: "Scottish" },
-  { value: "Welsh", label: "Welsh" },
-  { value: "Zambian", label: "Zambian" }
-];
-
-const CURRICULUM_TYPES = [
-  { value: "No curriculum type", label: "No curriculum type" },
-  { value: "Cambridge", label: "Cambridge" },
-  { value: "Foundation Stage", label: "Foundation Stage" },
-  { value: "IB PYP", label: "IB PYP" },
-  { value: "IPC", label: "IPC" },
-  { value: "IPC/IEYC", label: "IPC/IEYC" },
-  { value: "Montessori", label: "Montessori" },
-  { value: "Northern Ireland Curriculum", label: "Northern Ireland Curriculum" },
-  { value: "School's own", label: "School's own" },
-  { value: "Waldorf/Steiner", label: "Waldorf/Steiner" }
+  "Worksheet",
+  "Lesson Plan",
+  "Presentation",
+  "Assessment",
+  "Scheme of Work",
+  "Display",
+  "Activity",
+  "Game",
+  "Video",
+  "Other",
 ];
 
 const SUBJECTS = [
-  { value: "Aboriginal and Islander languages", label: "Aboriginal and Islander languages" },
-  { value: "Aboriginal studies", label: "Aboriginal studies" },
-  { value: "Afrikaans", label: "Afrikaans" },
-  { value: "Albanian", label: "Albanian" },
-  { value: "Amharic", label: "Amharic" },
-  { value: "Anthropology", label: "Anthropology" },
-  { value: "Arabic", label: "Arabic" },
-  { value: "Art and design", label: "Art and design" },
-  { value: "Belarussian", label: "Belarussian" },
-  { value: "Bengali", label: "Bengali" },
-  { value: "Biology", label: "Biology" },
-  { value: "Bosnian", label: "Bosnian" },
-  { value: "Bulgarian", label: "Bulgarian" },
-  { value: "Business and finance", label: "Business and finance" },
-  { value: "Cantonese", label: "Cantonese" },
-  { value: "Catalan", label: "Catalan" },
-  { value: "Chemistry", label: "Chemistry" },
-  { value: "Citizenship", label: "Citizenship" },
-  { value: "Classics", label: "Classics" },
-  { value: "Computing", label: "Computing" },
-  { value: "Core IB", label: "Core IB" },
-  { value: "Croatian", label: "Croatian" },
-  { value: "Cross-curricular topics", label: "Cross-curricular topics" },
-  { value: "Czech", label: "Czech" },
-  { value: "Danish", label: "Danish" },
-  { value: "Design, engineering and technology", label: "Design, engineering and technology" },
-  { value: "Drama", label: "Drama" },
-  { value: "Dutch", label: "Dutch" },
-  { value: "Economics", label: "Economics" },
-  { value: "English", label: "English" },
-  { value: "English language learning", label: "English language learning" },
-  { value: "Estonian", label: "Estonian" },
-  { value: "Expressive arts and design", label: "Expressive arts and design" },
-  { value: "Finnish", label: "Finnish" },
-  { value: "French", label: "French" },
-  { value: "Geography", label: "Geography" },
-  { value: "German", label: "German" },
-  { value: "Government and politics", label: "Government and politics" },
-  { value: "Greek", label: "Greek" },
-  { value: "Gujarati", label: "Gujarati" },
-  { value: "Hebrew", label: "Hebrew" },
-  { value: "Hindi", label: "Hindi" },
-  { value: "History", label: "History" },
-  { value: "Hungarian", label: "Hungarian" },
-  { value: "Icelandic", label: "Icelandic" },
-  { value: "Indonesian", label: "Indonesian" },
-  { value: "Irish Gaelic", label: "Irish Gaelic" },
-  { value: "Italian", label: "Italian" },
-  { value: "Japanese", label: "Japanese" },
-  { value: "Korean", label: "Korean" },
-  { value: "Latvian", label: "Latvian" },
-  { value: "Law and legal studies", label: "Law and legal studies" },
-  { value: "Literacy for early years", label: "Literacy for early years" },
-  { value: "Lithuanian", label: "Lithuanian" },
-  { value: "Macedonian", label: "Macedonian" },
-  { value: "Malay", label: "Malay" },
-  { value: "Mandarin", label: "Mandarin" },
-  { value: "Mathematics", label: "Mathematics" },
-  { value: "Maths for early years", label: "Maths for early years" },
-  { value: "Media studies", label: "Media studies" },
-  { value: "Music", label: "Music" },
-  { value: "Nepali", label: "Nepali" },
-  { value: "New teachers", label: "New teachers" },
-  { value: "Norwegian", label: "Norwegian" },
-  { value: "Pedagogy and professional development", label: "Pedagogy and professional development" },
-  { value: "Persian", label: "Persian" },
-  { value: "Personal, social and health education", label: "Personal, social and health education" },
-  { value: "Philosophy and ethics", label: "Philosophy and ethics" },
-  { value: "Physical development", label: "Physical development" },
-  { value: "Physical education", label: "Physical education" },
-  { value: "Physics", label: "Physics" },
-  { value: "Pilipino", label: "Pilipino" },
-  { value: "Polish", label: "Polish" },
-  { value: "Portuguese", label: "Portuguese" },
-  { value: "Primary science", label: "Primary science" },
-  { value: "Psychology", label: "Psychology" },
-  { value: "Punjabi", label: "Punjabi" },
-  { value: "Religious education", label: "Religious education" },
-  { value: "Romanian", label: "Romanian" },
-  { value: "Russian", label: "Russian" },
-  { value: "Scottish Gaelic", label: "Scottish Gaelic" },
-  { value: "Serbian", label: "Serbian" },
-  { value: "Sesotho", label: "Sesotho" },
-  { value: "Sinhalese", label: "Sinhalese" },
-  { value: "Siswati", label: "Siswati" },
-  { value: "Slovak", label: "Slovak" },
-  { value: "Sociology", label: "Sociology" },
-  { value: "Spanish", label: "Spanish" },
-  { value: "Special educational needs", label: "Special educational needs" },
-  { value: "Student careers advice", label: "Student careers advice" },
-  { value: "Swahili", label: "Swahili" },
-  { value: "Swedish", label: "Swedish" },
-  { value: "Tamil", label: "Tamil" },
-  { value: "Thai", label: "Thai" },
-  { value: "Turkish", label: "Turkish" },
-  { value: "Ukrainian", label: "Ukrainian" },
-  { value: "Understanding the world", label: "Understanding the world" },
-  { value: "Urdu", label: "Urdu" },
-  { value: "Vietnamese", label: "Vietnamese" },
-  { value: "Vocational studies", label: "Vocational studies" },
-  { value: "Welsh", label: "Welsh" },
-  { value: "Whole school", label: "Whole school" }
+  "Mathematics",
+  "English",
+  "Science",
+  "History",
+  "Geography",
+  "Art",
+  "Music",
+  "PE",
+  "Computing",
+  "Languages",
+  "PSHE",
+  "Religious Studies",
+];
+
+const AGE_GROUPS = [
+  "Early Years (2-5 years)",
+  "Key Stage 1 (5-7 years)",
+  "Key Stage 2 (7-11 years)",
+  "Key Stage 3 (11-14 years)",
+  "Key Stage 4 (14-16 years)",
+  "Key Stage 5 (16-18 years)",
 ];
 
 const CURRENCIES = [
@@ -246,6 +133,7 @@ const UploadResource = () => {
     resolver: zodResolver(resourceSchema),
     defaultValues: {
       isFree: "free",
+      language: "English",
       currency: "GBP",
       licenseType: "Single Teacher License",
       visibility: "Public",
@@ -680,10 +568,7 @@ const UploadResource = () => {
                 {/* Basic Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Describe your resource</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      This is your opportunity to clearly explain what your resource is all about! It's worth remembering that you are using the space to communicate to two different audiences. Firstly, think about what fellow teachers would like to know, such as exactly what the resource contains and how it could be used in the classroom. Secondly, the words you include on this page are also talking to internal and external search engines. External search engines, like Google, show the first 155 characters of the resource description, so make sure you take advantage of these characters by using lots of relevant keywords as part of an enticing pitch.
-                    </p>
+                    <CardTitle>Basic Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -691,15 +576,15 @@ const UploadResource = () => {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title your resource *</FormLabel>
+                          <FormLabel>Title *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Title your resource"
+                              placeholder="Clear, searchable title. Include key stage & topic."
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Character count: {field.value?.length || 0} - Aim for 35-45 characters for your title.
+                            {field.value?.length || 0}/140 characters
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -708,81 +593,68 @@ const UploadResource = () => {
 
                     <FormField
                       control={form.control}
-                      name="description"
+                      name="shortDescription"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Describe your resource *</FormLabel>
+                          <FormLabel>Short Description *</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Be clear in the first 155 characters, then write as much information as you can after."
+                              placeholder="Brief overview of your resource..."
+                              className="h-20"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {field.value?.length || 0}/300 characters (140-300
+                            required)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fullDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Description *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Describe learning outcomes, duration, equipment needed..."
                               className="h-32"
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Character count: {field.value?.length || 0} - Be clear in the first 155 characters, then write as much information as you can after. Markdown styling is supported.
+                            Include headings, bullet points, learning outcomes,
+                            and requirements.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="resourceType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Resource Type *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a resource type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {RESOURCE_TYPES.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
-                                  {type.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Age range and curriculum */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Age range and curriculum</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="mainAgeRange"
+                        name="resourceType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Main age range *</FormLabel>
+                            <FormLabel>Resource Type *</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Choose main age range..." />
+                                  <SelectValue placeholder="Select resource type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {AGE_RANGES.map((age) => (
-                                  <SelectItem key={age.value} value={age.value}>
-                                    {age.label}
+                                {RESOURCE_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -794,25 +666,25 @@ const UploadResource = () => {
 
                       <FormField
                         control={form.control}
-                        name="additionalAgeRange"
+                        name="language"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Additional age range (optional)</FormLabel>
+                            <FormLabel>Language *</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Choose additional age range..." />
+                                  <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {AGE_RANGES.map((age) => (
-                                  <SelectItem key={age.value} value={age.value}>
-                                    {age.label}
-                                  </SelectItem>
-                                ))}
+                                <SelectItem value="English">English</SelectItem>
+                                <SelectItem value="Spanish">Spanish</SelectItem>
+                                <SelectItem value="French">French</SelectItem>
+                                <SelectItem value="German">German</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -820,92 +692,6 @@ const UploadResource = () => {
                         )}
                       />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="curriculum"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Curriculum *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Please select..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {CURRICULUMS.map((curriculum) => (
-                                  <SelectItem key={curriculum.value} value={curriculum.value}>
-                                    {curriculum.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="curriculumType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Curriculum Type *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Please select..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {CURRICULUM_TYPES.map((type) => (
-                                  <SelectItem key={type.value} value={type.value}>
-                                    {type.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="mainSubject"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Subject *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Choose subject..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {SUBJECTS.map((subject) => (
-                                <SelectItem key={subject.value} value={subject.value}>
-                                  {subject.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </CardContent>
                 </Card>
 
