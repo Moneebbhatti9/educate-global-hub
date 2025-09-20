@@ -18,23 +18,47 @@ interface LocationState {
 const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyOTP, sendOTP, isAuthenticated, user, isInitialized } = useAuth();
+  const { verifyOTP, sendOTP, isAuthenticated, user, isInitialized } =
+    useAuth();
 
   const { handleError, showSuccess } = useErrorHandler();
   const state = location.state as LocationState;
 
   // Redirect if no state data (user came directly to this route)
-  if (!state || !state.email) {
-    navigate("/signup");
-    return null;
-  }
+  useEffect(() => {
+    if (!state || !state.email) {
+      navigate("/signup");
+    }
+  }, [state, navigate]);
 
   // Handle authentication state changes after OTP verification
   useEffect(() => {
+    // Debug: Log authentication state changes
+    if (import.meta.env.DEV) {
+      console.log("🔄 OTP Verification - Auth state changed:", {
+        isInitialized,
+        isAuthenticated,
+        user: user
+          ? {
+              email: user.email,
+              role: user.role,
+              isProfileComplete: user.isProfileComplete,
+              status: user.status,
+            }
+          : null,
+      });
+    }
+
     if (isInitialized && isAuthenticated && user) {
       // User is now authenticated after OTP verification
       if (!user.isProfileComplete) {
         // Navigate to profile completion
+        if (import.meta.env.DEV) {
+          console.log(
+            "📝 Redirecting to profile completion for user:",
+            user.email
+          );
+        }
         navigate("/profile-completion", {
           state: {
             email: user.email,
@@ -44,11 +68,24 @@ const OTPVerificationPage = () => {
           },
         });
       } else {
-        // Navigate to appropriate dashboard
+        // Profile is complete, navigate to dashboard
+        if (import.meta.env.DEV) {
+          console.log(
+            "🏠 Redirecting to dashboard for user:",
+            user.email,
+            "role:",
+            user.role
+          );
+        }
         navigate(`/dashboard/${user.role}`);
       }
     }
   }, [isInitialized, isAuthenticated, user, navigate]);
+
+  // Don't render if no state data
+  if (!state || !state.email) {
+    return null;
+  }
 
   const handleVerify = async (otp: string) => {
     try {
@@ -63,7 +100,29 @@ const OTPVerificationPage = () => {
         "Your account has been verified. Redirecting..."
       );
 
-      // Navigation will be handled by the useEffect hook
+      // Force immediate redirection after successful OTP verification
+      // This ensures the user is redirected even if useEffect doesn't trigger
+      setTimeout(() => {
+        // Check if user is authenticated and redirect accordingly
+        if (isAuthenticated && user) {
+          if (!user.isProfileComplete) {
+            // Navigate to profile completion
+            navigate("/profile-completion", {
+              state: {
+                email: user.email,
+                role: user.role,
+                firstName: user.firstName,
+                lastName: user.lastName,
+              },
+            });
+          } else {
+            // Profile is complete, navigate to dashboard
+            navigate(`/dashboard/${user.role}`);
+          }
+        }
+      }, 1000); // Small delay to ensure state is updated
+
+      // Navigation will also be handled by the useEffect hook
       // when the authentication state updates
     } catch (error) {
       handleError(error, "Verification failed");

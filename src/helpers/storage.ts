@@ -9,14 +9,6 @@ export const debugStorage = () => {
     try {
       const secureValue = secureLocalStorage.getItem(key);
       const localValue = localStorage.getItem(key);
-
-      console.log(`Key: ${key}`);
-      console.log(`  Secure Storage:`, secureValue);
-      console.log(`  Local Storage:`, localValue);
-      console.log(
-        `  Local Storage (parsed):`,
-        localValue ? JSON.parse(localValue) : null
-      );
     } catch (error) {
       console.error(`Error reading key ${key}:`, error);
     }
@@ -34,7 +26,6 @@ const clearCorruptedData = () => {
           JSON.parse(oldValue);
         } catch {
           // If parsing fails, remove the corrupted data
-          console.log(`Removing corrupted data for key: ${key}`);
           localStorage.removeItem(key);
         }
       }

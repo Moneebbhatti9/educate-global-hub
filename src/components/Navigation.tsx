@@ -8,7 +8,6 @@ import EducateLink2 from "@/assets/Educate-Link-2.png";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
-  console.log("user", user);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 

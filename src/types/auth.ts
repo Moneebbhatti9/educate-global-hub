@@ -13,6 +13,7 @@ export interface User {
   role: UserRole;
   isEmailVerified: boolean;
   isProfileComplete: boolean;
+  status?: "pending" | "active" | "inactive" | "suspended";
   avatarUrl?: string;
   avatar?: string; // Keep for backward compatibility
   phone?: string;
@@ -128,6 +129,16 @@ export interface AuthResponse {
 export interface OTPResponse {
   message: string;
   expiresIn: number;
+}
+
+export interface UserStatusResponse {
+  user: User;
+  redirectTo:
+    | "verify-email"
+    | "complete-profile"
+    | "pending-approval"
+    | "dashboard";
+  requiresStatusApproval?: boolean;
 }
 
 // Form validation schemas

@@ -14,6 +14,7 @@ import {
   ApiResponse,
   User,
   OTPResponse,
+  UserStatusResponse,
 } from "../types/auth";
 
 // API endpoints
@@ -28,6 +29,7 @@ const AUTH_ENDPOINTS = {
   PASSWORD_RESET: "/auth/password-reset",
   PASSWORD_RESET_CONFIRM: "/auth/password-reset-confirm",
   CHANGE_PASSWORD: "/auth/change-password",
+  CHECK_STATUS: "/auth/check-status",
   PROFILE: "/users/profile",
   COMPLETE_PROFILE: "/users/complete-profile",
   UPLOAD_AVATAR: "/users/avatar",
@@ -160,6 +162,13 @@ export const authAPI = {
     return apiHelpers.upload<ApiResponse<{ avatarUrl: string }>>(
       AUTH_ENDPOINTS.UPLOAD_AVATAR,
       formData
+    );
+  },
+
+  // Check user status
+  checkUserStatus: async (): Promise<ApiResponse<UserStatusResponse>> => {
+    return apiHelpers.get<ApiResponse<UserStatusResponse>>(
+      AUTH_ENDPOINTS.CHECK_STATUS
     );
   },
 };
