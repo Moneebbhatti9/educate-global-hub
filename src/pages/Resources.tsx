@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -42,23 +42,73 @@ import {
   Heart,
   Eye,
 } from "lucide-react";
+import {
+  resourceApi,
+  AllResourcesData,
+  AllResourcesResponse,
+} from "@/apis/resources";
+import { useToast } from "@/hooks/use-toast";
 
 const Resources = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
+  const [resources, setResources] = useState<AllResourcesResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const handleResourceClick = (resourceId: number) => {
+  // Load resources from API
+  const loadResources = async () => {
+    try {
+      setLoading(true);
+      const response = await resourceApi.getAllResources({
+        q: searchTerm || undefined,
+        subject: selectedSubject !== "all" ? selectedSubject : undefined,
+        page: currentPage,
+        limit: 12,
+      });
+
+      if (response.success) {
+        setResources(response.data.resources);
+        setPagination(response.data.pagination);
+      } else {
+        throw new Error(response.message || "Failed to load resources");
+      }
+    } catch (error: unknown) {
+      console.error("Error loading resources:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to load resources. Please try again.";
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load resources on component mount and when filters change
+  useEffect(() => {
+    loadResources();
+  }, [searchTerm, selectedSubject, selectedGrade, selectedType, currentPage]);
+
+  const handleResourceClick = (resourceId: string) => {
     navigate(`/resources/${resourceId}`);
   };
 
-  const handlePreviewClick = (resourceId: number) => {
+  const handlePreviewClick = (resourceId: string) => {
     navigate(`/resources/${resourceId}`);
   };
 
-  const handlePurchaseClick = (resourceId: number) => {
+  const handlePurchaseClick = (resourceId: string) => {
     // For now, navigate to resource detail page
     // In a real app, this would handle the purchase flow
     navigate(`/resources/${resourceId}`);
@@ -82,153 +132,6 @@ const Resources = () => {
     },
   ];
 
-  const resources = [
-    {
-      id: 1,
-      title: "Complete Algebra Workbook with Solutions",
-      description:
-        "Comprehensive algebra workbook covering linear equations, quadratic functions, and polynomial operations with step-by-step solutions.",
-      author: {
-        name: "Dr. Maria Santos",
-        avatar: "/api/placeholder/40/40",
-        verified: true,
-      },
-      subject: "Mathematics",
-      grade: "Grade 9-10",
-      type: "Workbook",
-      format: "PDF",
-      price: 12.99,
-      originalPrice: 19.99,
-      rating: 4.8,
-      reviews: 234,
-      downloads: 1420,
-      uploadDate: "2 weeks ago",
-      preview: true,
-      tags: ["algebra", "equations", "functions", "polynomials"],
-      thumbnail: "/api/placeholder/300/200",
-    },
-    {
-      id: 2,
-      title: "Interactive Chemistry Lab Simulations",
-      description:
-        "Virtual chemistry lab experiments with 3D animations and interactive elements. Perfect for remote learning.",
-      author: {
-        name: "Prof. James Wilson",
-        avatar: "/api/placeholder/40/40",
-        verified: true,
-      },
-      subject: "Science",
-      grade: "Grade 11-12",
-      type: "Interactive",
-      format: "Web App",
-      price: 0,
-      originalPrice: null,
-      rating: 4.9,
-      reviews: 156,
-      downloads: 892,
-      uploadDate: "1 week ago",
-      preview: true,
-      tags: ["chemistry", "experiments", "virtual-lab", "3d"],
-      thumbnail: "/api/placeholder/300/200",
-    },
-    {
-      id: 3,
-      title: "Creative Writing Prompts Collection",
-      description:
-        "300+ creative writing prompts designed to inspire students and develop their storytelling skills across various genres.",
-      author: {
-        name: "Sarah Mitchell",
-        avatar: "/api/placeholder/40/40",
-        verified: false,
-      },
-      subject: "English",
-      grade: "Grade 6-8",
-      type: "Activity Pack",
-      format: "PDF",
-      price: 8.5,
-      originalPrice: null,
-      rating: 4.6,
-      reviews: 89,
-      downloads: 567,
-      uploadDate: "3 days ago",
-      preview: false,
-      tags: ["creative-writing", "prompts", "storytelling", "genres"],
-      thumbnail: "/api/placeholder/300/200",
-    },
-    {
-      id: 4,
-      title: "World History Timeline Interactive Map",
-      description:
-        "Interactive timeline and map showing major historical events from ancient civilizations to modern times.",
-      author: {
-        name: "Dr. Ahmed Hassan",
-        avatar: "/api/placeholder/40/40",
-        verified: true,
-      },
-      subject: "History",
-      grade: "Grade 7-12",
-      type: "Interactive",
-      format: "Web App",
-      price: 15.0,
-      originalPrice: null,
-      rating: 4.7,
-      reviews: 203,
-      downloads: 1156,
-      uploadDate: "5 days ago",
-      preview: true,
-      tags: ["history", "timeline", "interactive", "civilizations"],
-      thumbnail: "/api/placeholder/300/200",
-    },
-    {
-      id: 5,
-      title: "Phonics Learning Games Bundle",
-      description:
-        "Fun and engaging phonics games to help young learners master letter sounds and reading fundamentals.",
-      author: {
-        name: "Emma Thompson",
-        avatar: "/api/placeholder/40/40",
-        verified: false,
-      },
-      subject: "English",
-      grade: "Grade K-2",
-      type: "Game Pack",
-      format: "PDF + Audio",
-      price: 0,
-      originalPrice: null,
-      rating: 4.5,
-      reviews: 312,
-      downloads: 2345,
-      uploadDate: "1 month ago",
-      preview: true,
-      tags: ["phonics", "reading", "games", "kindergarten"],
-      thumbnail: "/api/placeholder/300/200",
-    },
-    {
-      id: 6,
-      title: "Advanced Calculus Problem Sets",
-      description:
-        "Challenging calculus problems with detailed solutions covering derivatives, integrals, and applications.",
-      author: {
-        name: "Prof. Lisa Chen",
-        avatar: "/api/placeholder/40/40",
-        verified: true,
-      },
-      subject: "Mathematics",
-      grade: "Grade 12+",
-      type: "Problem Set",
-      format: "PDF",
-      price: 24.99,
-      originalPrice: 34.99,
-      rating: 4.9,
-      reviews: 145,
-      downloads: 678,
-      uploadDate: "1 week ago",
-      preview: true,
-      tags: ["calculus", "derivatives", "integrals", "advanced"],
-      thumbnail: "/api/placeholder/300/200",
-    },
-  ];
-
   const grades = [
     "Grade K-2",
     "Grade 3-5",
@@ -245,23 +148,6 @@ const Resources = () => {
     "Problem Set",
     "Video Course",
   ];
-
-  const filteredResources = resources.filter((resource) => {
-    const matchesSearch =
-      resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resource.tags.some((tag) =>
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    const matchesSubject =
-      selectedSubject === "all" || resource.subject === selectedSubject;
-    const matchesGrade =
-      selectedGrade === "all" || resource.grade === selectedGrade;
-    const matchesType =
-      selectedType === "all" || resource.type === selectedType;
-
-    return matchesSearch && matchesSubject && matchesGrade && matchesType;
-  });
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -449,7 +335,9 @@ const Resources = () => {
                 <TabsContent value="all" className="space-y-6 mt-6">
                   <div className="flex justify-between items-center">
                     <p className="text-sm text-muted-foreground">
-                      Showing {filteredResources.length} resources
+                      {loading
+                        ? "Loading..."
+                        : `Showing ${resources.length} of ${pagination.total} resources`}
                     </p>
                     <Select defaultValue="popular">
                       <SelectTrigger className="w-40">
@@ -469,31 +357,49 @@ const Resources = () => {
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredResources.map((resource) => {
-                      const TypeIcon = getTypeIcon(resource.type);
-                      return (
-                        <Card
-                          key={resource.id}
-                          className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20 overflow-hidden cursor-pointer"
-                          onClick={() => handleResourceClick(resource.id)}
-                        >
-                          <div className="relative">
-                            <img
-                              src={resource.thumbnail}
-                              alt={resource.title}
-                              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute top-3 left-3">
-                              <Badge
-                                variant="secondary"
-                                className="bg-background/90"
-                              >
-                                {resource.format}
-                              </Badge>
+                  {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {[...Array(6)].map((_, i) => (
+                        <Card key={i} className="animate-pulse">
+                          <div className="h-48 bg-muted rounded-t-lg"></div>
+                          <CardHeader>
+                            <div className="h-4 bg-muted rounded w-3/4"></div>
+                            <div className="h-3 bg-muted rounded w-1/2"></div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              <div className="h-3 bg-muted rounded"></div>
+                              <div className="h-3 bg-muted rounded w-5/6"></div>
                             </div>
-                            <div className="absolute top-3 right-3 flex space-x-1">
-                              {resource.preview && (
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {resources.map((resource) => {
+                        const isFree = resource.price === "Free";
+                        return (
+                          <Card
+                            key={resource.id}
+                            className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20 overflow-hidden cursor-pointer"
+                            onClick={() => handleResourceClick(resource.id)}
+                          >
+                            <div className="relative">
+                              <img
+                                src={resource.thumbnail}
+                                alt={resource.title}
+                                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-3 left-3">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-background/90"
+                                >
+                                  PDF
+                                </Badge>
+                              </div>
+                              <div className="absolute top-3 right-3 flex space-x-1">
                                 <Badge
                                   variant="outline"
                                   className="bg-background/90 text-xs"
@@ -501,142 +407,143 @@ const Resources = () => {
                                   <Eye className="w-3 h-3 mr-1" />
                                   Preview
                                 </Badge>
-                              )}
+                              </div>
+                              <div className="absolute bottom-3 right-3">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="bg-background/90 hover:bg-background"
+                                >
+                                  <Heart className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="absolute bottom-3 right-3">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="bg-background/90 hover:bg-background"
-                              >
-                                <Heart className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
 
-                          <CardHeader className="pb-2">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <CardTitle className="font-heading text-lg leading-tight group-hover:text-brand-primary transition-colors line-clamp-2">
-                                  {resource.title}
-                                </CardTitle>
-                                <div className="flex items-center space-x-2 mt-2">
-                                  <Avatar className="w-6 h-6">
-                                    <AvatarImage src={resource.author.avatar} />
-                                    <AvatarFallback className="text-xs">
-                                      {resource.author.name
-                                        .split(" ")
-                                        .map((n) => n[0])
-                                        .join("")}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-sm text-muted-foreground">
-                                    {resource.author.name}
-                                  </span>
-                                  {resource.author.verified && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs px-1 py-0"
-                                    >
-                                      ✓
-                                    </Badge>
+                            <CardHeader className="pb-2">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <CardTitle className="font-heading text-lg leading-tight group-hover:text-brand-primary transition-colors line-clamp-2">
+                                    {resource.title}
+                                  </CardTitle>
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <Avatar className="w-6 h-6">
+                                      <AvatarFallback className="text-xs">
+                                        {resource.author
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm text-muted-foreground">
+                                      {resource.author}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardHeader>
+
+                            <CardContent className="space-y-3">
+                              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                <Badge variant="outline" className="text-xs">
+                                  {resource.status}
+                                </Badge>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+                                  <div className="flex items-center">
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    {new Date(
+                                      resource.uploadDate
+                                    ).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {isFree ? (
+                                    <div className="text-lg font-bold text-brand-accent-green">
+                                      FREE
+                                    </div>
+                                  ) : (
+                                    <div className="text-lg font-bold text-foreground">
+                                      {resource.price}
+                                    </div>
                                   )}
                                 </div>
                               </div>
-                            </div>
-                          </CardHeader>
 
-                          <CardContent className="space-y-3">
-                            <CardDescription className="line-clamp-2 text-sm">
-                              {resource.description}
-                            </CardDescription>
-
-                            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                              <Badge variant="outline" className="text-xs">
-                                {resource.subject}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {resource.grade}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {resource.type}
-                              </Badge>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                                <div className="flex items-center">
-                                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                  {resource.rating}
-                                </div>
-                                <div className="flex items-center">
-                                  <Download className="w-4 h-4 mr-1" />
-                                  {resource.downloads}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                {resource.price === 0 ? (
-                                  <div className="text-lg font-bold text-brand-accent-green">
-                                    FREE
-                                  </div>
-                                ) : (
-                                  <div>
-                                    <div className="text-lg font-bold text-foreground">
-                                      ${resource.price}
-                                    </div>
-                                    {resource.originalPrice && (
-                                      <div className="text-xs text-muted-foreground line-through">
-                                        ${resource.originalPrice}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex space-x-2 pt-2">
-                              {resource.price === 0 ? (
-                                <Button
-                                  variant="teachers"
-                                  className="flex-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResourceClick(resource.id);
-                                  }}
-                                >
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download
-                                </Button>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="hero-outline"
-                                    className="flex-1"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePreviewClick(resource.id);
-                                    }}
-                                  >
-                                    Preview
-                                  </Button>
+                              <div className="flex space-x-2 pt-2">
+                                {isFree ? (
                                   <Button
                                     variant="teachers"
                                     className="flex-1"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handlePurchaseClick(resource.id);
+                                      handleResourceClick(resource.id);
                                     }}
                                   >
-                                    Buy Now
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Download
                                   </Button>
-                                </>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
+                                ) : (
+                                  <>
+                                    <Button
+                                      variant="hero-outline"
+                                      className="flex-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePreviewClick(resource.id);
+                                      }}
+                                    >
+                                      Preview
+                                    </Button>
+                                    <Button
+                                      variant="teachers"
+                                      className="flex-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePurchaseClick(resource.id);
+                                      }}
+                                    >
+                                      Buy Now
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {pagination.pages > 1 && (
+                    <div className="flex justify-center space-x-2 mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="flex items-center px-4 text-sm text-muted-foreground">
+                        Page {currentPage} of {pagination.pages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(pagination.pages, prev + 1)
+                          )
+                        }
+                        disabled={currentPage === pagination.pages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="free" className="mt-6">

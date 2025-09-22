@@ -42,6 +42,15 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/layout/DashboardLayout";
+import {
+  resourceApi,
+  RESOURCE_TYPES,
+  AGE_RANGES,
+  CURRICULUMS,
+  CURRICULUM_TYPES,
+  SUBJECTS,
+  CURRENCIES,
+} from "@/apis/resources";
 
 // Form validation schema
 const resourceSchema = z.object({
@@ -51,191 +60,45 @@ const resourceSchema = z.object({
     .max(45, "Aim for 35-45 characters for your title"),
   description: z.string().min(1, "Description is required"),
   resourceType: z.string().min(1, "Resource type is required"),
-  mainAgeRange: z.string().min(1, "Main age range is required"),
-  additionalAgeRange: z.string().optional(),  
+  ageRange: z.string().min(1, "Age range is required"),
   curriculum: z.string().min(1, "Curriculum is required"),
   curriculumType: z.string().min(1, "Curriculum type is required"),
-  mainSubject: z.string().min(1, "Subject is required"),
+  subject: z.string().min(1, "Subject is required"),
   isFree: z.enum(["free", "paid"]),
   price: z.number().optional(),
   currency: z.string().optional(),
-  licenseType: z.string().min(1, "License type is required"),
-  tags: z.string().min(1, "At least 3 tags are recommended"),
-  categories: z.array(z.string()).optional(),
-  accessibility: z.string().optional(),
-  visibility: z.string().min(1, "Visibility setting is required"),
-  versionNotes: z.string().optional(),
 });
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
 
-const RESOURCE_TYPES = [
-  { value: "Assembly", label: "Assembly" },
-  { value: "Assessment and revision", label: "Assessment and revision" },
-  { value: "Game/puzzle/quiz", label: "Game/puzzle/quiz" },
-  { value: "Audio, music & video", label: "Audio, music & video" },
-  { value: "Lesson (complete)", label: "Lesson (complete)" },
-  { value: "Other", label: "Other" },
-  { value: "Unit of work", label: "Unit of work" },
-  { value: "Visual aid/Display", label: "Visual aid/Display" },
-  { value: "Worksheet/Activity", label: "Worksheet/Activity" }
-];
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data?: unknown;
+}
 
-const AGE_RANGES = [
-  { value: "3-5", label: "3-5" },
-  { value: "5-7", label: "5-7" },
-  { value: "7-11", label: "7-11" },
-  { value: "11-14", label: "11-14" }, 
-  { value: "14-16", label: "14-16" },
-  { value: "16+", label: "16+" },
-  { value: "Age not applicable", label: "Age not applicable" }
-];
-
-const CURRICULUMS = [
-  { value: "No curriculum", label: "No curriculum" },
-  { value: "American", label: "American" },
-  { value: "Australian", label: "Australian" },
-  { value: "Canadian", label: "Canadian" },
-  { value: "English", label: "English" },
-  { value: "International", label: "International" },
-  { value: "Irish", label: "Irish" },
-  { value: "New Zealand", label: "New Zealand" },
-  { value: "Northern Irish", label: "Northern Irish" },
-  { value: "Scottish", label: "Scottish" },
-  { value: "Welsh", label: "Welsh" },
-  { value: "Zambian", label: "Zambian" }
-];
-
-const CURRICULUM_TYPES = [
-  { value: "No curriculum type", label: "No curriculum type" },
-  { value: "Cambridge", label: "Cambridge" },
-  { value: "Foundation Stage", label: "Foundation Stage" },
-  { value: "IB PYP", label: "IB PYP" },
-  { value: "IPC", label: "IPC" },
-  { value: "IPC/IEYC", label: "IPC/IEYC" },
-  { value: "Montessori", label: "Montessori" },
-  { value: "Northern Ireland Curriculum", label: "Northern Ireland Curriculum" },
-  { value: "School's own", label: "School's own" },
-  { value: "Waldorf/Steiner", label: "Waldorf/Steiner" }
-];
-
-const SUBJECTS = [
-  { value: "Aboriginal and Islander languages", label: "Aboriginal and Islander languages" },
-  { value: "Aboriginal studies", label: "Aboriginal studies" },
-  { value: "Afrikaans", label: "Afrikaans" },
-  { value: "Albanian", label: "Albanian" },
-  { value: "Amharic", label: "Amharic" },
-  { value: "Anthropology", label: "Anthropology" },
-  { value: "Arabic", label: "Arabic" },
-  { value: "Art and design", label: "Art and design" },
-  { value: "Belarussian", label: "Belarussian" },
-  { value: "Bengali", label: "Bengali" },
-  { value: "Biology", label: "Biology" },
-  { value: "Bosnian", label: "Bosnian" },
-  { value: "Bulgarian", label: "Bulgarian" },
-  { value: "Business and finance", label: "Business and finance" },
-  { value: "Cantonese", label: "Cantonese" },
-  { value: "Catalan", label: "Catalan" },
-  { value: "Chemistry", label: "Chemistry" },
-  { value: "Citizenship", label: "Citizenship" },
-  { value: "Classics", label: "Classics" },
-  { value: "Computing", label: "Computing" },
-  { value: "Core IB", label: "Core IB" },
-  { value: "Croatian", label: "Croatian" },
-  { value: "Cross-curricular topics", label: "Cross-curricular topics" },
-  { value: "Czech", label: "Czech" },
-  { value: "Danish", label: "Danish" },
-  { value: "Design, engineering and technology", label: "Design, engineering and technology" },
-  { value: "Drama", label: "Drama" },
-  { value: "Dutch", label: "Dutch" },
-  { value: "Economics", label: "Economics" },
-  { value: "English", label: "English" },
-  { value: "English language learning", label: "English language learning" },
-  { value: "Estonian", label: "Estonian" },
-  { value: "Expressive arts and design", label: "Expressive arts and design" },
-  { value: "Finnish", label: "Finnish" },
-  { value: "French", label: "French" },
-  { value: "Geography", label: "Geography" },
-  { value: "German", label: "German" },
-  { value: "Government and politics", label: "Government and politics" },
-  { value: "Greek", label: "Greek" },
-  { value: "Gujarati", label: "Gujarati" },
-  { value: "Hebrew", label: "Hebrew" },
-  { value: "Hindi", label: "Hindi" },
-  { value: "History", label: "History" },
-  { value: "Hungarian", label: "Hungarian" },
-  { value: "Icelandic", label: "Icelandic" },
-  { value: "Indonesian", label: "Indonesian" },
-  { value: "Irish Gaelic", label: "Irish Gaelic" },
-  { value: "Italian", label: "Italian" },
-  { value: "Japanese", label: "Japanese" },
-  { value: "Korean", label: "Korean" },
-  { value: "Latvian", label: "Latvian" },
-  { value: "Law and legal studies", label: "Law and legal studies" },
-  { value: "Literacy for early years", label: "Literacy for early years" },
-  { value: "Lithuanian", label: "Lithuanian" },
-  { value: "Macedonian", label: "Macedonian" },
-  { value: "Malay", label: "Malay" },
-  { value: "Mandarin", label: "Mandarin" },
-  { value: "Mathematics", label: "Mathematics" },
-  { value: "Maths for early years", label: "Maths for early years" },
-  { value: "Media studies", label: "Media studies" },
-  { value: "Music", label: "Music" },
-  { value: "Nepali", label: "Nepali" },
-  { value: "New teachers", label: "New teachers" },
-  { value: "Norwegian", label: "Norwegian" },
-  { value: "Pedagogy and professional development", label: "Pedagogy and professional development" },
-  { value: "Persian", label: "Persian" },
-  { value: "Personal, social and health education", label: "Personal, social and health education" },
-  { value: "Philosophy and ethics", label: "Philosophy and ethics" },
-  { value: "Physical development", label: "Physical development" },
-  { value: "Physical education", label: "Physical education" },
-  { value: "Physics", label: "Physics" },
-  { value: "Pilipino", label: "Pilipino" },
-  { value: "Polish", label: "Polish" },
-  { value: "Portuguese", label: "Portuguese" },
-  { value: "Primary science", label: "Primary science" },
-  { value: "Psychology", label: "Psychology" },
-  { value: "Punjabi", label: "Punjabi" },
-  { value: "Religious education", label: "Religious education" },
-  { value: "Romanian", label: "Romanian" },
-  { value: "Russian", label: "Russian" },
-  { value: "Scottish Gaelic", label: "Scottish Gaelic" },
-  { value: "Serbian", label: "Serbian" },
-  { value: "Sesotho", label: "Sesotho" },
-  { value: "Sinhalese", label: "Sinhalese" },
-  { value: "Siswati", label: "Siswati" },
-  { value: "Slovak", label: "Slovak" },
-  { value: "Sociology", label: "Sociology" },
-  { value: "Spanish", label: "Spanish" },
-  { value: "Special educational needs", label: "Special educational needs" },
-  { value: "Student careers advice", label: "Student careers advice" },
-  { value: "Swahili", label: "Swahili" },
-  { value: "Swedish", label: "Swedish" },
-  { value: "Tamil", label: "Tamil" },
-  { value: "Thai", label: "Thai" },
-  { value: "Turkish", label: "Turkish" },
-  { value: "Ukrainian", label: "Ukrainian" },
-  { value: "Understanding the world", label: "Understanding the world" },
-  { value: "Urdu", label: "Urdu" },
-  { value: "Vietnamese", label: "Vietnamese" },
-  { value: "Vocational studies", label: "Vocational studies" },
-  { value: "Welsh", label: "Welsh" },
-  { value: "Whole school", label: "Whole school" }
-];
-
-const CURRENCIES = [
-  { code: "GBP", symbol: "£", name: "British Pound" },
-  { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "EUR", symbol: "€", name: "Euro" },
-];
-
-const LICENSE_TYPES = [
-  "Single Teacher License",
-  "School License",
-  "Multiple Use License",
-  "Commercial License",
-];
+// Convert arrays to select options format
+const RESOURCE_TYPE_OPTIONS = RESOURCE_TYPES.map((type) => ({
+  value: type,
+  label: type,
+}));
+const AGE_RANGE_OPTIONS = AGE_RANGES.map((age) => ({ value: age, label: age }));
+const CURRICULUM_OPTIONS = CURRICULUMS.map((curriculum) => ({
+  value: curriculum,
+  label: curriculum,
+}));
+const CURRICULUM_TYPE_OPTIONS = CURRICULUM_TYPES.map((type) => ({
+  value: type,
+  label: type,
+}));
+const SUBJECT_OPTIONS = SUBJECTS.map((subject) => ({
+  value: subject,
+  label: subject,
+}));
+const CURRENCY_OPTIONS = CURRENCIES.map((currency) => ({
+  value: currency.code,
+  label: `${currency.symbol} ${currency.name}`,
+}));
 
 const UploadResource = () => {
   const navigate = useNavigate();
@@ -246,9 +109,7 @@ const UploadResource = () => {
     resolver: zodResolver(resourceSchema),
     defaultValues: {
       isFree: "free",
-      currency: "GBP",
-      licenseType: "Single Teacher License",
-      visibility: "Public",
+      currency: "USD",
     },
   });
 
@@ -396,10 +257,48 @@ const UploadResource = () => {
       return;
     }
 
+    if (resourceFiles.length === 0) {
+      toast({
+        title: "Resource files required",
+        description: "Please upload at least one resource file",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setUploadProgress(0);
 
     try {
+      // Create FormData for API
+      const formData = new FormData();
+
+      // Add form fields
+      formData.append("title", data.title);
+      formData.append("description", data.description);
+      formData.append("resourceType", data.resourceType);
+      formData.append("ageRange", data.ageRange);
+      formData.append("curriculum", data.curriculum);
+      formData.append("curriculumType", data.curriculumType);
+      formData.append("subject", data.subject);
+      formData.append("isFree", data.isFree === "free" ? "true" : "false");
+
+      if (isPaid) {
+        formData.append("price", data.price?.toString() || "0");
+        formData.append("currency", data.currency || "USD");
+      }
+
+      // Add files
+      formData.append("banner", bannerImage);
+
+      previewImages.forEach((file, index) => {
+        formData.append("previews", file);
+      });
+
+      resourceFiles.forEach((file, index) => {
+        formData.append("files", file);
+      });
+
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
@@ -411,23 +310,36 @@ const UploadResource = () => {
         });
       }, 500);
 
-      // TODO: Implement actual file upload and resource creation API call
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Call API
+      const response = (await resourceApi.createResource(
+        formData
+      )) as ApiResponse;
 
       setUploadProgress(100);
       clearInterval(progressInterval);
 
-      toast({
-        title: "Resource uploaded successfully!",
-        description: "Your resource is now live and available for purchase.",
-      });
+      if (response.success) {
+        toast({
+          title: "Resource uploaded successfully!",
+          description:
+            "Your resource is now pending approval and will be available soon.",
+        });
+        navigate("/teacher/dashboard");
+      } else {
+        throw new Error(response.message || "Failed to create resource");
+      }
+    } catch (error: unknown) {
+      console.error("Resource creation error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ||
+            "There was an error uploading your resource. Please try again.";
 
-      navigate("/teacher/dashboard");
-    } catch (error) {
       toast({
         title: "Upload failed",
-        description:
-          "There was an error uploading your resource. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -436,11 +348,82 @@ const UploadResource = () => {
     }
   };
 
-  const saveDraft = () => {
-    toast({
-      title: "Draft saved",
-      description: "Your resource has been saved as a draft.",
-    });
+  const saveDraft = async () => {
+    const formData = form.getValues();
+    const isPaid = formData.isFree === "paid";
+
+    // Basic validation for draft
+    if (!formData.title || !formData.description) {
+      toast({
+        title: "Required fields missing",
+        description: "Please fill in title and description to save as draft",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const draftFormData = new FormData();
+
+      // Add form fields
+      draftFormData.append("title", formData.title);
+      draftFormData.append("description", formData.description);
+      draftFormData.append("resourceType", formData.resourceType || "");
+      draftFormData.append("ageRange", formData.ageRange || "");
+      draftFormData.append("curriculum", formData.curriculum || "");
+      draftFormData.append("curriculumType", formData.curriculumType || "");
+      draftFormData.append("subject", formData.subject || "");
+      draftFormData.append(
+        "isFree",
+        formData.isFree === "free" ? "true" : "false"
+      );
+      draftFormData.append("saveAsDraft", "true");
+
+      if (isPaid && formData.price) {
+        draftFormData.append("price", formData.price.toString());
+        draftFormData.append("currency", formData.currency || "USD");
+      }
+
+      // Add files if available
+      if (bannerImage) {
+        draftFormData.append("banner", bannerImage);
+      }
+
+      previewImages.forEach((file) => {
+        draftFormData.append("previews", file);
+      });
+
+      resourceFiles.forEach((file) => {
+        draftFormData.append("files", file);
+      });
+
+      const response = (await resourceApi.createResource(
+        draftFormData
+      )) as ApiResponse;
+
+      if (response.success) {
+        toast({
+          title: "Draft saved",
+          description: "Your resource has been saved as a draft.",
+        });
+      } else {
+        throw new Error(response.message || "Failed to save draft");
+      }
+    } catch (error: unknown) {
+      console.error("Draft save error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : (error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ||
+            "There was an error saving your draft. Please try again.";
+
+      toast({
+        title: "Draft save failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -682,7 +665,18 @@ const UploadResource = () => {
                   <CardHeader>
                     <CardTitle>Describe your resource</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      This is your opportunity to clearly explain what your resource is all about! It's worth remembering that you are using the space to communicate to two different audiences. Firstly, think about what fellow teachers would like to know, such as exactly what the resource contains and how it could be used in the classroom. Secondly, the words you include on this page are also talking to internal and external search engines. External search engines, like Google, show the first 155 characters of the resource description, so make sure you take advantage of these characters by using lots of relevant keywords as part of an enticing pitch.
+                      This is your opportunity to clearly explain what your
+                      resource is all about! It's worth remembering that you are
+                      using the space to communicate to two different audiences.
+                      Firstly, think about what fellow teachers would like to
+                      know, such as exactly what the resource contains and how
+                      it could be used in the classroom. Secondly, the words you
+                      include on this page are also talking to internal and
+                      external search engines. External search engines, like
+                      Google, show the first 155 characters of the resource
+                      description, so make sure you take advantage of these
+                      characters by using lots of relevant keywords as part of
+                      an enticing pitch.
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -699,7 +693,8 @@ const UploadResource = () => {
                             />
                           </FormControl>
                           <FormDescription>
-                            Character count: {field.value?.length || 0} - Aim for 35-45 characters for your title.
+                            Character count: {field.value?.length || 0} - Aim
+                            for 35-45 characters for your title.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -720,7 +715,10 @@ const UploadResource = () => {
                             />
                           </FormControl>
                           <FormDescription>
-                            Character count: {field.value?.length || 0} - Be clear in the first 155 characters, then write as much information as you can after. Markdown styling is supported.
+                            Character count: {field.value?.length || 0} - Be
+                            clear in the first 155 characters, then write as
+                            much information as you can after. Markdown styling
+                            is supported.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -743,7 +741,7 @@ const UploadResource = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {RESOURCE_TYPES.map((type) => (
+                              {RESOURCE_TYPE_OPTIONS.map((type) => (
                                 <SelectItem key={type.value} value={type.value}>
                                   {type.label}
                                 </SelectItem>
@@ -766,49 +764,21 @@ const UploadResource = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="mainAgeRange"
+                        name="ageRange"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Main age range *</FormLabel>
+                            <FormLabel>Age range *</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Choose main age range..." />
+                                  <SelectValue placeholder="Choose age range..." />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {AGE_RANGES.map((age) => (
-                                  <SelectItem key={age.value} value={age.value}>
-                                    {age.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="additionalAgeRange"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Additional age range (optional)</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Choose additional age range..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {AGE_RANGES.map((age) => (
+                                {AGE_RANGE_OPTIONS.map((age) => (
                                   <SelectItem key={age.value} value={age.value}>
                                     {age.label}
                                   </SelectItem>
@@ -838,8 +808,11 @@ const UploadResource = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {CURRICULUMS.map((curriculum) => (
-                                  <SelectItem key={curriculum.value} value={curriculum.value}>
+                                {CURRICULUM_OPTIONS.map((curriculum) => (
+                                  <SelectItem
+                                    key={curriculum.value}
+                                    value={curriculum.value}
+                                  >
                                     {curriculum.label}
                                   </SelectItem>
                                 ))}
@@ -866,8 +839,11 @@ const UploadResource = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {CURRICULUM_TYPES.map((type) => (
-                                  <SelectItem key={type.value} value={type.value}>
+                                {CURRICULUM_TYPE_OPTIONS.map((type) => (
+                                  <SelectItem
+                                    key={type.value}
+                                    value={type.value}
+                                  >
                                     {type.label}
                                   </SelectItem>
                                 ))}
@@ -881,7 +857,7 @@ const UploadResource = () => {
 
                     <FormField
                       control={form.control}
-                      name="mainSubject"
+                      name="subject"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Subject *</FormLabel>
@@ -895,8 +871,11 @@ const UploadResource = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {SUBJECTS.map((subject) => (
-                                <SelectItem key={subject.value} value={subject.value}>
+                              {SUBJECT_OPTIONS.map((subject) => (
+                                <SelectItem
+                                  key={subject.value}
+                                  value={subject.value}
+                                >
                                   {subject.label}
                                 </SelectItem>
                               ))}
@@ -964,12 +943,12 @@ const UploadResource = () => {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {CURRENCIES.map((currency) => (
+                                    {CURRENCY_OPTIONS.map((currency) => (
                                       <SelectItem
-                                        key={currency.code}
-                                        value={currency.code}
+                                        key={currency.value}
+                                        value={currency.value}
                                       >
-                                        {currency.symbol} {currency.name}
+                                        {currency.label}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -1033,94 +1012,6 @@ const UploadResource = () => {
                         </div>
                       </div>
                     )}
-
-                    <FormField
-                      control={form.control}
-                      name="licenseType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>License Type *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {LICENSE_TYPES.map((license) => (
-                                <SelectItem key={license} value={license}>
-                                  {license}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Select the license to apply to buyers
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Publishing Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Publishing Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="visibility"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Visibility *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Public">Public</SelectItem>
-                              <SelectItem value="Private">Private</SelectItem>
-                              <SelectItem value="School-only">
-                                School Only
-                              </SelectItem>
-                              <SelectItem value="Unlisted">
-                                Unlisted Link
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="versionNotes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Version Notes</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Describe updates or changes..."
-                              className="h-20"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </CardContent>
                 </Card>
 
