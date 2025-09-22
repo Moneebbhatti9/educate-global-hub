@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Separator } from "@/components/ui/separator";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import AddReviewModal from "@/components/Modals/add-review-modal";
 
 // Mock data - replace with actual API calls
 const mockResource = {
@@ -105,9 +104,7 @@ Students will be able to confidently work with fractions and decimals, understan
 const ResourceDetail = () => {
   const { id } = useParams();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
-  const [reviews, setReviews] = useState(mockResource.reviews);
 
   const handlePurchase = () => {
     setShowPurchaseModal(true);
@@ -117,26 +114,8 @@ const ResourceDetail = () => {
     // TODO: Integrate with Stripe
     console.log("Processing purchase...");
     setShowPurchaseModal(false);
-    // Show review modal after purchase
-    setShowReviewModal(true);
-  };
-
-  const handleReviewSubmit = (rating: number, comment: string) => {
-    const newReview = {
-      id: String(Date.now()),
-      rating,
-      comment,
-      reviewer: "You",
-      date: new Date().toISOString().split('T')[0]
-    };
-    
-    setReviews(prev => [newReview, ...prev]);
-    
-    // Update mockResource rating (simple average)
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0) + rating;
-    const newRatingCount = reviews.length + 1;
-    mockResource.rating = Math.round((totalRating / newRatingCount) * 10) / 10;
-    mockResource.reviewCount = newRatingCount;
+    // Redirect to download page
+    window.location.href = `/download/${id}`;
   };
 
   return (
@@ -284,7 +263,7 @@ const ResourceDetail = () => {
                 <CardTitle>Reviews & Ratings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {reviews.map((review) => (
+                {mockResource.reviews.map((review) => (
                   <div key={review.id} className="border-b pb-4 last:border-b-0">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="flex">
@@ -457,14 +436,6 @@ const ResourceDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Add Review Modal */}
-      <AddReviewModal
-        open={showReviewModal}
-        onOpenChange={setShowReviewModal}
-        resourceTitle={mockResource.title}
-        onSubmit={handleReviewSubmit}
-      />
 
       <Footer />
     </div>
