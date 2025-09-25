@@ -33,17 +33,47 @@ export const useForum = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper: check if discussion already exists
+  const discussionExists = useCallback(
+    (id: string) => discussions.some((d) => d._id === id),
+    [discussions]
+  );
+
+  // Helper: refresh sidebar data (trending, categories, overview)
+  const refreshSidebarData = useCallback(async () => {
+    try {
+      const [trending, categories, overview] = await Promise.all([
+        forumAPI.getTrendingTopics(5),
+        forumAPI.getCategoryStats(),
+        forumAPI.getCommunityOverview(),
+      ]);
+      setTrendingTopics(trending.map(transformTrendingTopic));
+      setCategoryStats(categories.map(transformCategoryStats));
+      setCommunityOverview(transformCommunityOverview(overview));
+    } catch (err) {
+      // Non-blocking; log only
+      console.warn("Failed to refresh sidebar data:", err);
+    }
+  }, []);
+
   // Set up real-time listeners
   useEffect(() => {
     if (socket) {
       // Listen for new discussions
-      const handleNewDiscussion = (discussion: Record<string, unknown>) => {
+      const handleNewDiscussion = (...args: any[]) => {
+        const discussion = args[0] as any;
         const transformed = transformDiscussion(discussion);
-        setDiscussions((prev) => [transformed, ...prev]);
+        setDiscussions((prev) => {
+          if (prev.some((d) => d._id === transformed._id)) return prev;
+          return [transformed, ...prev];
+        });
+        // Refresh sidebar aggregates on new discussion
+        refreshSidebarData();
       };
 
       // Listen for new replies
-      const handleNewReply = (reply: Record<string, unknown>) => {
+      const handleNewReply = (...args: any[]) => {
+        const reply = args[0] as any;
         const transformed = transformReply(reply);
         // Update discussion reply count
         setDiscussions((prev) =>
@@ -56,10 +86,8 @@ export const useForum = () => {
       };
 
       // Listen for discussion updates (likes, etc.)
-      const handleDiscussionUpdate = (data: {
-        discussionId: string;
-        updates: Partial<Discussion>;
-      }) => {
+      const handleDiscussionUpdate = (...args: any[]) => {
+        const data = args[0] as { discussionId: string; updates: Partial<Discussion> };
         setDiscussions((prev) =>
           prev.map((discussion) =>
             discussion._id === data.discussionId
@@ -133,8 +161,14 @@ export const useForum = () => {
       const newDiscussion = await forumAPI.createDiscussion(data);
       const transformed = transformDiscussion(newDiscussion);
 
-      // Add to the beginning of discussions list
-      setDiscussions((prev) => [transformed, ...prev]);
+      // Add to the beginning of discussions list, avoiding duplicates
+      setDiscussions((prev) => {
+        if (prev.some((d) => d._id === transformed._id)) return prev;
+        return [transformed, ...prev];
+      });
+
+      // Refresh sidebar aggregates after creation
+      refreshSidebarData();
 
       return transformed;
     } catch (err) {
@@ -143,7 +177,7 @@ export const useForum = () => {
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, []);
+  }, [refreshSidebarData]);
 
   // Toggle like on discussion
   const toggleLikeDiscussion = useCallback(
@@ -161,9 +195,9 @@ export const useForum = () => {
             discussion._id === discussionId
               ? {
                   ...discussion,
-                  likes: discussion.likes.includes(user._id)
-                    ? discussion.likes.filter((id) => id !== user._id)
-                    : [...discussion.likes, user._id],
+                  likes: discussion.likes.includes((user as any)?._id || (user as any)?.id)
+                    ? discussion.likes.filter((id) => id !== ((user as any)?._id || (user as any)?.id))
+                    : [...discussion.likes, ((user as any)?._id || (user as any)?.id)],
                 }
               : discussion
           )
@@ -250,7 +284,8 @@ export const useForumDetail = (discussionId: string) => {
   useEffect(() => {
     if (socket && discussionId) {
       // Listen for new replies to this discussion
-      const handleNewReply = (reply: Record<string, unknown>) => {
+      const handleNewReply = (...args: any[]) => {
+        const reply = args[0] as any;
         const transformed = transformReply(reply);
         if (transformed.discussion === discussionId) {
           setReplies((prev) => [...prev, transformed]);
@@ -262,10 +297,8 @@ export const useForumDetail = (discussionId: string) => {
       };
 
       // Listen for reply updates (likes, etc.)
-      const handleReplyUpdate = (data: {
-        replyId: string;
-        updates: Partial<Reply>;
-      }) => {
+      const handleReplyUpdate = (...args: any[]) => {
+        const data = args[0] as { replyId: string; updates: Partial<Reply> };
         setReplies((prev) =>
           prev.map((reply) =>
             reply._id === data.replyId ? { ...reply, ...data.updates } : reply
@@ -274,10 +307,8 @@ export const useForumDetail = (discussionId: string) => {
       };
 
       // Listen for discussion updates
-      const handleDiscussionUpdate = (data: {
-        discussionId: string;
-        updates: Partial<Discussion>;
-      }) => {
+      const handleDiscussionUpdate = (...args: any[]) => {
+        const data = args[0] as { discussionId: string; updates: Partial<Discussion> };
         if (data.discussionId === discussionId) {
           setDiscussion((prev) => (prev ? { ...prev, ...data.updates } : null));
         }
@@ -370,9 +401,9 @@ export const useForumDetail = (discussionId: string) => {
             reply._id === replyId
               ? {
                   ...reply,
-                  likes: reply.likes.includes(user._id)
-                    ? reply.likes.filter((id) => id !== user._id)
-                    : [...reply.likes, user._id],
+                  likes: reply.likes.includes((user as any)?._id || (user as any)?.id)
+                    ? reply.likes.filter((id) => id !== ((user as any)?._id || (user as any)?.id))
+                    : [...reply.likes, ((user as any)?._id || (user as any)?.id)],
                 }
               : reply
           )

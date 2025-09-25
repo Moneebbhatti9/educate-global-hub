@@ -9,7 +9,7 @@ import {
 
 // Transform API discussion data to our Discussion interface
 export const transformDiscussion = (
-  apiDiscussion: Record<string, unknown>
+  apiDiscussion: Record<any, any>
 ): Discussion => ({
   _id: apiDiscussion._id,
   title: apiDiscussion.title,
@@ -30,7 +30,7 @@ export const transformDiscussion = (
 });
 
 // Transform API reply data to our Reply interface
-export const transformReply = (apiReply: Record<string, unknown>): Reply => ({
+export const transformReply = (apiReply: Record<any, any>): Reply => ({
   _id: apiReply._id,
   discussion: apiReply.discussion,
   content: apiReply.content,
@@ -43,7 +43,7 @@ export const transformReply = (apiReply: Record<string, unknown>): Reply => ({
 });
 
 // Transform API user data to our User interface
-export const transformUser = (apiUser: Record<string, unknown>): User => ({
+export const transformUser = (apiUser: Record<any, any>): User => ({
   _id: apiUser._id,
   firstName: apiUser.firstName,
   lastName: apiUser.lastName,
@@ -55,7 +55,7 @@ export const transformUser = (apiUser: Record<string, unknown>): User => ({
 
 // Transform trending topic data
 export const transformTrendingTopic = (
-  apiTopic: Record<string, unknown>
+  apiTopic: Record<any, any>
 ): TrendingTopic => ({
   _id: apiTopic._id,
   title: apiTopic.title,
@@ -69,7 +69,7 @@ export const transformTrendingTopic = (
 
 // Transform category stats
 export const transformCategoryStats = (
-  apiStats: Record<string, unknown>
+  apiStats: Record<any, any>
 ): CategoryStats => ({
   category: apiStats.category,
   posts: apiStats.posts || 0,
@@ -78,7 +78,7 @@ export const transformCategoryStats = (
 
 // Transform community overview
 export const transformCommunityOverview = (
-  apiOverview: Record<string, unknown>
+  apiOverview: Record<any, any>
 ): CommunityOverview => ({
   activeMembers: apiOverview.activeMembers || 0,
   totalDiscussions: apiOverview.totalDiscussions || 0,

@@ -108,8 +108,8 @@ const Forum = () => {
     }
   }, [activeTab, searchTerm, loadDiscussions, searchDiscussions]);
 
-  const handleCreateDiscussion = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateDiscussion = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     if (!user) {
       toast({
@@ -253,7 +253,6 @@ const Forum = () => {
                 </DialogHeader>
 
                 <form
-                  onSubmit={handleCreateDiscussion}
                   className="space-y-4 sm:space-y-6"
                 >
                   <div className="space-y-2">
@@ -289,16 +288,16 @@ const Forum = () => {
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="teaching-tips">
+                        <SelectItem value="Teaching Tips & Strategies">
                           Teaching Tips & Strategies
                         </SelectItem>
-                        <SelectItem value="curriculum">
+                        <SelectItem value="Curriculum & Resources">
                           Curriculum & Resources
                         </SelectItem>
-                        <SelectItem value="career-advice">
+                        <SelectItem value="Career Advice">
                           Career Advice
                         </SelectItem>
-                        <SelectItem value="help-support">
+                        <SelectItem value="Help & Support">
                           Help & Support
                         </SelectItem>
                       </SelectContent>
@@ -359,9 +358,10 @@ const Forum = () => {
                       Cancel
                     </Button>
                     <Button
-                      type="submit"
+                      type="button"
                       variant="hero"
                       disabled={isSubmitting}
+                      onClick={handleCreateDiscussion}
                     >
                       {isSubmitting ? (
                         <>
