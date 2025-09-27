@@ -243,7 +243,7 @@ const LICENSE_TYPES = [
   "Commercial License",
 ];
 
-const UploadResource = () => {
+const AdminUploadResource = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { handleError, showSuccess, showError } = useErrorHandler();
@@ -289,7 +289,7 @@ const UploadResource = () => {
     } else if (isEditMode && id) {
       console.error("Invalid resource ID for edit mode:", id);
       showError("Invalid resource ID", "Resource ID is invalid");
-      navigate("/teacher/resource-management");
+      navigate("/admin/resource-management");
     }
   }, [isEditMode, id]);
 
@@ -297,7 +297,7 @@ const UploadResource = () => {
     if (!resourceId || typeof resourceId !== 'string' || resourceId.trim().length === 0) {
       console.error("Invalid resource ID:", resourceId);
       showError("Invalid resource ID", "Resource ID is required");
-      navigate("/teacher/resource-management");
+      navigate("/admin/resource-management");
       return;
     }
 
@@ -308,7 +308,7 @@ const UploadResource = () => {
       // Safety checks for response
       if (!response) {
         showError("Failed to load resource", "No response received from server");
-        navigate("/dashboard/teacher/resource-management");
+        navigate("/admin/resource-management");
         return;
       }
 
@@ -317,14 +317,14 @@ const UploadResource = () => {
         if (!response.data || typeof response.data !== 'object') {
           console.warn("Invalid resource data structure:", response.data);
           showError("Invalid resource data", "Resource data is malformed");
-          navigate("/dashboard/teacher/resource-management");
+          navigate("/admin/resource-management");
           return;
         }
 
         if (!response.data.id || typeof response.data.id !== 'string') {
           console.warn("Resource missing valid ID:", response.data);
           showError("Invalid resource", "Resource ID is missing");
-          navigate("/dashboard/teacher/resource-management");
+          navigate("/admin/resource-management");
           return;
         }
 
@@ -352,12 +352,12 @@ const UploadResource = () => {
       } else {
         const errorMessage = response?.message || "Resource not found";
         showError("Failed to load resource", errorMessage);
-        navigate("/dashboard/teacher/resource-management");
+        navigate("/admin/resource-management");
       }
     } catch (error) {
       console.error("Error loading resource:", error);
       handleError(error, "Failed to load resource");
-      navigate("/teacher/resource-management");
+      navigate("/admin/resource-management");
     } finally {
       setIsLoadingResource(false);
     }
@@ -748,7 +748,7 @@ const UploadResource = () => {
   };
 
   return (
-    <DashboardLayout role="teacher">
+    <DashboardLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="mb-8">
@@ -757,8 +757,8 @@ const UploadResource = () => {
           </h1>
           <p className="text-muted-foreground mt-2">
             {isEditMode 
-              ? "Update your teaching resource details and files"
-              : "Share your teaching materials with educators worldwide"
+              ? "Update teaching resource details and files"
+              : "Create teaching materials for educators worldwide"
             }
           </p>
         </div>
@@ -1400,4 +1400,4 @@ const UploadResource = () => {
   );
 };
 
-export default UploadResource;
+export default AdminUploadResource;

@@ -1,16 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Search,
-  Filter,
   Check,
   X,
   Trash2,
   Eye,
-  Flag,
   MoreHorizontal,
   AlertTriangle,
   CheckSquare,
+  RefreshCw,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,95 +51,102 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// Mock data for demonstration
-const mockResources = [
-  {
-    id: "1",
-    title: "Year 7 Mathematics: Algebra Basics",
-    thumbnail: "/api/placeholder/100/60",
-    author: "Sarah Johnson",
-    authorId: "auth_1",
-    price: 4.99,
-    status: "Pending" as const,
-    flagsCount: 0,
-    uploadDate: "2024-01-20",
-    subject: "Mathematics",
-  },
-  {
-    id: "2",
-    title: "Science Lab Safety Worksheet",
-    thumbnail: "/api/placeholder/100/60",
-    author: "Mike Chen",
-    authorId: "auth_2",
-    price: 0,
-    status: "Approved" as const,
-    flagsCount: 0,
-    uploadDate: "2024-01-18",
-    subject: "Science",
-  },
-  {
-    id: "3",
-    title: "Creative Writing Prompts Bundle",
-    thumbnail: "/api/placeholder/100/60",
-    author: "Emma Davis",
-    authorId: "auth_3",
-    price: 7.5,
-    status: "Flagged" as const,
-    flagsCount: 3,
-    uploadDate: "2024-01-15",
-    subject: "English",
-  },
-  {
-    id: "4",
-    title: "History Timeline Activity",
-    thumbnail: "/api/placeholder/100/60",
-    author: "James Wilson",
-    authorId: "auth_4",
-    price: 3.99,
-    status: "Approved" as const,
-    flagsCount: 0,
-    uploadDate: "2024-01-12",
-    subject: "History",
-  },
-  {
-    id: "5",
-    title: "Controversial Content Example",
-    thumbnail: "/api/placeholder/100/60",
-    author: "Anonymous User",
-    authorId: "auth_5",
-    price: 2.99,
-    status: "Removed" as const,
-    flagsCount: 8,
-    uploadDate: "2024-01-10",
-    subject: "General",
-  },
-];
-
-const mockStats = {
-  totalResources: 156,
-  pendingApprovals: 12,
-  flaggedResources: 4,
-  totalSales: 5420,
-};
+import { resourcesAPI } from "@/apis/resources";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import type { AdminResource, AdminResourcesResponse, AdminResourcesQueryParams } from "@/types/resource";
 
 export default function AdminResourceManagement() {
+  const navigate = useNavigate();
+  const { handleError, showSuccess, showError } = useErrorHandler();
+  
+  // State management
+  const [resources, setResources] = useState<AdminResource[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
-  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    total: 0,
+    pages: 0,
+  });
+
+  // Stats state
+  const [stats, setStats] = useState({
+    totalResources: 0,
+    pendingApprovals: 0,
+    publishedResources: 0,
+    totalSales: 0,
+  });
+
+  // Load resources from API
+  const loadResources = async () => {
+    setLoading(true);
+    try {
+      // Map status filter to API expected values
+      const getApiStatus = (status: string) => {
+        switch (status) {
+          case "published":
+            return "approved";
+          case "flagged":
+            return "rejected";
+          case "archived":
+            return "rejected";
+          default:
+            return status as "draft" | "pending" | "approved" | "rejected";
+        }
+      };
+
+      const params = {
+        search: searchTerm || undefined,
+        status: statusFilter !== "all" ? getApiStatus(statusFilter) : undefined,
+        page: pagination.page,
+      };
+
+      const response = await resourcesAPI.getAdminResources(params);
+      
+      if (response.success && response.data) {
+        setResources(response.data.resources);
+        setPagination(response.data.pagination);
+        
+        // Calculate stats for admin resources
+        const totalResources = response.data.pagination.total;
+        const pendingApprovals = response.data.resources.filter(r => r.status === "pending").length;
+        const publishedResources = response.data.resources.filter(r => r.status === "approved").length;
+        const totalDownloads = response.data.resources.reduce((sum, r) => sum + r.flags, 0);
+        
+        setStats({
+          totalResources,
+          pendingApprovals,
+          publishedResources,
+          totalSales: totalDownloads,
+        });
+      } else {
+        showError("Failed to load resources", response.message || "Unknown error");
+      }
+    } catch (error) {
+      handleError(error, "Failed to load resources");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load resources on component mount and when filters change
+  useEffect(() => {
+    loadResources();
+  }, [searchTerm, statusFilter, subjectFilter, pagination.page]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case "Approved":
+      case "draft":
+        return <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>;
+      case "pending":
+        return <Badge className="bg-orange-100 text-orange-800">Pending</Badge>;
+      case "approved":
         return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case "Flagged":
-        return <Badge variant="destructive">Flagged</Badge>;
-      case "Removed":
-        return <Badge className="bg-red-100 text-red-800">Removed</Badge>;
+      case "rejected":
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -160,28 +168,82 @@ export default function AdminResourceManagement() {
     }
   };
 
-  const filteredResources = mockResources.filter((resource) => {
+  // Filter resources based on current filters
+  const filteredResources = resources.filter((resource) => {
     const matchesSearch =
       resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || resource.status.toLowerCase() === statusFilter;
-    const matchesSubject =
-      subjectFilter === "all" ||
-      resource.subject.toLowerCase() === subjectFilter;
-    const matchesFlagged = !showFlaggedOnly || resource.flagsCount > 0;
+      statusFilter === "all" || resource.status === statusFilter;
 
-    return matchesSearch && matchesStatus && matchesSubject && matchesFlagged;
+    return matchesSearch && matchesStatus;
   });
 
-  const handleBulkApprove = () => {
-    console.log("Bulk approving resources:", selectedResources);
-    setSelectedResources([]);
+  // Admin actions
+  const handleApproveResource = async (resourceId: string) => {
+    try {
+      const response = await resourcesAPI.updateResourceStatus(resourceId, {
+        status: "approved"
+      });
+      
+      if (response.success) {
+        showSuccess("Resource approved", "The resource has been approved successfully.");
+        loadResources();
+      } else {
+        showError("Failed to approve resource", response.message || "Unknown error");
+      }
+    } catch (error) {
+      handleError(error, "Failed to approve resource");
+    }
   };
 
-  const handleBulkDelete = () => {
-    console.log("Bulk deleting resources:", selectedResources);
-    setSelectedResources([]);
+  const handleRejectResource = async (resourceId: string) => {
+    try {
+      const response = await resourcesAPI.updateResourceStatus(resourceId, {
+        status: "rejected"
+      });
+      
+      if (response.success) {
+        showSuccess("Resource rejected", "The resource has been rejected successfully.");
+        loadResources();
+      } else {
+        showError("Failed to reject resource", response.message || "Unknown error");
+      }
+    } catch (error) {
+      handleError(error, "Failed to reject resource");
+    }
+  };
+
+  const handleDeleteResource = async (resourceId: string) => {
+    try {
+      const response = await resourcesAPI.deleteResource(resourceId);
+      
+      if (response.success) {
+        showSuccess("Resource deleted", "The resource has been deleted successfully.");
+        loadResources();
+      } else {
+        showError("Failed to delete resource", response.message || "Unknown error");
+      }
+    } catch (error) {
+      handleError(error, "Failed to delete resource");
+    }
+  };
+
+
+  const handleBulkDelete = async () => {
+    try {
+      // This would be a bulk API call
+      for (const resourceId of selectedResources) {
+        await handleDeleteResource(resourceId);
+      }
+      setSelectedResources([]);
+    } catch (error) {
+      handleError(error, "Failed to delete resources");
+    }
+  };
+
+  const handleViewResource = (resourceId: string) => {
+    navigate(`/resources/${resourceId}`);
   };
 
   return (
@@ -191,11 +253,22 @@ export default function AdminResourceManagement() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              Resource Management
+              Admin Resource Management
             </h1>
             <p className="text-muted-foreground">
-              Moderate and manage all platform resources
+              Manage and moderate all resources on the platform
             </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadResources}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
 
@@ -203,28 +276,28 @@ export default function AdminResourceManagement() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Total Resources"
-            value={mockStats.totalResources}
+            value={stats.totalResources}
             icon={Eye}
-            description="Resources on platform"
+            description="All resources on platform"
           />
           <StatsCard
-            title="Pending Approvals"
-            value={mockStats.pendingApprovals}
+            title="Pending Approval"
+            value={stats.pendingApprovals}
             icon={AlertTriangle}
-            description="Awaiting review"
-            badge={{ text: "Action Required", variant: "destructive" }}
+            description="Resources awaiting review"
+            badge={stats.pendingApprovals > 0 ? { text: "Action Required", variant: "destructive" } : undefined}
           />
           <StatsCard
-            title="Flagged Resources"
-            value={mockStats.flaggedResources}
-            icon={Flag}
-            description="Need attention"
-          />
-          <StatsCard
-            title="Total Sales"
-            value={mockStats.totalSales}
+            title="Published Resources"
+            value={stats.publishedResources || 0}
             icon={CheckSquare}
-            description="Platform-wide sales"
+            description="Live on platform"
+          />
+          <StatsCard
+            title="Total Downloads"
+            value={stats.totalSales}
+            icon={Download}
+            description="Platform-wide downloads"
           />
         </div>
 
@@ -239,7 +312,7 @@ export default function AdminResourceManagement() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search by title or author..."
+                  placeholder="Search by title, author, or content..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -253,10 +326,10 @@ export default function AdminResourceManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="flagged">Flagged</SelectItem>
-                    <SelectItem value="removed">Removed</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -273,14 +346,6 @@ export default function AdminResourceManagement() {
                   </SelectContent>
                 </Select>
 
-                <Button
-                  variant={showFlaggedOnly ? "default" : "outline"}
-                  onClick={() => setShowFlaggedOnly(!showFlaggedOnly)}
-                  className="flex items-center gap-2"
-                >
-                  <Flag className="w-4 h-4" />
-                  Flagged Only
-                </Button>
               </div>
             </div>
 
@@ -291,15 +356,11 @@ export default function AdminResourceManagement() {
                   {selectedResources.length} resource(s) selected
                 </span>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleBulkApprove}>
-                    <Check className="w-4 h-4 mr-2" />
-                    Approve All
-                  </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button size="sm" variant="destructive">
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Delete All
+                        Delete Selected
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -343,112 +404,146 @@ export default function AdminResourceManagement() {
                     <TableHead>Author</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Flags</TableHead>
                     <TableHead>Upload Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredResources.map((resource) => (
-                    <TableRow key={resource.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedResources.includes(resource.id)}
-                          onCheckedChange={(checked) =>
-                            handleSelectResource(resource.id, !!checked)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <img
-                          src={resource.thumbnail}
-                          alt={resource.title}
-                          className="w-12 h-8 object-cover rounded border"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{resource.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {resource.subject}
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <div className="flex items-center justify-center space-x-2">
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Loading resources...</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{resource.author}</div>
-                      </TableCell>
-                      <TableCell>
-                        {resource.price === 0 ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            Free
-                          </Badge>
-                        ) : (
-                          <span className="font-medium">
-                            £{resource.price.toFixed(2)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(resource.status)}</TableCell>
-                      <TableCell>
-                        {resource.flagsCount > 0 ? (
-                          <Badge
-                            variant="destructive"
-                            className="flex items-center gap-1"
-                          >
-                            <Flag className="w-3 h-3" />
-                            {resource.flagsCount}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">0</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground">
-                          {new Date(resource.uploadDate).toLocaleDateString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Resource
-                            </DropdownMenuItem>
-                            {resource.status === "Pending" && (
-                              <DropdownMenuItem className="text-green-600">
-                                <Check className="mr-2 h-4 w-4" />
-                                Approve
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem className="text-yellow-600">
-                              <Flag className="mr-2 h-4 w-4" />
-                              Flag Resource
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <X className="mr-2 h-4 w-4" />
-                              Suspend
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                    </TableRow>
+                  ) : filteredResources.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        <p className="text-muted-foreground">
+                          No resources found matching your criteria.
+                        </p>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredResources.map((resource) => (
+                      <TableRow key={resource.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedResources.includes(resource.id)}
+                            onCheckedChange={(checked) =>
+                              handleSelectResource(resource.id, !!checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <img
+                            src={resource.thumbnail || "/api/placeholder/100/60"}
+                            alt={resource.title}
+                            className="w-12 h-8 object-cover rounded border"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{resource.title}</div>
+                          <div className="text-sm text-muted-foreground">
+                            ID: {resource.id}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{resource.author}</div>
+                        </TableCell>
+                        <TableCell>
+                          {resource.price === "Free" ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              Free
+                            </Badge>
+                          ) : (
+                            <span className="font-medium">
+                              {resource.price}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(resource.status)}</TableCell>
+                        <TableCell>
+                          <span className="text-muted-foreground">
+                            {new Date(resource.uploadDate).toLocaleDateString()}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewResource(resource.id)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Resource
+                              </DropdownMenuItem>
+                              {resource.status === "pending" && (
+                                <DropdownMenuItem 
+                                  className="text-green-600"
+                                  onClick={() => handleApproveResource(resource.id)}
+                                >
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Approve
+                                </DropdownMenuItem>
+                              )}
+                              {resource.status === "pending" && (
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={() => handleRejectResource(resource.id)}
+                                >
+                                  <X className="mr-2 h-4 w-4" />
+                                  Reject
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => handleDeleteResource(resource.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
 
-            {filteredResources.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No resources found matching your criteria.
-                </p>
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {resources.length} of {pagination.total} resources
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                    disabled={pagination.page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {pagination.page} of {pagination.pages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                    disabled={pagination.page === pagination.pages}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
