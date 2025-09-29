@@ -44,34 +44,43 @@ import { Progress } from "@/components/ui/progress";
 import { customToast } from "@/components/ui/sonner";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { resourcesAPI } from "@/apis/resources";
-import type { CreateResourceRequest, UpdateResourceRequest, TeacherResource } from "@/types/resource";
+import type {
+  CreateResourceRequest,
+  UpdateResourceRequest,
+  TeacherResource,
+} from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
 
 // Form validation schema
-const resourceSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(140, "Title must be under 140 characters"),
-  description: z.string().min(1, "Description is required"),
-  type: z.string().min(1, "Resource type is required"),
-  publishing: z.string().optional(),
-  isFree: z.enum(["free", "paid"]),
-  price: z.union([z.number(), z.literal("")]).optional(),
-  currency: z.string().optional(),
-  ageRange: z.string().min(1, "Age range is required"),
-  curriculum: z.string().min(1, "Curriculum is required"),
-  curriculumType: z.string().min(1, "Curriculum type is required"),
-  subject: z.string().min(1, "Subject is required"),
-}).refine((data) => {
-  if (data.isFree === "paid") {
-    return data.price && typeof data.price === 'number' && data.price > 0;
-  }
-  return true;
-}, {
-  message: "Price is required for paid resources",
-  path: ["price"],
-});
+const resourceSchema = z
+  .object({
+    title: z
+      .string()
+      .min(1, "Title is required")
+      .max(140, "Title must be under 140 characters"),
+    description: z.string().min(1, "Description is required"),
+    type: z.string().min(1, "Resource type is required"),
+    publishing: z.string().optional(),
+    isFree: z.enum(["free", "paid"]),
+    price: z.union([z.number(), z.literal("")]).optional(),
+    currency: z.string().optional(),
+    ageRange: z.string().min(1, "Age range is required"),
+    curriculum: z.string().min(1, "Curriculum is required"),
+    curriculumType: z.string().min(1, "Curriculum type is required"),
+    subject: z.string().min(1, "Subject is required"),
+  })
+  .refine(
+    (data) => {
+      if (data.isFree === "paid") {
+        return data.price && typeof data.price === "number" && data.price > 0;
+      }
+      return true;
+    },
+    {
+      message: "Price is required for paid resources",
+      path: ["price"],
+    }
+  );
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
 
@@ -248,11 +257,16 @@ const UploadResource = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { handleError, showSuccess, showError } = useErrorHandler();
-  
+
   // Check for edit mode from location state or URL params
-  const editState = location.state as { editMode?: boolean; resourceData?: TeacherResource } | null;
+  const editState = location.state as {
+    editMode?: boolean;
+    resourceData?: TeacherResource;
+  } | null;
   const isEditMode = Boolean(id) || Boolean(editState?.editMode);
-  const [resourceData, setResourceData] = useState<TeacherResource | null>(null);
+  const [resourceData, setResourceData] = useState<TeacherResource | null>(
+    null
+  );
   const [isLoadingResource, setIsLoadingResource] = useState(false);
 
   // Form state
@@ -292,14 +306,20 @@ const UploadResource = () => {
         // Handle edit mode from location state
         const resource = editState.resourceData;
         console.log("🔍 EDIT MODE - Resource data received:", resource);
-        console.log("🔍 EDIT MODE - Cover photo URL:", resource.coverPhoto?.url);
+        console.log(
+          "🔍 EDIT MODE - Cover photo URL:",
+          resource.coverPhoto?.url
+        );
         console.log("🔍 EDIT MODE - Preview images:", resource.previewImages);
         console.log("🔍 EDIT MODE - Main file:", resource.mainFile);
         console.log("🔍 EDIT MODE - Main file URL:", resource.mainFile?.url);
-        console.log("🔍 EDIT MODE - Main file type:", resource.mainFile?.fileType);
-        
+        console.log(
+          "🔍 EDIT MODE - Main file type:",
+          resource.mainFile?.fileType
+        );
+
         setResourceData(resource);
-        
+
         // Populate form with existing data
         form.reset({
           title: resource.title || "",
@@ -307,14 +327,14 @@ const UploadResource = () => {
           type: resource.type || "",
           publishing: resource.publishing || "public",
           isFree: resource.isFree ? "free" : "paid",
-          price: typeof resource.price === 'number' ? resource.price : 0,
+          price: typeof resource.price === "number" ? resource.price : 0,
           currency: resource.currency || "GBP",
           ageRange: resource.ageRange || "",
           curriculum: resource.curriculum || "",
           curriculumType: resource.curriculumType || "",
           subject: resource.subject || "",
         });
-      } else if (id && typeof id === 'string' && id.trim().length > 0) {
+      } else if (id && typeof id === "string" && id.trim().length > 0) {
         // Handle edit mode from URL params (legacy)
         loadResourceData(id.trim());
       } else if (isEditMode && id) {
@@ -326,7 +346,11 @@ const UploadResource = () => {
   }, [isEditMode, id, editState]);
 
   const loadResourceData = async (resourceId: string) => {
-    if (!resourceId || typeof resourceId !== 'string' || resourceId.trim().length === 0) {
+    if (
+      !resourceId ||
+      typeof resourceId !== "string" ||
+      resourceId.trim().length === 0
+    ) {
       console.error("Invalid resource ID:", resourceId);
       showError("Invalid resource ID", "Resource ID is required");
       navigate("/teacher/resource-management");
@@ -336,24 +360,27 @@ const UploadResource = () => {
     setIsLoadingResource(true);
     try {
       const response = await resourcesAPI.getResourceById(resourceId.trim());
-      
+
       // Safety checks for response
       if (!response) {
-        showError("Failed to load resource", "No response received from server");
+        showError(
+          "Failed to load resource",
+          "No response received from server"
+        );
         navigate("/dashboard/teacher/resource-management");
         return;
       }
 
       if (response.success && response.data) {
         // Safety checks for resource data
-        if (!response.data || typeof response.data !== 'object') {
+        if (!response.data || typeof response.data !== "object") {
           console.warn("Invalid resource data structure:", response.data);
           showError("Invalid resource data", "Resource data is malformed");
           navigate("/dashboard/teacher/resource-management");
           return;
         }
 
-        if (!response.data.id || typeof response.data.id !== 'string') {
+        if (!response.data.id || typeof response.data.id !== "string") {
           console.warn("Resource missing valid ID:", response.data);
           showError("Invalid resource", "Resource ID is missing");
           navigate("/dashboard/teacher/resource-management");
@@ -365,7 +392,7 @@ const UploadResource = () => {
         console.log("🔍 API LOAD - Banner image URL:", resource.bannerImage);
         console.log("🔍 API LOAD - Preview images:", resource.previewImages);
         console.log("🔍 API LOAD - Resource files:", resource.resourceFiles);
-        
+
         // Convert Resource to TeacherResource format for consistency
         const teacherResource: TeacherResource = {
           _id: resource.id,
@@ -382,27 +409,29 @@ const UploadResource = () => {
           publishing: resource.visibility,
           createdBy: {
             userId: resource.authorId,
-            role: "teacher"
+            role: "teacher",
           },
-          coverPhoto: resource.bannerImage ? {
-            _id: "",
-            resourceId: resource.id,
-            fileType: "cover",
-            url: resource.bannerImage,
-            uploadedBy: resource.authorId,
-            createdAt: resource.uploadDate,
-            updatedAt: resource.lastModified,
-            __v: 0
-          } : {
-            _id: "",
-            resourceId: resource.id,
-            fileType: "cover",
-            url: "",
-            uploadedBy: resource.authorId,
-            createdAt: resource.uploadDate,
-            updatedAt: resource.lastModified,
-            __v: 0
-          },
+          coverPhoto: resource.bannerImage
+            ? {
+                _id: "",
+                resourceId: resource.id,
+                fileType: "cover",
+                url: resource.bannerImage,
+                uploadedBy: resource.authorId,
+                createdAt: resource.uploadDate,
+                updatedAt: resource.lastModified,
+                __v: 0,
+              }
+            : {
+                _id: "",
+                resourceId: resource.id,
+                fileType: "cover",
+                url: "",
+                uploadedBy: resource.authorId,
+                createdAt: resource.uploadDate,
+                updatedAt: resource.lastModified,
+                __v: 0,
+              },
           previewImages: resource.previewImages.map((url, index) => ({
             _id: `preview_${index}`,
             resourceId: resource.id,
@@ -411,52 +440,55 @@ const UploadResource = () => {
             uploadedBy: resource.authorId,
             createdAt: resource.uploadDate,
             updatedAt: resource.lastModified,
-            __v: 0
+            __v: 0,
           })),
-          mainFile: resource.resourceFiles[0] ? {
-            _id: "",
-            resourceId: resource.id,
-            fileType: "main",
-            url: resource.resourceFiles[0],
-            uploadedBy: resource.authorId,
-            createdAt: resource.uploadDate,
-            updatedAt: resource.lastModified,
-            __v: 0
-          } : {
-            _id: "",
-            resourceId: resource.id,
-            fileType: "main",
-            url: "",
-            uploadedBy: resource.authorId,
-            createdAt: resource.uploadDate,
-            updatedAt: resource.lastModified,
-            __v: 0
-          },
+          mainFile: resource.resourceFiles[0]
+            ? {
+                _id: "",
+                resourceId: resource.id,
+                fileType: "main",
+                url: resource.resourceFiles[0],
+                uploadedBy: resource.authorId,
+                createdAt: resource.uploadDate,
+                updatedAt: resource.lastModified,
+                __v: 0,
+              }
+            : {
+                _id: "",
+                resourceId: resource.id,
+                fileType: "main",
+                url: "",
+                uploadedBy: resource.authorId,
+                createdAt: resource.uploadDate,
+                updatedAt: resource.lastModified,
+                __v: 0,
+              },
           status: resource.status === "published" ? "approved" : "draft",
           approvedBy: null,
           isDeleted: false,
           createdAt: resource.uploadDate,
           updatedAt: resource.lastModified,
-          __v: 0
+          __v: 0,
         };
-        
+
         setResourceData(teacherResource);
-        
+
         // Populate form with existing data with safety checks
         form.reset({
           title: resource.title || "",
-          description: resource.fullDescription || resource.shortDescription || "",
+          description:
+            resource.fullDescription || resource.shortDescription || "",
           type: resource.resourceType || "",
           publishing: resource.visibility || "public",
           isFree: resource.isFree ? "free" : "paid",
-          price: typeof resource.price === 'number' ? resource.price : 0,
+          price: typeof resource.price === "number" ? resource.price : 0,
           currency: resource.currency || "GBP",
           ageRange: resource.ageGroups?.[0] || "",
           curriculum: resource.curriculum || "",
           curriculumType: resource.curriculumType || "",
           subject: resource.subjects?.[0] || "",
         });
-        
+
         // Set existing files (if any)
         // Note: In a real implementation, you'd need to convert URLs back to File objects
         // For now, we'll just show the existing data
@@ -513,7 +545,7 @@ const UploadResource = () => {
     }
 
     // Check file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       showError("Invalid file type", "Banner must be an image file");
       return;
     }
@@ -530,10 +562,7 @@ const UploadResource = () => {
 
     const maxFiles = 5;
     if (previewImages.length + files.length > maxFiles) {
-      showError(
-        "Too many files",
-        `Maximum ${maxFiles} preview images allowed`
-      );
+      showError("Too many files", `Maximum ${maxFiles} preview images allowed`);
       return;
     }
 
@@ -544,7 +573,7 @@ const UploadResource = () => {
         return false;
       }
 
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         showError("Invalid file type", `${file.name} must be an image file`);
         return false;
       }
@@ -571,10 +600,7 @@ const UploadResource = () => {
 
     const maxFiles = 3;
     if (resourceFiles.length + files.length > maxFiles) {
-      showError(
-        "Too many files",
-        `Maximum ${maxFiles} resource files allowed`
-      );
+      showError("Too many files", `Maximum ${maxFiles} resource files allowed`);
       return;
     }
 
@@ -623,33 +649,33 @@ const UploadResource = () => {
       curriculumType: "",
       subject: "",
     });
-    
+
     // Clear all file states
     setBannerImage(null);
     setPreviewImages([]);
     setResourceFiles([]);
     setUploadProgress(0);
-    
+
     // Clear edit mode states
     setResourceData(null);
-    
+
     // Reset UI states
     setExpectedEarnings(0);
     setCurrentRoyaltyTier("Bronze (60%)");
-    
+
     // Navigate to create mode (clear edit mode)
-    navigate("/dashboard/teacher/upload-resource", { 
+    navigate("/dashboard/teacher/upload-resource", {
       replace: true,
-      state: { editMode: false, resourceData: null }
+      state: { editMode: false, resourceData: null },
     });
-    
+
     console.log("🧹 Form cleared completely and exited edit mode");
   };
 
   // Form submission
   const onSubmit = async (data: ResourceFormData) => {
     // Safety checks for form data
-    if (!data || typeof data !== 'object') {
+    if (!data || typeof data !== "object") {
       console.error("Invalid form data:", data);
       showError("Invalid form data", "Form data is invalid");
       return;
@@ -659,18 +685,33 @@ const UploadResource = () => {
 
     // File validation checks (not handled by form schema)
     console.log("🔍 VALIDATION - Banner image:", bannerImage);
-    console.log("🔍 VALIDATION - Resource data cover photo:", resourceData?.coverPhoto?.url);
+    console.log(
+      "🔍 VALIDATION - Resource data cover photo:",
+      resourceData?.coverPhoto?.url
+    );
     console.log("🔍 VALIDATION - Preview images:", previewImages.length);
-    console.log("🔍 VALIDATION - Resource data preview images:", resourceData?.previewImages?.length);
+    console.log(
+      "🔍 VALIDATION - Resource data preview images:",
+      resourceData?.previewImages?.length
+    );
     console.log("🔍 VALIDATION - Resource files:", resourceFiles.length);
-    console.log("🔍 VALIDATION - Resource data main file:", resourceData?.mainFile?.url);
-    
+    console.log(
+      "🔍 VALIDATION - Resource data main file:",
+      resourceData?.mainFile?.url
+    );
+
     if (!bannerImage && !resourceData?.coverPhoto?.url) {
-      showError("Banner image required", "Please upload a banner image for your resource");
+      showError(
+        "Banner image required",
+        "Please upload a banner image for your resource"
+      );
       return;
     }
 
-    if (previewImages.length < 1 && (!resourceData?.previewImages || resourceData.previewImages.length === 0)) {
+    if (
+      previewImages.length < 1 &&
+      (!resourceData?.previewImages || resourceData.previewImages.length === 0)
+    ) {
       showError("Preview images required", "Please upload 1-5 preview images");
       return;
     }
@@ -680,13 +721,14 @@ const UploadResource = () => {
       return;
     }
 
-    if (isPaid && (!data.price || typeof data.price !== 'number' || data.price <= 0)) {
-      showError("Price required", "Please set a valid price for your paid resource");
-      return;
-    }
-
-    if (resourceFiles.length === 0) {
-      showError("Resource files required", "Please upload at least one resource file");
+    if (
+      isPaid &&
+      (!data.price || typeof data.price !== "number" || data.price <= 0)
+    ) {
+      showError(
+        "Price required",
+        "Please set a valid price for your paid resource"
+      );
       return;
     }
 
@@ -701,7 +743,10 @@ const UploadResource = () => {
         type: data.type,
         publishing: data.publishing || "public",
         isFree: data.isFree === "free",
-        price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
+        price:
+          isPaid && typeof data.price === "number" && data.price > 0
+            ? data.price
+            : undefined,
         currency: data.currency || "GBP",
         saveAsDraft: false, // Set to true for draft saving
         ageRange: data.ageRange,
@@ -709,8 +754,14 @@ const UploadResource = () => {
         curriculumType: data.curriculumType || "",
         subject: data.subject,
         banner: bannerImage || new File([], "placeholder"), // Use new banner if uploaded, otherwise placeholder
-        previews: previewImages.length > 0 ? previewImages : [new File([], "placeholder")], // Use new previews if uploaded, otherwise placeholder
-        files: resourceFiles.length > 0 ? resourceFiles : [new File([], "placeholder")], // Use new files if uploaded, otherwise placeholder
+        previews:
+          previewImages.length > 0
+            ? previewImages
+            : [new File([], "placeholder")], // Use new previews if uploaded, otherwise placeholder
+        files:
+          resourceFiles.length > 0
+            ? resourceFiles
+            : [new File([], "placeholder")], // Use new files if uploaded, otherwise placeholder
       };
 
       // Simulate upload progress
@@ -729,8 +780,12 @@ const UploadResource = () => {
       if (isEditMode) {
         // Determine resource ID for update
         const resourceId = id || editState?.resourceData?._id;
-        
-        if (resourceId && typeof resourceId === 'string' && resourceId.trim().length > 0) {
+
+        if (
+          resourceId &&
+          typeof resourceId === "string" &&
+          resourceId.trim().length > 0
+        ) {
           // Update existing resource
           const updateData: UpdateResourceRequest = {
             title: data.title.trim(),
@@ -738,7 +793,10 @@ const UploadResource = () => {
             type: data.type,
             publishing: data.publishing || "public",
             isFree: data.isFree === "free",
-            price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
+            price:
+              isPaid && typeof data.price === "number" && data.price > 0
+                ? data.price
+                : undefined,
             currency: data.currency || "GBP",
             ageRange: data.ageRange,
             curriculum: data.curriculum,
@@ -748,9 +806,15 @@ const UploadResource = () => {
             previewImages: previewImages.length > 0 ? previewImages : undefined,
             mainFile: resourceFiles.length > 0 ? resourceFiles[0] : undefined,
           };
-          response = await resourcesAPI.updateResource(resourceId.trim(), updateData);
+          response = await resourcesAPI.updateResource(
+            resourceId.trim(),
+            updateData
+          );
         } else {
-          showError("Invalid resource ID", "Cannot update resource without valid ID");
+          showError(
+            "Invalid resource ID",
+            "Cannot update resource without valid ID"
+          );
           return;
         }
       } else {
@@ -769,20 +833,23 @@ const UploadResource = () => {
 
       if (response.success) {
         showSuccess(
-          isEditMode ? "Resource updated successfully!" : "Resource uploaded successfully!",
-          isEditMode 
-            ? "Your resource has been updated successfully." 
+          isEditMode
+            ? "Resource updated successfully!"
+            : "Resource uploaded successfully!",
+          isEditMode
+            ? "Your resource has been updated successfully."
             : "Your resource is now live and available for purchase."
         );
-        
+
         // Clear the form completely
         clearForm();
       } else {
-        const errorMessage = response?.message || (isEditMode ? "Failed to update resource" : "Failed to upload resource");
-        showError(
-          isEditMode ? "Update failed" : "Upload failed", 
-          errorMessage
-        );
+        const errorMessage =
+          response?.message ||
+          (isEditMode
+            ? "Failed to update resource"
+            : "Failed to upload resource");
+        showError(isEditMode ? "Update failed" : "Upload failed", errorMessage);
       }
     } catch (error) {
       console.error("Error uploading resource:", error);
@@ -796,9 +863,9 @@ const UploadResource = () => {
   const saveDraft = async () => {
     try {
       const formData = form.getValues();
-      
+
       // Safety checks for form data
-      if (!formData || typeof formData !== 'object') {
+      if (!formData || typeof formData !== "object") {
         console.error("Invalid form data for draft:", formData);
         showError("Invalid form data", "Form data is invalid");
         return;
@@ -807,14 +874,21 @@ const UploadResource = () => {
       const isPaid = formData.isFree === "paid";
 
       // Basic validation for draft
-      if (!formData.title || typeof formData.title !== 'string' || formData.title.trim().length === 0) {
+      if (
+        !formData.title ||
+        typeof formData.title !== "string" ||
+        formData.title.trim().length === 0
+      ) {
         showError("Title required", "Please enter a title to save as draft");
         return;
       }
 
       // For draft, we need at least a banner image
       if (!bannerImage && !resourceData?.coverPhoto?.url) {
-        showError("Banner image required", "Please upload a banner image to save as draft");
+        showError(
+          "Banner image required",
+          "Please upload a banner image to save as draft"
+        );
         return;
       }
 
@@ -824,20 +898,47 @@ const UploadResource = () => {
       // Prepare draft data with safety checks
       const draftData: CreateResourceRequest = {
         title: formData.title.trim(),
-        description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : "",
-        type: formData.type && typeof formData.type === 'string' ? formData.type : "",
+        description:
+          formData.description && typeof formData.description === "string"
+            ? formData.description.trim()
+            : "",
+        type:
+          formData.type && typeof formData.type === "string"
+            ? formData.type
+            : "",
         publishing: formData.publishing || "public",
         isFree: formData.isFree === "free",
-        price: isPaid && typeof formData.price === 'number' && formData.price > 0 ? formData.price : undefined,
+        price:
+          isPaid && typeof formData.price === "number" && formData.price > 0
+            ? formData.price
+            : undefined,
         currency: formData.currency || "GBP",
         saveAsDraft: true,
-        ageRange: formData.ageRange && typeof formData.ageRange === 'string' ? formData.ageRange : "",
-        curriculum: formData.curriculum && typeof formData.curriculum === 'string' ? formData.curriculum : "",
-        curriculumType: formData.curriculumType && typeof formData.curriculumType === 'string' ? formData.curriculumType : "",
-        subject: formData.subject && typeof formData.subject === 'string' ? formData.subject : "",
+        ageRange:
+          formData.ageRange && typeof formData.ageRange === "string"
+            ? formData.ageRange
+            : "",
+        curriculum:
+          formData.curriculum && typeof formData.curriculum === "string"
+            ? formData.curriculum
+            : "",
+        curriculumType:
+          formData.curriculumType && typeof formData.curriculumType === "string"
+            ? formData.curriculumType
+            : "",
+        subject:
+          formData.subject && typeof formData.subject === "string"
+            ? formData.subject
+            : "",
         banner: bannerImage || new File([], "placeholder"), // Use new banner if uploaded, otherwise placeholder
-        previews: previewImages.length > 0 ? previewImages : [new File([], "placeholder")],
-        files: resourceFiles.length > 0 ? resourceFiles : [new File([], "placeholder")],
+        previews:
+          previewImages.length > 0
+            ? previewImages
+            : [new File([], "placeholder")],
+        files:
+          resourceFiles.length > 0
+            ? resourceFiles
+            : [new File([], "placeholder")],
       };
 
       // Simulate upload progress
@@ -864,8 +965,11 @@ const UploadResource = () => {
       }
 
       if (response.success) {
-        showSuccess("Draft saved successfully!", "Your resource has been saved as a draft and can be edited later.");
-        
+        showSuccess(
+          "Draft saved successfully!",
+          "Your resource has been saved as a draft and can be edited later."
+        );
+
         // Clear the form after successful draft save
         clearForm();
       } else {
@@ -890,10 +994,9 @@ const UploadResource = () => {
             {isEditMode ? "Edit Resource" : "Create a Resource"}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {isEditMode 
+            {isEditMode
               ? "Update your teaching resource details and files"
-              : "Share your teaching materials with educators worldwide"
-            }
+              : "Share your teaching materials with educators worldwide"}
           </p>
         </div>
 
@@ -927,9 +1030,14 @@ const UploadResource = () => {
         )}
 
         <Form {...form}>
-           <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-             showError("Form validation failed", "Please check all required fields");
-           })}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              showError(
+                "Form validation failed",
+                "Please check all required fields"
+              );
+            })}
+          >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column - File Uploads */}
               <div className="space-y-6">
@@ -963,14 +1071,25 @@ const UploadResource = () => {
                               Remove
                             </Button>
                           </div>
-                        ) : (isEditMode && resourceData?.coverPhoto?.url) ? (
+                        ) : isEditMode && resourceData?.coverPhoto?.url ? (
                           <div className="space-y-2">
                             <img
                               src={resourceData.coverPhoto.url}
                               alt="Existing banner"
                               className="w-full h-32 object-cover rounded"
-                              onLoad={() => console.log("✅ Banner image loaded successfully:", resourceData.coverPhoto.url)}
-                              onError={(e) => console.error("❌ Banner image failed to load:", resourceData.coverPhoto.url, e)}
+                              onLoad={() =>
+                                console.log(
+                                  "✅ Banner image loaded successfully:",
+                                  resourceData.coverPhoto.url
+                                )
+                              }
+                              onError={(e) =>
+                                console.error(
+                                  "❌ Banner image failed to load:",
+                                  resourceData.coverPhoto.url,
+                                  e
+                                )
+                              }
                             />
                             <p className="text-sm text-muted-foreground">
                               Existing banner image
@@ -980,7 +1099,9 @@ const UploadResource = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                console.log("🔄 Replacing existing banner image");
+                                console.log(
+                                  "🔄 Replacing existing banner image"
+                                );
                                 setBannerImage(null);
                               }}
                             >
@@ -1059,33 +1180,52 @@ const UploadResource = () => {
                         </div>
                       )}
 
-                      {isEditMode && resourceData?.previewImages && resourceData.previewImages.length > 0 && previewImages.length === 0 && (
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                          {resourceData.previewImages.map((preview, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={preview.url}
-                                alt={`Existing preview ${index + 1}`}
-                                className="w-full h-20 object-cover rounded"
-                                onLoad={() => console.log("✅ Preview image loaded successfully:", preview.url)}
-                                onError={(e) => console.error("❌ Preview image failed to load:", preview.url, e)}
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="absolute -top-2 -right-2 w-6 h-6 p-0"
-                                onClick={() => {
-                                  console.log("🔄 Removing existing preview image:", preview.url);
-                                  // Note: In a real implementation, you'd need to track which existing images to remove
-                                }}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {isEditMode &&
+                        resourceData?.previewImages &&
+                        resourceData.previewImages.length > 0 &&
+                        previewImages.length === 0 && (
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            {resourceData.previewImages.map(
+                              (preview, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={preview.url}
+                                    alt={`Existing preview ${index + 1}`}
+                                    className="w-full h-20 object-cover rounded"
+                                    onLoad={() =>
+                                      console.log(
+                                        "✅ Preview image loaded successfully:",
+                                        preview.url
+                                      )
+                                    }
+                                    onError={(e) =>
+                                      console.error(
+                                        "❌ Preview image failed to load:",
+                                        preview.url,
+                                        e
+                                      )
+                                    }
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="absolute -top-2 -right-2 w-6 h-6 p-0"
+                                    onClick={() => {
+                                      console.log(
+                                        "🔄 Removing existing preview image:",
+                                        preview.url
+                                      );
+                                      // Note: In a real implementation, you'd need to track which existing images to remove
+                                    }}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
 
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
                         <label
@@ -1152,39 +1292,52 @@ const UploadResource = () => {
                         </div>
                       )}
 
-                      {isEditMode && resourceData?.mainFile && resourceData.mainFile.url && resourceFiles.length === 0 && (
-                        <div className="space-y-2 mb-3">
-                          <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                            <div className="flex items-center space-x-2">
-                              <FileText className="w-4 h-4" />
-                              <span className="text-sm">Existing Resource File</span>
-                              <span className="text-xs text-muted-foreground">
-                                ({resourceData.mainFile.fileType})
-                              </span>
-                              <a 
-                                href={resourceData.mainFile.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-xs text-primary hover:underline"
-                                onClick={() => console.log("🔗 Opening existing resource file:", resourceData.mainFile.url)}
+                      {isEditMode &&
+                        resourceData?.mainFile &&
+                        resourceData.mainFile.url &&
+                        resourceFiles.length === 0 && (
+                          <div className="space-y-2 mb-3">
+                            <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="w-4 h-4" />
+                                <span className="text-sm">
+                                  Existing Resource File
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({resourceData.mainFile.fileType})
+                                </span>
+                                <a
+                                  href={resourceData.mainFile.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline"
+                                  onClick={() =>
+                                    console.log(
+                                      "🔗 Opening existing resource file:",
+                                      resourceData.mainFile.url
+                                    )
+                                  }
+                                >
+                                  View File
+                                </a>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  console.log(
+                                    "🔄 Replacing existing resource file:",
+                                    resourceData.mainFile.url
+                                  );
+                                  // Note: In a real implementation, you'd need to track which existing files to remove
+                                }}
                               >
-                                View File
-                              </a>
+                                <X className="w-4 h-4" />
+                              </Button>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                console.log("🔄 Replacing existing resource file:", resourceData.mainFile.url);
-                                // Note: In a real implementation, you'd need to track which existing files to remove
-                              }}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
                           </div>
-                        </div>
-                      )}
+                        )}
 
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
                         <label
@@ -1207,7 +1360,8 @@ const UploadResource = () => {
                       </div>
 
                       <p className="text-xs text-muted-foreground">
-                        PDF, DOCX, PPTX, ZIP, images. Total max 500MB (1-3 files)
+                        PDF, DOCX, PPTX, ZIP, images. Total max 500MB (1-3
+                        files)
                       </p>
                     </div>
                   </CardContent>
@@ -1219,21 +1373,7 @@ const UploadResource = () => {
                 {/* Basic Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Describe your resource</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      This is your opportunity to clearly explain what your
-                      resource is all about! It's worth remembering that you are
-                      using the space to communicate to two different audiences.
-                      Firstly, think about what fellow teachers would like to
-                      know, such as exactly what the resource contains and how
-                      it could be used in the classroom. Secondly, the words you
-                      include on this page are also talking to internal and
-                      external search engines. External search engines, like
-                      Google, show the first 155 characters of the resource
-                      description, so make sure you take advantage of these
-                      characters by using lots of relevant keywords as part of
-                      an enticing pitch.
-                    </p>
+                    <CardTitle>Basic Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -1241,16 +1381,15 @@ const UploadResource = () => {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title your resource *</FormLabel>
+                          <FormLabel>Title *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Title your resource"
+                              placeholder="Clear, searchable title. Include key stage & topic."
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Character count: {field.value?.length || 0} - Aim
-                            for 35-45 characters for your title.
+                            {field.value?.length || 0}/140 characters
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -1271,49 +1410,14 @@ const UploadResource = () => {
                             />
                           </FormControl>
                           <FormDescription>
-                            Include learning outcomes, duration, equipment needed, and detailed instructions.
+                            Include learning outcomes, duration, equipment
+                            needed, and detailed instructions.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Resource Type *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a resource type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {RESOURCE_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Age range and curriculum */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Age range and curriculum</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -1321,19 +1425,19 @@ const UploadResource = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Resource Type *</FormLabel>
-                             <Select
-                               onValueChange={field.onChange}
-                               value={field.value}
-                             >
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Choose age range..." />
+                                  <SelectValue placeholder="Select resource type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {AGE_GROUPS.map((age) => (
-                                  <SelectItem key={age} value={age}>
-                                    {age}
+                                {RESOURCE_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1342,40 +1446,6 @@ const UploadResource = () => {
                           </FormItem>
                         )}
                       />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="curriculum"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Curriculum *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Please select..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {CURRICULA.map((curriculum) => (
-                                  <SelectItem
-                                    key={curriculum}
-                                    value={curriculum}
-                                  >
-                                    {curriculum}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1454,7 +1524,10 @@ const UploadResource = () => {
                               </FormControl>
                               <SelectContent>
                                 {CURRICULA.map((curriculum) => (
-                                  <SelectItem key={curriculum} value={curriculum}>
+                                  <SelectItem
+                                    key={curriculum}
+                                    value={curriculum}
+                                  >
                                     {curriculum}
                                   </SelectItem>
                                 ))}
@@ -1493,37 +1566,6 @@ const UploadResource = () => {
                         )}
                       />
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name="subject"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Subject *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Choose subject..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {SUBJECTS.map((subject) => (
-                                <SelectItem
-                                  key={subject}
-                                  value={subject}
-                                >
-                                  {subject}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </CardContent>
                 </Card>
 
@@ -1609,11 +1651,19 @@ const UploadResource = () => {
                                     step="0.01"
                                     min="0"
                                     placeholder="0.00"
-                                    value={field.value === "" ? "" : field.value}
+                                    value={
+                                      field.value === "" ? "" : field.value
+                                    }
                                     onChange={(e) => {
-                                      const value = e.target.value === "" ? "" : parseFloat(e.target.value) || 0;
+                                      const value =
+                                        e.target.value === ""
+                                          ? ""
+                                          : parseFloat(e.target.value) || 0;
                                       field.onChange(value);
-                                      if (typeof value === 'number' && value > 0) {
+                                      if (
+                                        typeof value === "number" &&
+                                        value > 0
+                                      ) {
                                         calculateEarnings(value);
                                       }
                                     }}
@@ -1652,7 +1702,6 @@ const UploadResource = () => {
                         </div>
                       </div>
                     )}
-
                   </CardContent>
                 </Card>
 
@@ -1692,7 +1741,6 @@ const UploadResource = () => {
                         </FormItem>
                       )}
                     />
-
                   </CardContent>
                 </Card>
 
