@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
@@ -11,6 +11,7 @@ import {
   Eye,
   SortAsc,
   SortDesc,
+  Check,
 } from "lucide-react";
 import ResourceStatsModal from "@/components/Modals/resource-stats-modal";
 import { Button } from "@/components/ui/button";
@@ -39,99 +40,211 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { resourcesAPI } from "@/apis/resources";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import type { TeacherResource, MyResourcesResponse, MyResourcesQueryParams } from "@/types/resource";
 
-// Mock data for demonstration
-const mockResources = [
-  {
-    id: "1",
-    title: "Year 7 Mathematics: Algebra Basics",
-    thumbnail: "/api/placeholder/100/60",
-    price: 4.99,
-    status: "Published" as const,
-    salesCount: 127,
-    uploadDate: "2024-01-15",
-  },
-  {
-    id: "2",
-    title: "Science Lab Safety Worksheet",
-    thumbnail: "/api/placeholder/100/60",
-    price: 0,
-    status: "Published" as const,
-    salesCount: 89,
-    uploadDate: "2024-01-10",
-  },
-  {
-    id: "3",
-    title: "Creative Writing Prompts Bundle",
-    thumbnail: "/api/placeholder/100/60",
-    price: 7.5,
-    status: "Draft" as const,
-    salesCount: 0,
-    uploadDate: "2024-01-20",
-  },
-  {
-    id: "4",
-    title: "History Timeline Activity",
-    thumbnail: "/api/placeholder/100/60",
-    price: 3.99,
-    status: "Flagged" as const,
-    salesCount: 45,
-    uploadDate: "2024-01-05",
-  },
-];
-
-const mockStats = {
-  totalResources: 24,
-  totalSales: 1567,
-  currentBalance: 234.5,
-  royaltyTier: "Silver" as const,
-};
 
 export default function ResourceManagement() {
   const navigate = useNavigate();
+  const { handleError, showError, showSuccess } = useErrorHandler();
+  
+  // State management
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("uploadDate");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [selectedResource, setSelectedResource] = useState<
-    (typeof mockResources)[0] | null
-  >(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "pending" | "approved" | "rejected">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  
+  // Data state
+  const [resources, setResources] = useState<TeacherResource[]>([]);
+  const [totalResources, setTotalResources] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<TeacherResource | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  
+  // Delete confirmation state
+  const [resourceToDelete, setResourceToDelete] = useState<TeacherResource | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Stats state
+  const [stats, setStats] = useState({
+    totalResources: 0,
+    totalSales: 0,
+    currentBalance: 0,
+  });
+
+  // Load resources when component mounts or filters change
+  useEffect(() => {
+    loadResources();
+  }, [searchTerm, statusFilter, currentPage, pageSize]);
+
+  const loadResources = async () => {
+    setIsLoading(true);
+    try {
+      // Safety checks for parameters
+      const params: MyResourcesQueryParams = {
+        search: searchTerm && searchTerm.trim().length > 0 ? searchTerm.trim() : undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        page: currentPage && currentPage > 0 ? currentPage : 1,
+        limit: pageSize && pageSize > 0 && pageSize <= 100 ? pageSize : 10,
+      };
+
+      const response = await resourcesAPI.getMyResources(params);
+      
+      // Safety checks for response
+      if (!response) {
+        showError("Failed to load resources", "No response received from server");
+        return;
+      }
+
+      if (response.success && response.data) {
+        // Safety checks for data structure
+        if (!Array.isArray(response.data.resources)) {
+          console.warn("Invalid data structure received:", response.data);
+          setResources([]);
+          setTotalResources(0);
+          return;
+        }
+
+        // Safety checks for stats
+        const statsData = response.data.stats;
+        if (statsData && typeof statsData === 'object') {
+          setStats({
+            totalResources: statsData.totalResources || 0,
+            totalSales: statsData.totalSales || 0,
+            currentBalance: statsData.currentBalance || 0,
+          });
+          setTotalResources(statsData.totalResources || 0);
+        } else {
+          console.warn("Invalid stats data:", statsData);
+          setTotalResources(0);
+        }
+
+        setResources(response.data.resources);
+      } else {
+        const errorMessage = response?.message || "Unable to fetch resources";
+        showError("Failed to load resources", errorMessage);
+        setResources([]);
+        setTotalResources(0);
+      }
+    } catch (error) {
+      console.error("Error loading resources:", error);
+      handleError(error, "Failed to load resources");
+      setResources([]);
+      setTotalResources(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteResource = (resource: TeacherResource) => {
+    // Safety checks for resource
+    if (!resource || typeof resource !== 'object') {
+      console.error("Invalid resource data:", resource);
+      showError("Invalid resource", "Resource data is invalid");
+      return;
+    }
+
+    if (!resource._id || typeof resource._id !== 'string' || resource._id.trim().length === 0) {
+      console.error("Resource missing valid ID:", resource);
+      showError("Invalid resource", "Resource ID is missing");
+      return;
+    }
+
+    setResourceToDelete(resource);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteResource = async () => {
+    if (!resourceToDelete) {
+      console.error("No resource selected for deletion");
+      showError("Delete error", "No resource selected");
+      return;
+    }
+
+    if (!resourceToDelete._id || typeof resourceToDelete._id !== 'string' || resourceToDelete._id.trim().length === 0) {
+      console.error("Resource missing valid ID:", resourceToDelete);
+      showError("Delete error", "Resource ID is invalid");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await resourcesAPI.deleteResource(resourceToDelete._id.trim());
+      
+      if (response.success) {
+        // Remove the resource from the local state
+        setResources(prev => prev.filter(r => r._id !== resourceToDelete._id));
+        setTotalResources(prev => prev - 1);
+        
+        // Show success message
+        showSuccess("Resource deleted successfully", "The resource has been permanently removed.");
+      } else {
+        const errorMessage = response?.message || "Unable to delete resource";
+        showError("Failed to delete resource", errorMessage);
+      }
+    } catch (error) {
+      console.error("Error deleting resource:", error);
+      handleError(error, "Failed to delete resource");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setResourceToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setResourceToDelete(null);
+  };
+
+  const handleSubmitResource = async (resourceId: string) => {
+    try {
+      const response = await resourcesAPI.updateResourceStatus(resourceId, {
+        status: "pending"
+      });
+      
+      if (response.success) {
+        showSuccess("Resource submitted", "Your resource has been submitted for review.");
+        loadResources(); // Reload to update the status
+      } else {
+        showError("Failed to submit resource", response.message || "Unknown error");
+      }
+    } catch (error) {
+      handleError(error, "Failed to submit resource");
+    }
+  };
+
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Published":
-        return <Badge className="bg-green-100 text-green-800">Published</Badge>;
-      case "Draft":
+    switch (status.toLowerCase()) {
+      case "approved":
+      case "published":
+        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+      case "draft":
         return <Badge variant="secondary">Draft</Badge>;
-      case "Flagged":
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">Rejected</Badge>;
+      case "flagged":
         return <Badge variant="destructive">Flagged</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getRoyaltyTierColor = (tier: string) => {
-    switch (tier) {
-      case "Bronze":
-        return "text-amber-600";
-      case "Silver":
-        return "text-slate-600";
-      case "Gold":
-        return "text-yellow-600";
-      default:
-        return "text-muted-foreground";
-    }
-  };
-
-  const filteredResources = mockResources.filter((resource) => {
-    const matchesSearch = resource.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || resource.status.toLowerCase() === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <DashboardLayout role="teacher">
@@ -157,28 +270,27 @@ export default function ResourceManagement() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Total Resources"
-            value={mockStats.totalResources}
+            value={stats.totalResources}
             icon={BarChart3}
             description="Resources uploaded"
           />
           <StatsCard
             title="Total Sales"
-            value={mockStats.totalSales}
+            value={stats.totalSales}
             icon={BarChart3}
             description="Units sold"
           />
           <StatsCard
             title="Current Balance"
-            value={`£${mockStats.currentBalance.toFixed(2)}`}
+            value={`£${stats.currentBalance.toFixed(2)}`}
             icon={BarChart3}
             description="Available to withdraw"
           />
           <StatsCard
-            title="Royalty Tier"
-            value={mockStats.royaltyTier}
+            title="Approved Resources"
+            value={resources.filter(r => r.status === "approved").length}
             icon={BarChart3}
-            description="Your commission level"
-            className={getRoyaltyTierColor(mockStats.royaltyTier)}
+            description="Live on platform"
           />
         </div>
 
@@ -198,128 +310,175 @@ export default function ResourceManagement() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | "draft" | "pending" | "approved" | "rejected")}>
                 <SelectTrigger className="w-[180px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="flagged">Flagged</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Resources Table */}
             <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[100px]">Thumbnail</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="h-auto p-0 font-medium"
-                        onClick={() => {
-                          setSortBy("title");
-                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                        }}
-                      >
-                        Resource Title
-                        {sortBy === "title" &&
-                          (sortOrder === "asc" ? (
-                            <SortAsc className="ml-2 w-4 h-4" />
-                          ) : (
-                            <SortDesc className="ml-2 w-4 h-4" />
-                          ))}
-                      </Button>
-                    </TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sales</TableHead>
-                    <TableHead>Upload Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredResources.map((resource) => (
-                    <TableRow key={resource.id}>
-                      <TableCell>
-                        <img
-                          src={resource.thumbnail}
-                          alt={resource.title}
-                          className="w-16 h-10 object-cover rounded border"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{resource.title}</div>
-                      </TableCell>
-                      <TableCell>
-                        {resource.price === 0 ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            Free
-                          </Badge>
-                        ) : (
-                          <span className="font-medium">
-                            £{resource.price.toFixed(2)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(resource.status)}</TableCell>
-                      <TableCell>
-                        <span className="font-medium">
-                          {resource.salesCount}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground">
-                          {new Date(resource.uploadDate).toLocaleDateString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <svg
-                                className="h-4 w-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                              </svg>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedResource(resource);
-                                setIsStatsModalOpen(true);
-                              }}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Stats
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Resource
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-2">Loading resources...</span>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Thumbnail</TableHead>
+                      <TableHead>Resource Title</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Sales</TableHead>
+                      <TableHead>Upload Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {resources.map((resource) => {
+                      // Safety checks for resource data
+                      if (!resource || typeof resource !== 'object') {
+                        console.warn("Invalid resource data:", resource);
+                        return null;
+                      }
+
+                      if (!resource._id || typeof resource._id !== 'string') {
+                        console.warn("Resource missing valid ID:", resource);
+                        return null;
+                      }
+
+                      return (
+                        <TableRow key={resource._id}>
+                          <TableCell>
+                            <img
+                              src={resource.coverPhoto?.url || "/api/placeholder/100/60"}
+                              alt={resource.title || "Resource"}
+                              className="w-16 h-10 object-cover rounded border"
+                              onError={(e) => {
+                                // Fallback for broken images
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/api/placeholder/100/60";
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{resource.title || "Untitled Resource"}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {resource.type} • {resource.subject}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {resource.isFree ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                Free
+                              </Badge>
+                            ) : (
+                              <span className="font-medium">
+                                {resource.currency} {resource.price.toFixed(2)}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(resource.status || "unknown")}</TableCell>
+                          <TableCell>
+                            <span className="font-medium">
+                              0 {/* Sales count not provided in API response */}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground">
+                              {resource.createdAt 
+                                ? new Date(resource.createdAt).toLocaleDateString() 
+                                : "Unknown Date"}
+                            </span>
+                          </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (resource && resource._id) {
+                                    setSelectedResource(resource);
+                                    setIsStatsModalOpen(true);
+                                  } else {
+                                    console.error("Invalid resource for stats view:", resource);
+                                    showError("Invalid resource", "Cannot view stats for this resource");
+                                  }
+                                }}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Stats
+                              </DropdownMenuItem>
+                              {(resource.status === "draft" || resource.status === "pending") && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (resource && resource._id && typeof resource._id === 'string') {
+                                      navigate('/dashboard/teacher/upload-resource', {
+                                        state: {
+                                          editMode: true,
+                                          resourceData: resource
+                                        }
+                                      });
+                                    } else {
+                                      console.error("Invalid resource for editing:", resource);
+                                      showError("Invalid resource", "Cannot edit this resource");
+                                    }
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Resource
+                                </DropdownMenuItem>
+                              )}
+                              {resource.status === "draft" && (
+                                <DropdownMenuItem 
+                                  className="text-green-600"
+                                  onClick={() => handleSubmitResource(resource._id)}
+                                >
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Submit for Review
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => handleDeleteResource(resource)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
             </div>
 
-            {filteredResources.length === 0 && (
+            {!isLoading && resources.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">
                   No resources found matching your criteria.
@@ -336,8 +495,48 @@ export default function ResourceManagement() {
             setIsStatsModalOpen(false);
             setSelectedResource(null);
           }}
-          resource={selectedResource}
+          resource={selectedResource ? {
+            id: selectedResource._id,
+            title: selectedResource.title || "Untitled Resource",
+            thumbnail: selectedResource.coverPhoto?.url || "/api/placeholder/100/60",
+            price: selectedResource.price || 0,
+            status: selectedResource.status || "unknown",
+            salesCount: 0, // Sales count not provided in API response
+            uploadDate: selectedResource.createdAt || new Date().toISOString()
+          } : null}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Resource</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{resourceToDelete?.title}"? This action cannot be undone.
+                The resource will be permanently removed from your library and will no longer be available for purchase.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDelete} disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteResource}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Resource"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

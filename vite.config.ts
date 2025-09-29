@@ -46,7 +46,6 @@ export default defineConfig(({ mode }) => ({
   },
   // Security-related configurations
   define: {
-    // Remove development-only code in production
     __DEV__: mode === "development",
   },
 }));
