@@ -24,11 +24,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search,
   Filter,
-  Download,
   Star,
   Users,
   Clock,
-  DollarSign,
   FileText,
   Video,
   Image,
@@ -44,7 +42,7 @@ import {
 } from "lucide-react";
 import { resourcesAPI } from "@/apis/resources";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
-import type { Resource, GetAllResourcesQueryParams } from "@/types/resource";
+import type { PublicResource, GetAllResourcesQueryParams } from "@/types/resource";
 
 const Resources = () => {
   const navigate = useNavigate();
@@ -57,7 +55,7 @@ const Resources = () => {
   const [selectedType, setSelectedType] = useState("all");
   
   // Data state
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [resources, setResources] = useState<PublicResource[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResources, setTotalResources] = useState(0);
@@ -88,7 +86,7 @@ const Resources = () => {
 
       if (response.success && response.data) {
         // Safety checks for data structure
-        if (!Array.isArray(response.data.data)) {
+        if (!Array.isArray(response.data.resources)) {
           console.warn("Invalid data structure received:", response.data);
           setResources([]);
           setTotalResources(0);
@@ -104,7 +102,7 @@ const Resources = () => {
           setTotalResources(totalCount);
         }
 
-        setResources(response.data.data);
+        setResources(response.data.resources);
       } else {
         const errorMessage = response?.message || "Unable to fetch resources";
         showError("Failed to load resources", errorMessage);
@@ -141,17 +139,6 @@ const Resources = () => {
     navigate(`/resources/${resourceId.trim()}`);
   };
 
-  const handlePurchaseClick = (resourceId: string) => {
-    // Safety check for resourceId
-    if (!resourceId || typeof resourceId !== 'string' || resourceId.trim().length === 0) {
-      console.error("Invalid resource ID:", resourceId);
-      showError("Invalid resource", "Resource ID is invalid");
-      return;
-    }
-    // For now, navigate to resource detail page
-    // In a real app, this would handle the purchase flow
-    navigate(`/resources/${resourceId.trim()}`);
-  };
 
   const subjects = [
     {
@@ -473,7 +460,7 @@ const Resources = () => {
                           return null;
                         }
 
-                        const TypeIcon = getTypeIcon(resource.resourceType || resource.type);
+                        const TypeIcon = getTypeIcon("Resource"); // Default type since API doesn't provide type
                         return (
                           <Card
                             key={resource.id}
@@ -482,7 +469,7 @@ const Resources = () => {
                           >
                             <div className="relative">
                               <img
-                                src={resource.bannerImage || "/api/placeholder/300/200"}
+                                src={resource.thumbnail || "/api/placeholder/300/200"}
                                 alt={resource.title || "Resource"}
                                 className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
@@ -496,7 +483,7 @@ const Resources = () => {
                                   variant="secondary"
                                   className="bg-background/90"
                                 >
-                                  {resource.resourceType || resource.type || "Resource"}
+                                  Resource
                                 </Badge>
                               </div>
                               <div className="absolute top-3 right-3 flex space-x-1">
@@ -528,8 +515,8 @@ const Resources = () => {
                                   <div className="flex items-center space-x-2 mt-2">
                                     <Avatar className="w-6 h-6">
                                       <AvatarFallback className="text-xs">
-                                        {resource.createdBy?.name
-                                          ? resource.createdBy.name
+                                        {resource.author
+                                          ? resource.author
                                               .split(" ")
                                               .map((n) => n[0])
                                               .join("")
@@ -537,7 +524,7 @@ const Resources = () => {
                                       </AvatarFallback>
                                     </Avatar>
                                     <span className="text-sm text-muted-foreground">
-                                      {resource.createdBy?.name || "Unknown Author"}
+                                      {resource.author || "Unknown Author"}
                                     </span>
                                   </div>
                                 </div>
@@ -546,18 +533,15 @@ const Resources = () => {
 
                             <CardContent className="space-y-3">
                               <CardDescription className="line-clamp-2 text-sm">
-                                {resource.description || "No description available"}
+                                {resource.title || "No description available"}
                               </CardDescription>
 
                               <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                                 <Badge variant="outline" className="text-xs">
-                                  {resource.subject || "Unknown Subject"}
+                                  {resource.status || "Unknown Status"}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  {resource.ageRange || "Unknown Age Range"}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {resource.curriculum || "Unknown Curriculum"}
+                                  {new Date(resource.uploadDate).toLocaleDateString()}
                                 </Badge>
                               </div>
 
@@ -568,58 +552,37 @@ const Resources = () => {
                                     4.5
                                   </div>
                                   <div className="flex items-center">
-                                    <Download className="w-4 h-4 mr-1" />
-                                    0
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    {new Date(resource.uploadDate).toLocaleDateString()}
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  {resource.isFree ? (
+                                  {resource.price === "FREE" || resource.price === "0" ? (
                                     <div className="text-lg font-bold text-brand-accent-green">
                                       FREE
                                     </div>
                                   ) : (
                                     <div className="space-y-1">
                                       <div className="text-lg font-bold">
-                                        ${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}
+                                        {resource.price || "N/A"}
                                       </div>
                                     </div>
                                   )}
                                 </div>
                               </div>
 
-                              <div className="flex space-x-2">
+                              <div className="flex justify-center">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="flex-1"
+                                  className="w-full"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handlePreviewClick(resource.id);
                                   }}
                                 >
                                   <Eye className="w-4 h-4 mr-2" />
-                                  Preview
-                                </Button>
-                                <Button
-                                  variant="hero"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePurchaseClick(resource.id);
-                                  }}
-                                >
-                                  {resource.isFree ? (
-                                    <>
-                                      <Download className="w-4 h-4 mr-2" />
-                                      Download
-                                    </>
-                                  ) : (
-                                    <>
-                                      <DollarSign className="w-4 h-4 mr-2" />
-                                      Purchase
-                                    </>
-                                  )}
+                                  View Details
                                 </Button>
                               </div>
                             </CardContent>

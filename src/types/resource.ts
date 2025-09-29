@@ -202,3 +202,24 @@ export interface AdminResourcesResponse {
   };
 }
 
+// Public Resources API Response Types (for get-all-resources)
+export interface PublicResource {
+  id: string;
+  thumbnail: string;
+  title: string;
+  author: string;
+  price: string;
+  status: "approved" | "pending" | "rejected" | "draft";
+  flags: number;
+  uploadDate: string;
+}
+
+export interface PublicResourcesResponse {
+  resources: PublicResource[];
+  pagination: {
+    total: number;
+    page: number;
+    pages: number;
+  };
+}
+

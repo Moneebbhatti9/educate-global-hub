@@ -430,19 +430,26 @@ export default function ResourceManagement() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Stats
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  if (resource && resource._id && typeof resource._id === 'string') {
-                                    navigate(`/teacher/upload-resource/${resource._id}`);
-                                  } else {
-                                    console.error("Invalid resource for editing:", resource);
-                                    showError("Invalid resource", "Cannot edit this resource");
-                                  }
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Resource
-                              </DropdownMenuItem>
+                              {(resource.status === "draft" || resource.status === "pending") && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (resource && resource._id && typeof resource._id === 'string') {
+                                      navigate('/dashboard/teacher/upload-resource', {
+                                        state: {
+                                          editMode: true,
+                                          resourceData: resource
+                                        }
+                                      });
+                                    } else {
+                                      console.error("Invalid resource for editing:", resource);
+                                      showError("Invalid resource", "Cannot edit this resource");
+                                    }
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Resource
+                                </DropdownMenuItem>
+                              )}
                               {resource.status === "draft" && (
                                 <DropdownMenuItem 
                                   className="text-green-600"

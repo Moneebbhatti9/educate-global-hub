@@ -12,6 +12,8 @@ import type {
   AdminResourcesResponse,
   GetAllResourcesQueryParams,
   PaginatedResponse,
+  PublicResource,
+  PublicResourcesResponse,
 } from "../types/resource";
 import type { ApiResponse } from "../types/auth";
 
@@ -352,9 +354,14 @@ export const resourcesAPI = {
         formData.append("mainFile", data.mainFile);
       }
       
-      return await apiHelpers.upload<ApiResponse<Resource>>(
+      return await apiHelpers.put<ApiResponse<Resource>>(
         `${RESOURCE_ENDPOINTS.UPDATE_RESOURCE}/${resourceId.trim()}`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
     } catch (error) {
       console.error("Error in updateResource:", error);
@@ -434,7 +441,7 @@ export const resourcesAPI = {
   // Get All Resources (Public)
   getAllResources: async (
     params: GetAllResourcesQueryParams = {}
-  ): Promise<ApiResponse<PaginatedResponse<Resource>>> => {
+  ): Promise<ApiResponse<PublicResourcesResponse>> => {
     try {
       // Safety checks for parameters
       if (!params || typeof params !== 'object') {
@@ -461,7 +468,7 @@ export const resourcesAPI = {
         queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`;
       
-      const response = await apiHelpers.get<ApiResponse<PaginatedResponse<Resource>>>(url);
+      const response = await apiHelpers.get<ApiResponse<PublicResourcesResponse>>(url);
       
       // Safety check for response structure
       if (!response || typeof response !== 'object') {

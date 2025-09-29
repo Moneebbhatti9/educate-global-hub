@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,7 +44,7 @@ import { Progress } from "@/components/ui/progress";
 import { customToast } from "@/components/ui/sonner";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { resourcesAPI } from "@/apis/resources";
-import type { CreateResourceRequest, UpdateResourceRequest, Resource } from "@/types/resource";
+import type { CreateResourceRequest, UpdateResourceRequest, TeacherResource } from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
 
 // Form validation schema
@@ -246,10 +246,13 @@ const LICENSE_TYPES = [
 const UploadResource = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { handleError, showSuccess, showError } = useErrorHandler();
   
-  const isEditMode = Boolean(id);
-  const [resourceData, setResourceData] = useState<Resource | null>(null);
+  // Check for edit mode from location state or URL params
+  const editState = location.state as { editMode?: boolean; resourceData?: TeacherResource } | null;
+  const isEditMode = Boolean(id) || Boolean(editState?.editMode);
+  const [resourceData, setResourceData] = useState<TeacherResource | null>(null);
   const [isLoadingResource, setIsLoadingResource] = useState(false);
 
   // Form state
@@ -284,14 +287,43 @@ const UploadResource = () => {
 
   // Load resource data for edit mode
   useEffect(() => {
-    if (isEditMode && id && typeof id === 'string' && id.trim().length > 0) {
-      loadResourceData(id.trim());
-    } else if (isEditMode && id) {
-      console.error("Invalid resource ID for edit mode:", id);
-      showError("Invalid resource ID", "Resource ID is invalid");
-      navigate("/teacher/resource-management");
+    if (isEditMode) {
+      if (editState?.editMode && editState?.resourceData) {
+        // Handle edit mode from location state
+        const resource = editState.resourceData;
+        console.log("🔍 EDIT MODE - Resource data received:", resource);
+        console.log("🔍 EDIT MODE - Cover photo URL:", resource.coverPhoto?.url);
+        console.log("🔍 EDIT MODE - Preview images:", resource.previewImages);
+        console.log("🔍 EDIT MODE - Main file:", resource.mainFile);
+        console.log("🔍 EDIT MODE - Main file URL:", resource.mainFile?.url);
+        console.log("🔍 EDIT MODE - Main file type:", resource.mainFile?.fileType);
+        
+        setResourceData(resource);
+        
+        // Populate form with existing data
+        form.reset({
+          title: resource.title || "",
+          description: resource.description || "",
+          type: resource.type || "",
+          publishing: resource.publishing || "public",
+          isFree: resource.isFree ? "free" : "paid",
+          price: typeof resource.price === 'number' ? resource.price : 0,
+          currency: resource.currency || "GBP",
+          ageRange: resource.ageRange || "",
+          curriculum: resource.curriculum || "",
+          curriculumType: resource.curriculumType || "",
+          subject: resource.subject || "",
+        });
+      } else if (id && typeof id === 'string' && id.trim().length > 0) {
+        // Handle edit mode from URL params (legacy)
+        loadResourceData(id.trim());
+      } else if (isEditMode && id) {
+        console.error("Invalid resource ID for edit mode:", id);
+        showError("Invalid resource ID", "Resource ID is invalid");
+        navigate("/dashboard/teacher/resource-management");
+      }
     }
-  }, [isEditMode, id]);
+  }, [isEditMode, id, editState]);
 
   const loadResourceData = async (resourceId: string) => {
     if (!resourceId || typeof resourceId !== 'string' || resourceId.trim().length === 0) {
@@ -329,7 +361,86 @@ const UploadResource = () => {
         }
 
         const resource = response.data;
-        setResourceData(resource);
+        console.log("🔍 API LOAD - Resource data received:", resource);
+        console.log("🔍 API LOAD - Banner image URL:", resource.bannerImage);
+        console.log("🔍 API LOAD - Preview images:", resource.previewImages);
+        console.log("🔍 API LOAD - Resource files:", resource.resourceFiles);
+        
+        // Convert Resource to TeacherResource format for consistency
+        const teacherResource: TeacherResource = {
+          _id: resource.id,
+          title: resource.title,
+          description: resource.fullDescription || resource.shortDescription,
+          type: resource.resourceType,
+          ageRange: resource.ageGroups?.[0] || "",
+          curriculum: resource.curriculum || "",
+          curriculumType: resource.curriculumType || "",
+          subject: resource.subjects?.[0] || "",
+          isFree: resource.isFree,
+          currency: resource.currency || null,
+          price: resource.price || 0,
+          publishing: resource.visibility,
+          createdBy: {
+            userId: resource.authorId,
+            role: "teacher"
+          },
+          coverPhoto: resource.bannerImage ? {
+            _id: "",
+            resourceId: resource.id,
+            fileType: "cover",
+            url: resource.bannerImage,
+            uploadedBy: resource.authorId,
+            createdAt: resource.uploadDate,
+            updatedAt: resource.lastModified,
+            __v: 0
+          } : {
+            _id: "",
+            resourceId: resource.id,
+            fileType: "cover",
+            url: "",
+            uploadedBy: resource.authorId,
+            createdAt: resource.uploadDate,
+            updatedAt: resource.lastModified,
+            __v: 0
+          },
+          previewImages: resource.previewImages.map((url, index) => ({
+            _id: `preview_${index}`,
+            resourceId: resource.id,
+            fileType: "preview",
+            url: url,
+            uploadedBy: resource.authorId,
+            createdAt: resource.uploadDate,
+            updatedAt: resource.lastModified,
+            __v: 0
+          })),
+          mainFile: resource.resourceFiles[0] ? {
+            _id: "",
+            resourceId: resource.id,
+            fileType: "main",
+            url: resource.resourceFiles[0],
+            uploadedBy: resource.authorId,
+            createdAt: resource.uploadDate,
+            updatedAt: resource.lastModified,
+            __v: 0
+          } : {
+            _id: "",
+            resourceId: resource.id,
+            fileType: "main",
+            url: "",
+            uploadedBy: resource.authorId,
+            createdAt: resource.uploadDate,
+            updatedAt: resource.lastModified,
+            __v: 0
+          },
+          status: resource.status === "published" ? "approved" : "draft",
+          approvedBy: null,
+          isDeleted: false,
+          createdAt: resource.uploadDate,
+          updatedAt: resource.lastModified,
+          __v: 0
+        };
+        
+        setResourceData(teacherResource);
         
         // Populate form with existing data with safety checks
         form.reset({
@@ -496,6 +607,45 @@ const UploadResource = () => {
     setResourceFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Clear form function
+  const clearForm = () => {
+    // Reset form fields
+    form.reset({
+      title: "",
+      description: "",
+      type: "",
+      publishing: "public",
+      isFree: "free",
+      price: "",
+      currency: "GBP",
+      ageRange: "",
+      curriculum: "",
+      curriculumType: "",
+      subject: "",
+    });
+    
+    // Clear all file states
+    setBannerImage(null);
+    setPreviewImages([]);
+    setResourceFiles([]);
+    setUploadProgress(0);
+    
+    // Clear edit mode states
+    setResourceData(null);
+    
+    // Reset UI states
+    setExpectedEarnings(0);
+    setCurrentRoyaltyTier("Bronze (60%)");
+    
+    // Navigate to create mode (clear edit mode)
+    navigate("/dashboard/teacher/upload-resource", { 
+      replace: true,
+      state: { editMode: false, resourceData: null }
+    });
+    
+    console.log("🧹 Form cleared completely and exited edit mode");
+  };
+
   // Form submission
   const onSubmit = async (data: ResourceFormData) => {
     // Safety checks for form data
@@ -508,17 +658,24 @@ const UploadResource = () => {
     const isPaid = data.isFree === "paid";
 
     // File validation checks (not handled by form schema)
-    if (!bannerImage) {
+    console.log("🔍 VALIDATION - Banner image:", bannerImage);
+    console.log("🔍 VALIDATION - Resource data cover photo:", resourceData?.coverPhoto?.url);
+    console.log("🔍 VALIDATION - Preview images:", previewImages.length);
+    console.log("🔍 VALIDATION - Resource data preview images:", resourceData?.previewImages?.length);
+    console.log("🔍 VALIDATION - Resource files:", resourceFiles.length);
+    console.log("🔍 VALIDATION - Resource data main file:", resourceData?.mainFile?.url);
+    
+    if (!bannerImage && !resourceData?.coverPhoto?.url) {
       showError("Banner image required", "Please upload a banner image for your resource");
       return;
     }
 
-    if (previewImages.length < 1 || previewImages.length > 5) {
+    if (previewImages.length < 1 && (!resourceData?.previewImages || resourceData.previewImages.length === 0)) {
       showError("Preview images required", "Please upload 1-5 preview images");
       return;
     }
 
-    if (resourceFiles.length < 1 || resourceFiles.length > 3) {
+    if (resourceFiles.length < 1 && !resourceData?.mainFile?.url) {
       showError("Resource files required", "Please upload 1-3 resource files");
       return;
     }
@@ -546,9 +703,9 @@ const UploadResource = () => {
         curriculum: data.curriculum,
         curriculumType: data.curriculumType || "",
         subject: data.subject,
-        banner: bannerImage,
-        previews: previewImages,
-        files: resourceFiles,
+        banner: bannerImage || new File([], "placeholder"), // Use new banner if uploaded, otherwise placeholder
+        previews: previewImages.length > 0 ? previewImages : [new File([], "placeholder")], // Use new previews if uploaded, otherwise placeholder
+        files: resourceFiles.length > 0 ? resourceFiles : [new File([], "placeholder")], // Use new files if uploaded, otherwise placeholder
       };
 
       // Simulate upload progress
@@ -564,25 +721,33 @@ const UploadResource = () => {
 
       // Call the appropriate API based on mode
       let response;
-      if (isEditMode && id && typeof id === 'string' && id.trim().length > 0) {
-        // Update existing resource
-        const updateData: UpdateResourceRequest = {
-          title: data.title.trim(),
-          description: data.description.trim(),
-          type: data.type,
-          publishing: data.publishing || "public",
-          isFree: data.isFree === "free",
-          price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
-          currency: data.currency || "GBP",
-          ageRange: data.ageRange,
-          curriculum: data.curriculum,
-          curriculumType: data.curriculumType || "",
-          subject: data.subject,
-          coverPhoto: bannerImage || undefined,
-          previewImages: previewImages.length > 0 ? previewImages : undefined,
-          mainFile: resourceFiles.length > 0 ? resourceFiles[0] : undefined,
-        };
-        response = await resourcesAPI.updateResource(id.trim(), updateData);
+      if (isEditMode) {
+        // Determine resource ID for update
+        const resourceId = id || editState?.resourceData?._id;
+        
+        if (resourceId && typeof resourceId === 'string' && resourceId.trim().length > 0) {
+          // Update existing resource
+          const updateData: UpdateResourceRequest = {
+            title: data.title.trim(),
+            description: data.description.trim(),
+            type: data.type,
+            publishing: data.publishing || "public",
+            isFree: data.isFree === "free",
+            price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
+            currency: data.currency || "GBP",
+            ageRange: data.ageRange,
+            curriculum: data.curriculum,
+            curriculumType: data.curriculumType || "",
+            subject: data.subject,
+            coverPhoto: bannerImage || undefined,
+            previewImages: previewImages.length > 0 ? previewImages : undefined,
+            mainFile: resourceFiles.length > 0 ? resourceFiles[0] : undefined,
+          };
+          response = await resourcesAPI.updateResource(resourceId.trim(), updateData);
+        } else {
+          showError("Invalid resource ID", "Cannot update resource without valid ID");
+          return;
+        }
       } else {
         // Create new resource
         response = await resourcesAPI.createResource(resourceData);
@@ -605,26 +770,8 @@ const UploadResource = () => {
             : "Your resource is now live and available for purchase."
         );
         
-        // Clear the form instead of navigating away
-        form.reset({
-          title: "",
-          description: "",
-          type: "",
-          publishing: "public",
-          isFree: "free",
-          price: "",
-          currency: "GBP",
-          ageRange: "",
-          curriculum: "",
-          curriculumType: "",
-          subject: "",
-        });
-        
-        // Clear file uploads
-        setBannerImage(null);
-        setPreviewImages([]);
-        setResourceFiles([]);
-        setUploadProgress(0);
+        // Clear the form completely
+        clearForm();
       } else {
         const errorMessage = response?.message || (isEditMode ? "Failed to update resource" : "Failed to upload resource");
         showError(
@@ -661,7 +808,7 @@ const UploadResource = () => {
       }
 
       // For draft, we need at least a banner image
-      if (!bannerImage) {
+      if (!bannerImage && !resourceData?.coverPhoto?.url) {
         showError("Banner image required", "Please upload a banner image to save as draft");
         return;
       }
@@ -683,7 +830,7 @@ const UploadResource = () => {
         curriculum: formData.curriculum && typeof formData.curriculum === 'string' ? formData.curriculum : "",
         curriculumType: formData.curriculumType && typeof formData.curriculumType === 'string' ? formData.curriculumType : "",
         subject: formData.subject && typeof formData.subject === 'string' ? formData.subject : "",
-        banner: bannerImage,
+        banner: bannerImage || new File([], "placeholder"), // Use new banner if uploaded, otherwise placeholder
         previews: previewImages.length > 0 ? previewImages : [new File([], "placeholder")],
         files: resourceFiles.length > 0 ? resourceFiles : [new File([], "placeholder")],
       };
@@ -715,25 +862,7 @@ const UploadResource = () => {
         showSuccess("Draft saved successfully!", "Your resource has been saved as a draft and can be edited later.");
         
         // Clear the form after successful draft save
-        form.reset({
-          title: "",
-          description: "",
-          type: "",
-          publishing: "public",
-          isFree: "free",
-          price: "",
-          currency: "GBP",
-          ageRange: "",
-          curriculum: "",
-          curriculumType: "",
-          subject: "",
-        });
-        
-        // Clear file uploads
-        setBannerImage(null);
-        setPreviewImages([]);
-        setResourceFiles([]);
-        setUploadProgress(0);
+        clearForm();
       } else {
         const errorMessage = response?.message || "Failed to save draft";
         showError("Draft save failed", errorMessage);
@@ -829,6 +958,30 @@ const UploadResource = () => {
                               Remove
                             </Button>
                           </div>
+                        ) : (isEditMode && resourceData?.coverPhoto?.url) ? (
+                          <div className="space-y-2">
+                            <img
+                              src={resourceData.coverPhoto.url}
+                              alt="Existing banner"
+                              className="w-full h-32 object-cover rounded"
+                              onLoad={() => console.log("✅ Banner image loaded successfully:", resourceData.coverPhoto.url)}
+                              onError={(e) => console.error("❌ Banner image failed to load:", resourceData.coverPhoto.url, e)}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                              Existing banner image
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                console.log("🔄 Replacing existing banner image");
+                                setBannerImage(null);
+                              }}
+                            >
+                              Replace
+                            </Button>
+                          </div>
                         ) : (
                           <div className="space-y-2">
                             <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
@@ -901,6 +1054,34 @@ const UploadResource = () => {
                         </div>
                       )}
 
+                      {isEditMode && resourceData?.previewImages && resourceData.previewImages.length > 0 && previewImages.length === 0 && (
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          {resourceData.previewImages.map((preview, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={preview.url}
+                                alt={`Existing preview ${index + 1}`}
+                                className="w-full h-20 object-cover rounded"
+                                onLoad={() => console.log("✅ Preview image loaded successfully:", preview.url)}
+                                onError={(e) => console.error("❌ Preview image failed to load:", preview.url, e)}
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute -top-2 -right-2 w-6 h-6 p-0"
+                                onClick={() => {
+                                  console.log("🔄 Removing existing preview image:", preview.url);
+                                  // Note: In a real implementation, you'd need to track which existing images to remove
+                                }}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
                         <label
                           htmlFor="preview-upload"
@@ -963,6 +1144,40 @@ const UploadResource = () => {
                               </Button>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {isEditMode && resourceData?.mainFile && resourceData.mainFile.url && resourceFiles.length === 0 && (
+                        <div className="space-y-2 mb-3">
+                          <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <div className="flex items-center space-x-2">
+                              <FileText className="w-4 h-4" />
+                              <span className="text-sm">Existing Resource File</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({resourceData.mainFile.fileType})
+                              </span>
+                              <a 
+                                href={resourceData.mainFile.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                                onClick={() => console.log("🔗 Opening existing resource file:", resourceData.mainFile.url)}
+                              >
+                                View File
+                              </a>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                console.log("🔄 Replacing existing resource file:", resourceData.mainFile.url);
+                                // Note: In a real implementation, you'd need to track which existing files to remove
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       )}
 
