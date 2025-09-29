@@ -87,7 +87,10 @@ export const useForum = () => {
 
       // Listen for discussion updates (likes, etc.)
       const handleDiscussionUpdate = (...args: any[]) => {
-        const data = args[0] as { discussionId: string; updates: Partial<Discussion> };
+        const data = args[0] as {
+          discussionId: string;
+          updates: Partial<Discussion>;
+        };
         setDiscussions((prev) =>
           prev.map((discussion) =>
             discussion._id === data.discussionId
@@ -148,36 +151,39 @@ export const useForum = () => {
   }, []);
 
   // Create new discussion
-  const createDiscussion = useCallback(async (data: CreateDiscussionData) => {
-    try {
-      setError(null);
+  const createDiscussion = useCallback(
+    async (data: CreateDiscussionData) => {
+      try {
+        setError(null);
 
-      // Validate data
-      const validation = validateDiscussionData(data);
-      if (!validation.isValid) {
-        throw new Error(validation.errors.join(", "));
+        // Validate data
+        const validation = validateDiscussionData(data);
+        if (!validation.isValid) {
+          throw new Error(validation.errors.join(", "));
+        }
+
+        const newDiscussion = await forumAPI.createDiscussion(data);
+        const transformed = transformDiscussion(newDiscussion);
+
+        // Add to the beginning of discussions list, avoiding duplicates
+        setDiscussions((prev) => {
+          if (prev.some((d) => d._id === transformed._id)) return prev;
+          return [transformed, ...prev];
+        });
+
+        // Refresh sidebar aggregates after creation
+        refreshSidebarData();
+
+        return transformed;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to create discussion";
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
-
-      const newDiscussion = await forumAPI.createDiscussion(data);
-      const transformed = transformDiscussion(newDiscussion);
-
-      // Add to the beginning of discussions list, avoiding duplicates
-      setDiscussions((prev) => {
-        if (prev.some((d) => d._id === transformed._id)) return prev;
-        return [transformed, ...prev];
-      });
-
-      // Refresh sidebar aggregates after creation
-      refreshSidebarData();
-
-      return transformed;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to create discussion";
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }, [refreshSidebarData]);
+    },
+    [refreshSidebarData]
+  );
 
   // Toggle like on discussion
   const toggleLikeDiscussion = useCallback(
@@ -195,9 +201,16 @@ export const useForum = () => {
             discussion._id === discussionId
               ? {
                   ...discussion,
-                  likes: discussion.likes.includes((user as any)?._id || (user as any)?.id)
-                    ? discussion.likes.filter((id) => id !== ((user as any)?._id || (user as any)?.id))
-                    : [...discussion.likes, ((user as any)?._id || (user as any)?.id)],
+                  likes: discussion.likes.includes(
+                    (user as any)?._id || (user as any)?.id
+                  )
+                    ? discussion.likes.filter(
+                        (id) => id !== ((user as any)?._id || (user as any)?.id)
+                      )
+                    : [
+                        ...discussion.likes,
+                        (user as any)?._id || (user as any)?.id,
+                      ],
                 }
               : discussion
           )
@@ -288,7 +301,13 @@ export const useForumDetail = (discussionId: string) => {
         const reply = args[0] as any;
         const transformed = transformReply(reply);
         if (transformed.discussion === discussionId) {
-          setReplies((prev) => [...prev, transformed]);
+          setReplies((prev) => {
+            // Check if reply already exists to avoid duplicates
+            if (prev.some((r) => r._id === transformed._id)) {
+              return prev;
+            }
+            return [...prev, transformed];
+          });
           // Update discussion reply count
           setDiscussion((prev) =>
             prev ? { ...prev, replyCount: (prev.replyCount || 0) + 1 } : null
@@ -308,7 +327,10 @@ export const useForumDetail = (discussionId: string) => {
 
       // Listen for discussion updates
       const handleDiscussionUpdate = (...args: any[]) => {
-        const data = args[0] as { discussionId: string; updates: Partial<Discussion> };
+        const data = args[0] as {
+          discussionId: string;
+          updates: Partial<Discussion>;
+        };
         if (data.discussionId === discussionId) {
           setDiscussion((prev) => (prev ? { ...prev, ...data.updates } : null));
         }
@@ -401,9 +423,13 @@ export const useForumDetail = (discussionId: string) => {
             reply._id === replyId
               ? {
                   ...reply,
-                  likes: reply.likes.includes((user as any)?._id || (user as any)?.id)
-                    ? reply.likes.filter((id) => id !== ((user as any)?._id || (user as any)?.id))
-                    : [...reply.likes, ((user as any)?._id || (user as any)?.id)],
+                  likes: reply.likes.includes(
+                    (user as any)?._id || (user as any)?.id
+                  )
+                    ? reply.likes.filter(
+                        (id) => id !== ((user as any)?._id || (user as any)?.id)
+                      )
+                    : [...reply.likes, (user as any)?._id || (user as any)?.id],
                 }
               : reply
           )

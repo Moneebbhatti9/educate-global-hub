@@ -88,6 +88,181 @@ const ForumDetail = () => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [nestedReplyContent, setNestedReplyContent] = useState("");
+
+  // Organize replies into nested structure
+  const organizeReplies = (replies: Reply[]) => {
+    const replyMap = new Map<
+      string,
+      Reply & { children: (Reply & { children: Reply[] })[] }
+    >();
+    const rootReplies: (Reply & {
+      children: (Reply & { children: Reply[] })[];
+    })[] = [];
+
+    // First pass: create map of all replies
+    replies.forEach((reply) => {
+      replyMap.set(reply._id, { ...reply, children: [] });
+    });
+
+    // Second pass: organize into tree structure
+    replies.forEach((reply) => {
+      if (reply.parentReply) {
+        const parent = replyMap.get(reply.parentReply);
+        if (parent) {
+          parent.children.push(replyMap.get(reply._id)!);
+        }
+      } else {
+        rootReplies.push(replyMap.get(reply._id)!);
+      }
+    });
+
+    return rootReplies;
+  };
+
+  // Render nested replies recursively
+  const renderNestedReplies = (
+    reply: Reply & { children: Reply[] },
+    depth = 0
+  ) => {
+    const maxDepth = 3; // Limit nesting depth
+    const isMaxDepth = depth >= maxDepth;
+
+    return (
+      <div
+        key={reply._id}
+        className={`${depth > 0 ? "ml-6 border-l-2 border-muted pl-4" : ""}`}
+      >
+        <div className="flex items-start space-x-3">
+          <Avatar className="w-10 h-10">
+            <AvatarImage src={reply.createdBy.avatarUrl} />
+            <AvatarFallback>{getUserInitials(reply.createdBy)}</AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="font-semibold">
+                {getUserDisplayName(reply.createdBy)}
+              </span>
+              <Badge variant="outline" className="text-xs">
+                {reply.createdBy.role}
+              </Badge>
+              {reply.isOP && (
+                <Badge variant="secondary" className="text-xs">
+                  OP
+                </Badge>
+              )}
+              <span className="text-sm text-muted-foreground">
+                {formatDetailedDate(reply.createdAt)}
+              </span>
+            </div>
+
+            <div className="prose prose-slate max-w-none mb-3">
+              <div className="whitespace-pre-wrap text-foreground">
+                {reply.content}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleReplyLike(reply._id)}
+                className={`h-8 ${
+                  user && hasUserLiked(reply.likes, user.id || "")
+                    ? "text-brand-primary"
+                    : ""
+                }`}
+              >
+                <ThumbsUp className="w-4 h-4 mr-1" />
+                {getLikeCount(reply.likes)}
+              </Button>
+              {!isMaxDepth && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() =>
+                    setReplyingTo(replyingTo === reply._id ? null : reply._id)
+                  }
+                >
+                  <Reply className="w-4 h-4 mr-1" />
+                  Reply
+                </Button>
+              )}
+            </div>
+
+            {/* Nested Reply Form */}
+            {replyingTo === reply._id && (
+              <div className="mt-4 ml-4 border-l-2 border-muted pl-4">
+                <div className="flex items-start space-x-3">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user?.avatarUrl} />
+                    <AvatarFallback>
+                      {user
+                        ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+                        : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <Textarea
+                      placeholder={`Reply to ${getUserDisplayName(
+                        reply.createdBy
+                      )}...`}
+                      value={nestedReplyContent}
+                      onChange={(e) => setNestedReplyContent(e.target.value)}
+                      className="min-h-[80px] mb-3"
+                      disabled={!user}
+                    />
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setReplyingTo(null);
+                          setNestedReplyContent("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-brand-primary hover:bg-brand-primary/90"
+                        disabled={
+                          !nestedReplyContent.trim() || submittingReply || !user
+                        }
+                        onClick={() => handlePostNestedReply(reply._id)}
+                      >
+                        {submittingReply ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Posting...
+                          </>
+                        ) : (
+                          "Post Reply"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Render child replies */}
+        {reply.children && reply.children.length > 0 && (
+          <div className="mt-4 space-y-4">
+            {reply.children.map((child) =>
+              renderNestedReplies(child, depth + 1)
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Load discussion on component mount
   useEffect(() => {
@@ -161,6 +336,43 @@ const ForumDetail = () => {
 
       await postReply(replyData);
       setReplyContent("");
+
+      toast({
+        title: "Success",
+        description: "Reply posted successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to post reply",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePostNestedReply = async (parentReplyId: string) => {
+    if (!nestedReplyContent.trim() || !id) return;
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to post replies.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const replyData: CreateReplyData = {
+        discussionId: id,
+        content: nestedReplyContent.trim(),
+        parentReply: parentReplyId,
+      };
+
+      await postReply(replyData);
+      setNestedReplyContent("");
+      setReplyingTo(null);
 
       toast({
         title: "Success",
@@ -410,6 +622,31 @@ const ForumDetail = () => {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => {
+                                const textarea = document.querySelector(
+                                  'textarea[placeholder="Add your reply to help the community..."]'
+                                ) as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = textarea.value.substring(
+                                    start,
+                                    end
+                                  );
+                                  const newText =
+                                    textarea.value.substring(0, start) +
+                                    `**${selectedText}**` +
+                                    textarea.value.substring(end);
+                                  setReplyContent(newText);
+                                  setTimeout(() => {
+                                    textarea.focus();
+                                    textarea.setSelectionRange(
+                                      start + 2,
+                                      end + 2
+                                    );
+                                  }, 0);
+                                }
+                              }}
                             >
                               <Bold className="w-4 h-4" />
                             </Button>
@@ -417,6 +654,31 @@ const ForumDetail = () => {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => {
+                                const textarea = document.querySelector(
+                                  'textarea[placeholder="Add your reply to help the community..."]'
+                                ) as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = textarea.value.substring(
+                                    start,
+                                    end
+                                  );
+                                  const newText =
+                                    textarea.value.substring(0, start) +
+                                    `*${selectedText}*` +
+                                    textarea.value.substring(end);
+                                  setReplyContent(newText);
+                                  setTimeout(() => {
+                                    textarea.focus();
+                                    textarea.setSelectionRange(
+                                      start + 1,
+                                      end + 1
+                                    );
+                                  }, 0);
+                                }
+                              }}
                             >
                               <Italic className="w-4 h-4" />
                             </Button>
@@ -424,6 +686,31 @@ const ForumDetail = () => {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => {
+                                const textarea = document.querySelector(
+                                  'textarea[placeholder="Add your reply to help the community..."]'
+                                ) as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = textarea.value.substring(
+                                    start,
+                                    end
+                                  );
+                                  const newText =
+                                    textarea.value.substring(0, start) +
+                                    `[${selectedText}](url)` +
+                                    textarea.value.substring(end);
+                                  setReplyContent(newText);
+                                  setTimeout(() => {
+                                    textarea.focus();
+                                    textarea.setSelectionRange(
+                                      start + selectedText.length + 2,
+                                      end + selectedText.length + 5
+                                    );
+                                  }, 0);
+                                }
+                              }}
                             >
                               <LinkIcon className="w-4 h-4" />
                             </Button>
@@ -431,6 +718,31 @@ const ForumDetail = () => {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => {
+                                const textarea = document.querySelector(
+                                  'textarea[placeholder="Add your reply to help the community..."]'
+                                ) as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = textarea.value.substring(
+                                    start,
+                                    end
+                                  );
+                                  const newText =
+                                    textarea.value.substring(0, start) +
+                                    `\`${selectedText}\`` +
+                                    textarea.value.substring(end);
+                                  setReplyContent(newText);
+                                  setTimeout(() => {
+                                    textarea.focus();
+                                    textarea.setSelectionRange(
+                                      start + 1,
+                                      end + 1
+                                    );
+                                  }, 0);
+                                }
+                              }}
                             >
                               <Code className="w-4 h-4" />
                             </Button>
@@ -438,6 +750,31 @@ const ForumDetail = () => {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => {
+                                const textarea = document.querySelector(
+                                  'textarea[placeholder="Add your reply to help the community..."]'
+                                ) as HTMLTextAreaElement;
+                                if (textarea) {
+                                  const start = textarea.selectionStart;
+                                  const end = textarea.selectionEnd;
+                                  const selectedText = textarea.value.substring(
+                                    start,
+                                    end
+                                  );
+                                  const newText =
+                                    textarea.value.substring(0, start) +
+                                    `> ${selectedText}` +
+                                    textarea.value.substring(end);
+                                  setReplyContent(newText);
+                                  setTimeout(() => {
+                                    textarea.focus();
+                                    textarea.setSelectionRange(
+                                      start + 2,
+                                      end + 2
+                                    );
+                                  }, 0);
+                                }
+                              }}
                             >
                               <Quote className="w-4 h-4" />
                             </Button>
@@ -467,70 +804,15 @@ const ForumDetail = () => {
 
                   <Separator />
 
-                  {/* Comments List */}
-                  {replies.map((reply) => (
-                    <div key={reply._id} className="space-y-4">
-                      <div className="flex items-start space-x-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={reply.createdBy.avatarUrl} />
-                          <AvatarFallback>
-                            {getUserInitials(reply.createdBy)}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="font-semibold">
-                              {getUserDisplayName(reply.createdBy)}
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {reply.createdBy.role}
-                            </Badge>
-                            {reply.isOP && (
-                              <Badge variant="secondary" className="text-xs">
-                                OP
-                              </Badge>
-                            )}
-                            <span className="text-sm text-muted-foreground">
-                              {formatDetailedDate(reply.createdAt)}
-                            </span>
-                          </div>
-
-                          <div className="prose prose-slate max-w-none mb-3">
-                            <div className="whitespace-pre-wrap text-foreground">
-                              {reply.content}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleReplyLike(reply._id)}
-                              className={`h-8 ${
-                                user && hasUserLiked(reply.likes, user.id || "")
-                                  ? "text-brand-primary"
-                                  : ""
-                              }`}
-                            >
-                              <ThumbsUp className="w-4 h-4 mr-1" />
-                              {getLikeCount(reply.likes)}
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8">
-                              <Reply className="w-4 h-4 mr-1" />
-                              Reply
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-8">
-                              <Share2 className="w-4 h-4 mr-1" />
-                              Share
-                            </Button>
-                          </div>
-                        </div>
+                  {/* Comments List - Nested Structure */}
+                  <div className="space-y-6">
+                    {organizeReplies(replies).map((reply) => (
+                      <div key={reply._id}>
+                        {renderNestedReplies(reply)}
+                        <Separator className="mt-6" />
                       </div>
-
-                      <Separator />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {/* Empty State */}
                   {replies.length === 0 && (
