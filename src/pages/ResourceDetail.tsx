@@ -1,11 +1,29 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Star, Heart, Download, Eye, Calendar, User, BookOpen, GraduationCap, FileText, ExternalLink } from "lucide-react";
+import {
+  Star,
+  Heart,
+  Download,
+  Eye,
+  Calendar,
+  User,
+  BookOpen,
+  GraduationCap,
+  FileText,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -113,6 +131,78 @@ const ResourceDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
+
+  // Load resource from API
+  useEffect(() => {
+    const loadResource = async () => {
+      if (!id) return;
+
+      try {
+        setIsLoading(true);
+        // For now, we'll use search API to get resource details
+        // In a real app, there would be a specific get resource by ID endpoint
+        const response = await resourcesAPI.getAllResources({
+          q: id,
+          limit: 1,
+        });
+
+        if (response.success && response.data && response.data.resources.length > 0) {
+          // Convert search result to Resource format
+          const searchResult = response.data.resources[0];
+          const resourceData: Resource = {
+            id: searchResult.id,
+            title: searchResult.title,
+            shortDescription: searchResult.title,
+            fullDescription: searchResult.title,
+            resourceType: "Resource",
+            subjects: ["Unknown"],
+            ageGroups: ["Unknown"],
+            curriculum: "Unknown",
+            curriculumType: "Foundation Stage",
+            language: "English",
+            pages: 0,
+            lessonTime: 0,
+            isFree: searchResult.price === "FREE" || searchResult.price === "0",
+            price: searchResult.price === "FREE" || searchResult.price === "0" ? 0 : parseFloat(searchResult.price.replace(/[^\d.]/g, '')),
+            currency: "USD",
+            licenseType: "Single Teacher License",
+            tags: "",
+            categories: [],
+            accessibility: "Standard",
+            visibility: "public",
+            versionNotes: "",
+            bannerImage: searchResult.thumbnail,
+            previewImages: [searchResult.thumbnail],
+            resourceFiles: [],
+            status: "published",
+            uploadDate: searchResult.uploadDate,
+            lastModified: searchResult.uploadDate,
+            salesCount: 0,
+            downloadCount: 0,
+            rating: 4.5,
+            reviewCount: 0,
+            authorId: "unknown",
+            authorName: searchResult.author,
+          };
+          setResource(resourceData);
+        } else {
+          throw new Error("Resource not found");
+        }
+      } catch (error: unknown) {
+        console.error("Error loading resource:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load resource. Please try again.";
+
+        showError("Failed to load resource", errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadResource();
+  }, [id]);
 
   // Load resource data when component mounts
   useEffect(() => {
@@ -242,7 +332,7 @@ const ResourceDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -270,12 +360,12 @@ const ResourceDetail = () => {
                 <div className="flex items-center space-x-2">
                   <Avatar className="w-8 h-8">
                     <AvatarFallback>
-                      {resource.createdBy?.name ? resource.createdBy.name.charAt(0) : "U"}
+                      {resource.authorName ? resource.authorName.charAt(0) : "U"}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm text-muted-foreground">
                     by <span className="text-primary font-medium cursor-pointer hover:underline">
-                      {resource.createdBy?.name || "Unknown Author"}
+                      {resource.authorName || "Unknown Author"}
                     </span>
                   </span>
                 </div>
@@ -288,7 +378,7 @@ const ResourceDetail = () => {
                 </div>
               </div>
               <p className="text-muted-foreground text-lg">
-                {resource.description || "No description available"}
+                {resource.fullDescription || "No description available"}
               </p>
             </div>
 
@@ -315,7 +405,7 @@ const ResourceDetail = () => {
                       }}
                     />
                   </div>
-                  
+
                   {/* Thumbnail Navigation */}
                   {resource.previewImages && Array.isArray(resource.previewImages) && resource.previewImages.length > 1 && (
                     <div className="flex space-x-2 overflow-x-auto">
@@ -360,7 +450,7 @@ const ResourceDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none">
-                  <p className="mb-2">{resource.description || "No description available"}</p>
+                  <p className="mb-2">{resource.fullDescription || "No description available"}</p>
                 </div>
               </CardContent>
             </Card>
@@ -374,11 +464,11 @@ const ResourceDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center space-x-2">
                     <BookOpen className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Subject:</strong> {resource.subject || "Unknown Subject"}</span>
+                    <span><strong>Subject:</strong> {resource.subjects?.[0] || "Unknown Subject"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Age Range:</strong> {resource.ageRange || "Unknown Age Range"}</span>
+                    <span><strong>Age Range:</strong> {resource.ageGroups?.[0] || "Unknown Age Range"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />
@@ -391,8 +481,8 @@ const ResourceDetail = () => {
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <span><strong>Created:</strong> {
-                      resource.createdAt 
-                        ? new Date(resource.createdAt).toLocaleDateString() 
+                      resource.uploadDate 
+                        ? new Date(resource.uploadDate).toLocaleDateString() 
                         : "Unknown Date"
                     }</span>
                   </div>
@@ -430,7 +520,7 @@ const ResourceDetail = () => {
                   <div className="text-3xl font-bold text-primary">
                     {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Button 
                       onClick={handlePurchase}
@@ -446,7 +536,9 @@ const ResourceDetail = () => {
                   </div>
 
                   <div className="text-xs text-muted-foreground">
-                    Instant download after purchase
+                    {resource.isFree
+                      ? "Instant download"
+                      : "Instant download after purchase"}
                   </div>
                 </div>
               </CardContent>
@@ -464,18 +556,18 @@ const ResourceDetail = () => {
                 <div className="flex items-center space-x-3 mb-3">
                   <Avatar className="w-12 h-12">
                     <AvatarFallback>
-                      {resource.createdBy?.name ? resource.createdBy.name.charAt(0) : "U"}
+                      {resource.authorName ? resource.authorName.charAt(0) : "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="font-semibold">{resource.createdBy?.name || "Unknown Author"}</h4>
+                    <h4 className="font-semibold">{resource.authorName || "Unknown Author"}</h4>
                     <div className="flex items-center space-x-1">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                       <span className="text-xs">4.5</span>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <div className="font-medium">0</div>
@@ -522,7 +614,7 @@ const ResourceDetail = () => {
               Complete your purchase to access this resource
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
               <img 
@@ -537,7 +629,7 @@ const ResourceDetail = () => {
               />
               <div className="flex-1">
                 <h4 className="font-medium text-sm">{resource.title || "Untitled Resource"}</h4>
-                <p className="text-xs text-muted-foreground">by {resource.createdBy?.name || "Unknown Author"}</p>
+                <p className="text-xs text-muted-foreground">by {resource.authorName || "Unknown Author"}</p>
               </div>
               <div className="text-lg font-bold text-primary">
                 {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
@@ -550,10 +642,16 @@ const ResourceDetail = () => {
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setShowPurchaseModal(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowPurchaseModal(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleConfirmPurchase} className="w-full sm:w-auto">
+            <Button
+              onClick={handleConfirmPurchase}
+              className="w-full sm:w-auto"
+            >
               Continue to Payment
             </Button>
           </DialogFooter>

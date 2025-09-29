@@ -226,6 +226,7 @@ export default function ResourceManagement() {
     }
   };
 
+
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":

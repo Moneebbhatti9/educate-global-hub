@@ -685,6 +685,11 @@ const UploadResource = () => {
       return;
     }
 
+    if (resourceFiles.length === 0) {
+      showError("Resource files required", "Please upload at least one resource file");
+      return;
+    }
+
     setIsSubmitting(true);
     setUploadProgress(0);
 
@@ -1214,7 +1219,21 @@ const UploadResource = () => {
                 {/* Basic Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Basic Information</CardTitle>
+                    <CardTitle>Describe your resource</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      This is your opportunity to clearly explain what your
+                      resource is all about! It's worth remembering that you are
+                      using the space to communicate to two different audiences.
+                      Firstly, think about what fellow teachers would like to
+                      know, such as exactly what the resource contains and how
+                      it could be used in the classroom. Secondly, the words you
+                      include on this page are also talking to internal and
+                      external search engines. External search engines, like
+                      Google, show the first 155 characters of the resource
+                      description, so make sure you take advantage of these
+                      characters by using lots of relevant keywords as part of
+                      an enticing pitch.
+                    </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -1222,15 +1241,16 @@ const UploadResource = () => {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title *</FormLabel>
+                          <FormLabel>Title your resource *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Clear, searchable title. Include key stage & topic."
+                              placeholder="Title your resource"
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            {field.value?.length || 0}/140 characters
+                            Character count: {field.value?.length || 0} - Aim
+                            for 35-45 characters for your title.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -1258,6 +1278,42 @@ const UploadResource = () => {
                       )}
                     />
 
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Resource Type *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a resource type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {RESOURCE_TYPES.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Age range and curriculum */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Age range and curriculum</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -1271,13 +1327,46 @@ const UploadResource = () => {
                              >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select resource type" />
+                                  <SelectValue placeholder="Choose age range..." />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {RESOURCE_TYPES.map((type) => (
-                                  <SelectItem key={type} value={type}>
-                                    {type}
+                                {AGE_GROUPS.map((age) => (
+                                  <SelectItem key={age} value={age}>
+                                    {age}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="curriculum"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Curriculum *</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Please select..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {CURRICULA.map((curriculum) => (
+                                  <SelectItem
+                                    key={curriculum}
+                                    value={curriculum}
+                                  >
+                                    {curriculum}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1404,6 +1493,37 @@ const UploadResource = () => {
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Subject *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose subject..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {SUBJECTS.map((subject) => (
+                                <SelectItem
+                                  key={subject}
+                                  value={subject}
+                                >
+                                  {subject}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 

@@ -396,9 +396,11 @@ const Resources = () => {
 
                 <TabsContent value="all" className="space-y-6 mt-6">
                   <div className="flex justify-between items-center">
-                    <p className="text-sm text-muted-foreground">
-                      Showing {filteredResources.length} resources
-                    </p>
+                      <p className="text-sm text-muted-foreground">
+                        {isLoading
+                          ? "Loading..."
+                          : `Showing ${resources.length} of ${totalResources} resources`}
+                      </p>
                     <Select defaultValue="popular">
                       <SelectTrigger className="w-40">
                         <SelectValue />
