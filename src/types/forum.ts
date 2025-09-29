@@ -30,6 +30,7 @@ export interface Discussion {
   isPinned: boolean;
   isLocked: boolean;
   isActive: boolean;
+  reports: string[]; // Array of report IDs
   createdAt: string;
   updatedAt: string;
   replyCount?: number;

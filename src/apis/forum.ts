@@ -288,4 +288,95 @@ export const forumAPI = {
 
     return response.data;
   },
+
+  // Admin Forum Management endpoints
+  getAdminForumStats: async (): Promise<{
+    totalDiscussions: number;
+    active: number;
+    reported: number;
+    pinned: number;
+    totalReplies: number;
+  }> => {
+    const response = await apiHelpers.get<
+      ApiResponse<{
+        totalDiscussions: number;
+        active: number;
+        reported: number;
+        pinned: number;
+        totalReplies: number;
+      }>
+    >("/adminForum/stats");
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Failed to fetch forum statistics");
+    }
+
+    return response.data;
+  },
+
+  getAdminForumList: async (params: {
+    status?: string;
+    category?: string;
+    sortBy?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: Discussion[];
+    total: number;
+    page: number;
+    limit: number;
+  }> => {
+    const queryString = new URLSearchParams();
+
+    if (params.status) queryString.append("status", params.status);
+    if (params.category) queryString.append("category", params.category);
+    if (params.sortBy) queryString.append("sortBy", params.sortBy);
+    if (params.page) queryString.append("page", params.page.toString());
+    if (params.limit) queryString.append("limit", params.limit.toString());
+
+    const response = await apiHelpers.get<
+      ApiResponse<{
+        data: Discussion[];
+        total: number;
+        page: number;
+        limit: number;
+      }>
+    >(`/adminForum/list?${queryString.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Failed to fetch admin discussions");
+    }
+
+    return response.data;
+  },
+
+  togglePinDiscussion: async (id: string): Promise<void> => {
+    const response = await apiHelpers.patch<ApiResponse<void>>(
+      `/adminForum/${id}/pin`
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to toggle pin status");
+    }
+  },
+
+  toggleLockDiscussion: async (id: string): Promise<void> => {
+    const response = await apiHelpers.patch<ApiResponse<void>>(
+      `/adminForum/${id}/lock`
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to toggle lock status");
+    }
+  },
+
+  deleteDiscussion: async (id: string): Promise<void> => {
+    const response = await apiHelpers.delete<ApiResponse<void>>(
+      `/adminForum/${id}`
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to delete discussion");
+    }
+  },
 };
