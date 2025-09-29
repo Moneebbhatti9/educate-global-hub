@@ -80,6 +80,19 @@ export default function AdminResourceManagement() {
     totalSales: 0,
   });
 
+  // Confirmation modals state
+  const [resourceToApprove, setResourceToApprove] = useState<AdminResource | null>(null);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+
+  const [resourceToReject, setResourceToReject] = useState<AdminResource | null>(null);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const [resourceToDelete, setResourceToDelete] = useState<AdminResource | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Load resources from API
   const loadResources = async () => {
     setLoading(true);
@@ -182,6 +195,7 @@ export default function AdminResourceManagement() {
   // Admin actions
   const handleApproveResource = async (resourceId: string) => {
     try {
+      setIsApproving(true);
       const response = await resourcesAPI.updateResourceStatus(resourceId, {
         status: "approved"
       });
@@ -194,11 +208,26 @@ export default function AdminResourceManagement() {
       }
     } catch (error) {
       handleError(error, "Failed to approve resource");
+    } finally {
+      setIsApproving(false);
+      setIsApproveDialogOpen(false);
+      setResourceToApprove(null);
     }
+  };
+
+  const confirmApproveResource = (resource: AdminResource) => {
+    setResourceToApprove(resource);
+    setIsApproveDialogOpen(true);
+  };
+
+  const cancelApprove = () => {
+    setIsApproveDialogOpen(false);
+    setResourceToApprove(null);
   };
 
   const handleRejectResource = async (resourceId: string) => {
     try {
+      setIsRejecting(true);
       const response = await resourcesAPI.updateResourceStatus(resourceId, {
         status: "rejected"
       });
@@ -211,11 +240,26 @@ export default function AdminResourceManagement() {
       }
     } catch (error) {
       handleError(error, "Failed to reject resource");
+    } finally {
+      setIsRejecting(false);
+      setIsRejectDialogOpen(false);
+      setResourceToReject(null);
     }
+  };
+
+  const confirmRejectResource = (resource: AdminResource) => {
+    setResourceToReject(resource);
+    setIsRejectDialogOpen(true);
+  };
+
+  const cancelReject = () => {
+    setIsRejectDialogOpen(false);
+    setResourceToReject(null);
   };
 
   const handleDeleteResource = async (resourceId: string) => {
     try {
+      setIsDeleting(true);
       const response = await resourcesAPI.deleteResource(resourceId);
       
       if (response.success) {
@@ -226,7 +270,21 @@ export default function AdminResourceManagement() {
       }
     } catch (error) {
       handleError(error, "Failed to delete resource");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setResourceToDelete(null);
     }
+  };
+
+  const confirmDeleteResource = (resource: AdminResource) => {
+    setResourceToDelete(resource);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setResourceToDelete(null);
   };
 
 
@@ -485,7 +543,7 @@ export default function AdminResourceManagement() {
                               {resource.status === "pending" && (
                                 <DropdownMenuItem 
                                   className="text-green-600"
-                                  onClick={() => handleApproveResource(resource.id)}
+                                  onClick={() => confirmApproveResource(resource)}
                                 >
                                   <Check className="mr-2 h-4 w-4" />
                                   Approve
@@ -494,7 +552,7 @@ export default function AdminResourceManagement() {
                               {resource.status === "pending" && (
                                 <DropdownMenuItem 
                                   className="text-red-600"
-                                  onClick={() => handleRejectResource(resource.id)}
+                                  onClick={() => confirmRejectResource(resource)}
                                 >
                                   <X className="mr-2 h-4 w-4" />
                                   Reject
@@ -502,7 +560,7 @@ export default function AdminResourceManagement() {
                               )}
                               <DropdownMenuItem 
                                 className="text-destructive"
-                                onClick={() => handleDeleteResource(resource.id)}
+                                onClick={() => confirmDeleteResource(resource)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
@@ -548,6 +606,102 @@ export default function AdminResourceManagement() {
             )}
           </CardContent>
         </Card>
+
+        {/* Approve Confirmation Dialog */}
+        <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Approve Resource</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to approve "{resourceToApprove?.title}"? 
+                Once approved, this resource will be published and available for purchase by users.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelApprove} disabled={isApproving}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => resourceToApprove && handleApproveResource(resourceToApprove.id)}
+                disabled={isApproving}
+                className="bg-green-600 text-white hover:bg-green-700"
+              >
+                {isApproving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Approving...
+                  </>
+                ) : (
+                  "Approve Resource"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reject Confirmation Dialog */}
+        <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reject Resource</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to reject "{resourceToReject?.title}"? 
+                Once rejected, this resource will not be published and the author will be notified of the rejection.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelReject} disabled={isRejecting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => resourceToReject && handleRejectResource(resourceToReject.id)}
+                disabled={isRejecting}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                {isRejecting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Rejecting...
+                  </>
+                ) : (
+                  "Reject Resource"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Resource</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{resourceToDelete?.title}"? This action cannot be undone.
+                The resource will be permanently removed from the platform and will no longer be available for purchase.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDelete} disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => resourceToDelete && handleDeleteResource(resourceToDelete.id)}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Resource"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

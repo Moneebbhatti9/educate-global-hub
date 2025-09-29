@@ -77,6 +77,11 @@ export default function ResourceManagement() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Submit confirmation state
+  const [resourceToSubmit, setResourceToSubmit] = useState<TeacherResource | null>(null);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Stats state
   const [stats, setStats] = useState({
     totalResources: 0,
@@ -211,6 +216,7 @@ export default function ResourceManagement() {
 
   const handleSubmitResource = async (resourceId: string) => {
     try {
+      setIsSubmitting(true);
       const response = await resourcesAPI.updateResourceStatus(resourceId, {
         status: "pending"
       });
@@ -223,7 +229,21 @@ export default function ResourceManagement() {
       }
     } catch (error) {
       handleError(error, "Failed to submit resource");
+    } finally {
+      setIsSubmitting(false);
+      setIsSubmitDialogOpen(false);
+      setResourceToSubmit(null);
     }
+  };
+
+  const confirmSubmitResource = (resource: TeacherResource) => {
+    setResourceToSubmit(resource);
+    setIsSubmitDialogOpen(true);
+  };
+
+  const cancelSubmit = () => {
+    setIsSubmitDialogOpen(false);
+    setResourceToSubmit(null);
   };
 
 
@@ -454,7 +474,7 @@ export default function ResourceManagement() {
                               {resource.status === "draft" && (
                                 <DropdownMenuItem 
                                   className="text-green-600"
-                                  onClick={() => handleSubmitResource(resource._id)}
+                                  onClick={() => confirmSubmitResource(resource)}
                                 >
                                   <Check className="mr-2 h-4 w-4" />
                                   Submit for Review
@@ -532,6 +552,38 @@ export default function ResourceManagement() {
                   </>
                 ) : (
                   "Delete Resource"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Submit Confirmation Dialog */}
+        <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Submit Resource for Review</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to submit "{resourceToSubmit?.title}" for review? 
+                Once submitted, your resource will be reviewed by our team and you won't be able to edit it until it's approved or rejected.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelSubmit} disabled={isSubmitting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => resourceToSubmit && handleSubmitResource(resourceToSubmit._id)}
+                disabled={isSubmitting}
+                className="bg-green-600 text-white hover:bg-green-700"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit for Review"
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
