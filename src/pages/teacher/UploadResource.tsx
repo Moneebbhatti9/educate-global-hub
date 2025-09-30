@@ -507,7 +507,6 @@ const UploadResource = () => {
   };
 
   const watchIsFree = form.watch("isFree");
-  const watchPrice = form.watch("price");
 
   // Calculate expected earnings when price changes
   const calculateEarnings = (price: number) => {
@@ -1669,36 +1668,11 @@ const UploadResource = () => {
                                     }}
                                   />
                                 </FormControl>
-                                {watchPrice && watchPrice < 3 && (
-                                  <p className="text-sm text-amber-600">
-                                    ⚠️ Items under £3 incur a transaction fee of
-                                    £0.20
-                                  </p>
-                                )}
+
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                        </div>
-
-                        {/* Royalty Information */}
-                        <div className="bg-muted/50 p-3 rounded-lg space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Current Royalty Tier:</span>
-                            <Badge variant="secondary">
-                              {currentRoyaltyTier}
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Expected Net Earnings:</span>
-                            <span className="font-medium text-primary">
-                              £{expectedEarnings.toFixed(2)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Your share after VAT, transaction fees, and platform
-                            commission
-                          </p>
                         </div>
                       </div>
                     )}

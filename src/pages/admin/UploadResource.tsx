@@ -44,34 +44,43 @@ import { Progress } from "@/components/ui/progress";
 import { customToast } from "@/components/ui/sonner";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { resourcesAPI } from "@/apis/resources";
-import type { CreateResourceRequest, UpdateResourceRequest, Resource } from "@/types/resource";
+import type {
+  CreateResourceRequest,
+  UpdateResourceRequest,
+  Resource,
+} from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
 
 // Form validation schema
-const resourceSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(140, "Title must be under 140 characters"),
-  description: z.string().min(1, "Description is required"),
-  type: z.string().min(1, "Resource type is required"),
-  publishing: z.string().optional(),
-  isFree: z.enum(["free", "paid"]),
-  price: z.union([z.number(), z.literal("")]).optional(),
-  currency: z.string().optional(),
-  ageRange: z.string().min(1, "Age range is required"),
-  curriculum: z.string().min(1, "Curriculum is required"),
-  curriculumType: z.string().min(1, "Curriculum type is required"),
-  subject: z.string().min(1, "Subject is required"),
-}).refine((data) => {
-  if (data.isFree === "paid") {
-    return data.price && typeof data.price === 'number' && data.price > 0;
-  }
-  return true;
-}, {
-  message: "Price is required for paid resources",
-  path: ["price"],
-});
+const resourceSchema = z
+  .object({
+    title: z
+      .string()
+      .min(1, "Title is required")
+      .max(140, "Title must be under 140 characters"),
+    description: z.string().min(1, "Description is required"),
+    type: z.string().min(1, "Resource type is required"),
+    publishing: z.string().optional(),
+    isFree: z.enum(["free", "paid"]),
+    price: z.union([z.number(), z.literal("")]).optional(),
+    currency: z.string().optional(),
+    ageRange: z.string().min(1, "Age range is required"),
+    curriculum: z.string().min(1, "Curriculum is required"),
+    curriculumType: z.string().min(1, "Curriculum type is required"),
+    subject: z.string().min(1, "Subject is required"),
+  })
+  .refine(
+    (data) => {
+      if (data.isFree === "paid") {
+        return data.price && typeof data.price === "number" && data.price > 0;
+      }
+      return true;
+    },
+    {
+      message: "Price is required for paid resources",
+      path: ["price"],
+    }
+  );
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
 
@@ -247,7 +256,7 @@ const AdminUploadResource = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { handleError, showSuccess, showError } = useErrorHandler();
-  
+
   const isEditMode = Boolean(id);
   const [resourceData, setResourceData] = useState<Resource | null>(null);
   const [isLoadingResource, setIsLoadingResource] = useState(false);
@@ -284,7 +293,7 @@ const AdminUploadResource = () => {
 
   // Load resource data for edit mode
   useEffect(() => {
-    if (isEditMode && id && typeof id === 'string' && id.trim().length > 0) {
+    if (isEditMode && id && typeof id === "string" && id.trim().length > 0) {
       loadResourceData(id.trim());
     } else if (isEditMode && id) {
       console.error("Invalid resource ID for edit mode:", id);
@@ -294,7 +303,11 @@ const AdminUploadResource = () => {
   }, [isEditMode, id]);
 
   const loadResourceData = async (resourceId: string) => {
-    if (!resourceId || typeof resourceId !== 'string' || resourceId.trim().length === 0) {
+    if (
+      !resourceId ||
+      typeof resourceId !== "string" ||
+      resourceId.trim().length === 0
+    ) {
       console.error("Invalid resource ID:", resourceId);
       showError("Invalid resource ID", "Resource ID is required");
       navigate("/admin/resource-management");
@@ -304,24 +317,27 @@ const AdminUploadResource = () => {
     setIsLoadingResource(true);
     try {
       const response = await resourcesAPI.getResourceById(resourceId.trim());
-      
+
       // Safety checks for response
       if (!response) {
-        showError("Failed to load resource", "No response received from server");
+        showError(
+          "Failed to load resource",
+          "No response received from server"
+        );
         navigate("/admin/resource-management");
         return;
       }
 
       if (response.success && response.data) {
         // Safety checks for resource data
-        if (!response.data || typeof response.data !== 'object') {
+        if (!response.data || typeof response.data !== "object") {
           console.warn("Invalid resource data structure:", response.data);
           showError("Invalid resource data", "Resource data is malformed");
           navigate("/admin/resource-management");
           return;
         }
 
-        if (!response.data.id || typeof response.data.id !== 'string') {
+        if (!response.data.id || typeof response.data.id !== "string") {
           console.warn("Resource missing valid ID:", response.data);
           showError("Invalid resource", "Resource ID is missing");
           navigate("/admin/resource-management");
@@ -330,22 +346,23 @@ const AdminUploadResource = () => {
 
         const resource = response.data;
         setResourceData(resource);
-        
+
         // Populate form with existing data with safety checks
         form.reset({
           title: resource.title || "",
-          description: resource.fullDescription || resource.shortDescription || "",
+          description:
+            resource.fullDescription || resource.shortDescription || "",
           type: resource.resourceType || "",
           publishing: resource.visibility || "public",
           isFree: resource.isFree ? "free" : "paid",
-          price: typeof resource.price === 'number' ? resource.price : 0,
+          price: typeof resource.price === "number" ? resource.price : 0,
           currency: resource.currency || "GBP",
           ageRange: resource.ageGroups?.[0] || "",
           curriculum: resource.curriculum || "",
           curriculumType: resource.curriculumType || "",
           subject: resource.subjects?.[0] || "",
         });
-        
+
         // Set existing files (if any)
         // Note: In a real implementation, you'd need to convert URLs back to File objects
         // For now, we'll just show the existing data
@@ -364,7 +381,6 @@ const AdminUploadResource = () => {
   };
 
   const watchIsFree = form.watch("isFree");
-  const watchPrice = form.watch("price");
 
   // Calculate expected earnings when price changes
   const calculateEarnings = (price: number) => {
@@ -402,7 +418,7 @@ const AdminUploadResource = () => {
     }
 
     // Check file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       showError("Invalid file type", "Banner must be an image file");
       return;
     }
@@ -419,10 +435,7 @@ const AdminUploadResource = () => {
 
     const maxFiles = 5;
     if (previewImages.length + files.length > maxFiles) {
-      showError(
-        "Too many files",
-        `Maximum ${maxFiles} preview images allowed`
-      );
+      showError("Too many files", `Maximum ${maxFiles} preview images allowed`);
       return;
     }
 
@@ -433,7 +446,7 @@ const AdminUploadResource = () => {
         return false;
       }
 
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         showError("Invalid file type", `${file.name} must be an image file`);
         return false;
       }
@@ -460,10 +473,7 @@ const AdminUploadResource = () => {
 
     const maxFiles = 3;
     if (resourceFiles.length + files.length > maxFiles) {
-      showError(
-        "Too many files",
-        `Maximum ${maxFiles} resource files allowed`
-      );
+      showError("Too many files", `Maximum ${maxFiles} resource files allowed`);
       return;
     }
 
@@ -499,7 +509,7 @@ const AdminUploadResource = () => {
   // Form submission
   const onSubmit = async (data: ResourceFormData) => {
     // Safety checks for form data
-    if (!data || typeof data !== 'object') {
+    if (!data || typeof data !== "object") {
       console.error("Invalid form data:", data);
       showError("Invalid form data", "Form data is invalid");
       return;
@@ -509,7 +519,10 @@ const AdminUploadResource = () => {
 
     // File validation checks (not handled by form schema)
     if (!bannerImage) {
-      showError("Banner image required", "Please upload a banner image for your resource");
+      showError(
+        "Banner image required",
+        "Please upload a banner image for your resource"
+      );
       return;
     }
 
@@ -523,8 +536,14 @@ const AdminUploadResource = () => {
       return;
     }
 
-    if (isPaid && (!data.price || typeof data.price !== 'number' || data.price <= 0)) {
-      showError("Price required", "Please set a valid price for your paid resource");
+    if (
+      isPaid &&
+      (!data.price || typeof data.price !== "number" || data.price <= 0)
+    ) {
+      showError(
+        "Price required",
+        "Please set a valid price for your paid resource"
+      );
       return;
     }
 
@@ -539,7 +558,10 @@ const AdminUploadResource = () => {
         type: data.type,
         publishing: data.publishing || "public",
         isFree: data.isFree === "free",
-        price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
+        price:
+          isPaid && typeof data.price === "number" && data.price > 0
+            ? data.price
+            : undefined,
         currency: data.currency || "GBP",
         saveAsDraft: false, // Set to true for draft saving
         ageRange: data.ageRange,
@@ -564,7 +586,7 @@ const AdminUploadResource = () => {
 
       // Call the appropriate API based on mode
       let response;
-      if (isEditMode && id && typeof id === 'string' && id.trim().length > 0) {
+      if (isEditMode && id && typeof id === "string" && id.trim().length > 0) {
         // Update existing resource
         const updateData: UpdateResourceRequest = {
           title: data.title.trim(),
@@ -572,7 +594,10 @@ const AdminUploadResource = () => {
           type: data.type,
           publishing: data.publishing || "public",
           isFree: data.isFree === "free",
-          price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
+          price:
+            isPaid && typeof data.price === "number" && data.price > 0
+              ? data.price
+              : undefined,
           currency: data.currency || "GBP",
           ageRange: data.ageRange,
           curriculum: data.curriculum,
@@ -599,12 +624,14 @@ const AdminUploadResource = () => {
 
       if (response.success) {
         showSuccess(
-          isEditMode ? "Resource updated successfully!" : "Resource uploaded successfully!",
-          isEditMode 
-            ? "Your resource has been updated successfully." 
+          isEditMode
+            ? "Resource updated successfully!"
+            : "Resource uploaded successfully!",
+          isEditMode
+            ? "Your resource has been updated successfully."
             : "Your resource is now live and available for purchase."
         );
-        
+
         // Clear the form instead of navigating away
         form.reset({
           title: "",
@@ -619,18 +646,19 @@ const AdminUploadResource = () => {
           curriculumType: "",
           subject: "",
         });
-        
+
         // Clear file uploads
         setBannerImage(null);
         setPreviewImages([]);
         setResourceFiles([]);
         setUploadProgress(0);
       } else {
-        const errorMessage = response?.message || (isEditMode ? "Failed to update resource" : "Failed to upload resource");
-        showError(
-          isEditMode ? "Update failed" : "Upload failed", 
-          errorMessage
-        );
+        const errorMessage =
+          response?.message ||
+          (isEditMode
+            ? "Failed to update resource"
+            : "Failed to upload resource");
+        showError(isEditMode ? "Update failed" : "Upload failed", errorMessage);
       }
     } catch (error) {
       console.error("Error uploading resource:", error);
@@ -644,9 +672,9 @@ const AdminUploadResource = () => {
   const saveDraft = async () => {
     try {
       const formData = form.getValues();
-      
+
       // Safety checks for form data
-      if (!formData || typeof formData !== 'object') {
+      if (!formData || typeof formData !== "object") {
         console.error("Invalid form data for draft:", formData);
         showError("Invalid form data", "Form data is invalid");
         return;
@@ -655,14 +683,21 @@ const AdminUploadResource = () => {
       const isPaid = formData.isFree === "paid";
 
       // Basic validation for draft
-      if (!formData.title || typeof formData.title !== 'string' || formData.title.trim().length === 0) {
+      if (
+        !formData.title ||
+        typeof formData.title !== "string" ||
+        formData.title.trim().length === 0
+      ) {
         showError("Title required", "Please enter a title to save as draft");
         return;
       }
 
       // For draft, we need at least a banner image
       if (!bannerImage) {
-        showError("Banner image required", "Please upload a banner image to save as draft");
+        showError(
+          "Banner image required",
+          "Please upload a banner image to save as draft"
+        );
         return;
       }
 
@@ -672,20 +707,47 @@ const AdminUploadResource = () => {
       // Prepare draft data with safety checks
       const draftData: CreateResourceRequest = {
         title: formData.title.trim(),
-        description: formData.description && typeof formData.description === 'string' ? formData.description.trim() : "",
-        type: formData.type && typeof formData.type === 'string' ? formData.type : "",
+        description:
+          formData.description && typeof formData.description === "string"
+            ? formData.description.trim()
+            : "",
+        type:
+          formData.type && typeof formData.type === "string"
+            ? formData.type
+            : "",
         publishing: formData.publishing || "public",
         isFree: formData.isFree === "free",
-        price: isPaid && typeof formData.price === 'number' && formData.price > 0 ? formData.price : undefined,
+        price:
+          isPaid && typeof formData.price === "number" && formData.price > 0
+            ? formData.price
+            : undefined,
         currency: formData.currency || "GBP",
         saveAsDraft: true,
-        ageRange: formData.ageRange && typeof formData.ageRange === 'string' ? formData.ageRange : "",
-        curriculum: formData.curriculum && typeof formData.curriculum === 'string' ? formData.curriculum : "",
-        curriculumType: formData.curriculumType && typeof formData.curriculumType === 'string' ? formData.curriculumType : "",
-        subject: formData.subject && typeof formData.subject === 'string' ? formData.subject : "",
+        ageRange:
+          formData.ageRange && typeof formData.ageRange === "string"
+            ? formData.ageRange
+            : "",
+        curriculum:
+          formData.curriculum && typeof formData.curriculum === "string"
+            ? formData.curriculum
+            : "",
+        curriculumType:
+          formData.curriculumType && typeof formData.curriculumType === "string"
+            ? formData.curriculumType
+            : "",
+        subject:
+          formData.subject && typeof formData.subject === "string"
+            ? formData.subject
+            : "",
         banner: bannerImage,
-        previews: previewImages.length > 0 ? previewImages : [new File([], "placeholder")],
-        files: resourceFiles.length > 0 ? resourceFiles : [new File([], "placeholder")],
+        previews:
+          previewImages.length > 0
+            ? previewImages
+            : [new File([], "placeholder")],
+        files:
+          resourceFiles.length > 0
+            ? resourceFiles
+            : [new File([], "placeholder")],
       };
 
       // Simulate upload progress
@@ -712,8 +774,11 @@ const AdminUploadResource = () => {
       }
 
       if (response.success) {
-        showSuccess("Draft saved successfully!", "Your resource has been saved as a draft and can be edited later.");
-        
+        showSuccess(
+          "Draft saved successfully!",
+          "Your resource has been saved as a draft and can be edited later."
+        );
+
         // Clear the form after successful draft save
         form.reset({
           title: "",
@@ -728,7 +793,7 @@ const AdminUploadResource = () => {
           curriculumType: "",
           subject: "",
         });
-        
+
         // Clear file uploads
         setBannerImage(null);
         setPreviewImages([]);
@@ -756,10 +821,9 @@ const AdminUploadResource = () => {
             {isEditMode ? "Edit Resource" : "Create a Resource"}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {isEditMode 
+            {isEditMode
               ? "Update teaching resource details and files"
-              : "Create teaching materials for educators worldwide"
-            }
+              : "Create teaching materials for educators worldwide"}
           </p>
         </div>
 
@@ -793,9 +857,14 @@ const AdminUploadResource = () => {
         )}
 
         <Form {...form}>
-           <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-             showError("Form validation failed", "Please check all required fields");
-           })}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              showError(
+                "Form validation failed",
+                "Please check all required fields"
+              );
+            })}
+          >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column - File Uploads */}
               <div className="space-y-6">
@@ -987,7 +1056,8 @@ const AdminUploadResource = () => {
                       </div>
 
                       <p className="text-xs text-muted-foreground">
-                        PDF, DOCX, PPTX, ZIP, images. Total max 500MB (1-3 files)
+                        PDF, DOCX, PPTX, ZIP, images. Total max 500MB (1-3
+                        files)
                       </p>
                     </div>
                   </CardContent>
@@ -1036,7 +1106,8 @@ const AdminUploadResource = () => {
                             />
                           </FormControl>
                           <FormDescription>
-                            Include learning outcomes, duration, equipment needed, and detailed instructions.
+                            Include learning outcomes, duration, equipment
+                            needed, and detailed instructions.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -1050,10 +1121,10 @@ const AdminUploadResource = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Resource Type *</FormLabel>
-                             <Select
-                               onValueChange={field.onChange}
-                               value={field.value}
-                             >
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select resource type" />
@@ -1067,11 +1138,10 @@ const AdminUploadResource = () => {
                                 ))}
                               </SelectContent>
                             </Select>
-                             <FormMessage />
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1150,7 +1220,10 @@ const AdminUploadResource = () => {
                               </FormControl>
                               <SelectContent>
                                 {CURRICULA.map((curriculum) => (
-                                  <SelectItem key={curriculum} value={curriculum}>
+                                  <SelectItem
+                                    key={curriculum}
+                                    value={curriculum}
+                                  >
                                     {curriculum}
                                   </SelectItem>
                                 ))}
@@ -1274,50 +1347,32 @@ const AdminUploadResource = () => {
                                     step="0.01"
                                     min="0"
                                     placeholder="0.00"
-                                    value={field.value === "" ? "" : field.value}
+                                    value={
+                                      field.value === "" ? "" : field.value
+                                    }
                                     onChange={(e) => {
-                                      const value = e.target.value === "" ? "" : parseFloat(e.target.value) || 0;
+                                      const value =
+                                        e.target.value === ""
+                                          ? ""
+                                          : parseFloat(e.target.value) || 0;
                                       field.onChange(value);
-                                      if (typeof value === 'number' && value > 0) {
+                                      if (
+                                        typeof value === "number" &&
+                                        value > 0
+                                      ) {
                                         calculateEarnings(value);
                                       }
                                     }}
                                   />
                                 </FormControl>
-                                {watchPrice && watchPrice < 3 && (
-                                  <p className="text-sm text-amber-600">
-                                    ⚠️ Items under £3 incur a transaction fee of
-                                    £0.20
-                                  </p>
-                                )}
+
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
                         </div>
-
-                        {/* Royalty Information */}
-                        <div className="bg-muted/50 p-3 rounded-lg space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Current Royalty Tier:</span>
-                            <Badge variant="secondary">
-                              {currentRoyaltyTier}
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Expected Net Earnings:</span>
-                            <span className="font-medium text-primary">
-                              £{expectedEarnings.toFixed(2)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Your share after VAT, transaction fees, and platform
-                            commission
-                          </p>
-                        </div>
                       </div>
                     )}
-
                   </CardContent>
                 </Card>
 
@@ -1357,7 +1412,6 @@ const AdminUploadResource = () => {
                         </FormItem>
                       )}
                     />
-
                   </CardContent>
                 </Card>
 
