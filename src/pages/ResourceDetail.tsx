@@ -132,77 +132,6 @@ const ResourceDetail = () => {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
 
-  // Load resource from API
-  useEffect(() => {
-    const loadResource = async () => {
-      if (!id) return;
-
-      try {
-        setIsLoading(true);
-        // For now, we'll use search API to get resource details
-        // In a real app, there would be a specific get resource by ID endpoint
-        const response = await resourcesAPI.getAllResources({
-          q: id,
-          limit: 1,
-        });
-
-        if (response.success && response.data && response.data.resources.length > 0) {
-          // Convert search result to Resource format
-          const searchResult = response.data.resources[0];
-          const resourceData: Resource = {
-            id: searchResult.id,
-            title: searchResult.title,
-            shortDescription: searchResult.title,
-            fullDescription: searchResult.title,
-            resourceType: "Resource",
-            subjects: ["Unknown"],
-            ageGroups: ["Unknown"],
-            curriculum: "Unknown",
-            curriculumType: "Foundation Stage",
-            language: "English",
-            pages: 0,
-            lessonTime: 0,
-            isFree: searchResult.price === "FREE" || searchResult.price === "0",
-            price: searchResult.price === "FREE" || searchResult.price === "0" ? 0 : parseFloat(searchResult.price.replace(/[^\d.]/g, '')),
-            currency: "USD",
-            licenseType: "Single Teacher License",
-            tags: "",
-            categories: [],
-            accessibility: "Standard",
-            visibility: "public",
-            versionNotes: "",
-            bannerImage: searchResult.thumbnail,
-            previewImages: [searchResult.thumbnail],
-            resourceFiles: [],
-            status: "published",
-            uploadDate: searchResult.uploadDate,
-            lastModified: searchResult.uploadDate,
-            salesCount: 0,
-            downloadCount: 0,
-            rating: 4.5,
-            reviewCount: 0,
-            authorId: "unknown",
-            authorName: searchResult.author,
-          };
-          setResource(resourceData);
-        } else {
-          throw new Error("Resource not found");
-        }
-      } catch (error: unknown) {
-        console.error("Error loading resource:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Failed to load resource. Please try again.";
-
-        showError("Failed to load resource", errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadResource();
-  }, [id]);
 
   // Load resource data when component mounts
   useEffect(() => {
@@ -245,7 +174,61 @@ const ResourceDetail = () => {
           return;
         }
 
-        setResource(response.data);
+        // Map the API response to Resource interface
+        const apiData = response.data as {
+          id: string;
+          title?: string;
+          description?: string;
+          type?: string;
+          subject?: string;
+          ageRange?: string;
+          curriculum?: string;
+          curriculumType?: string;
+          price?: string;
+          status?: string;
+          thumbnail?: string;
+          previews?: string[];
+          file?: string;
+          author?: string;
+          createdAt?: string;
+        };
+        const mappedResource: Resource = {
+          id: apiData.id,
+          title: apiData.title || "Untitled Resource",
+          shortDescription: apiData.description || "",
+          fullDescription: apiData.description || "",
+          resourceType: apiData.type || "Resource",
+          subjects: apiData.subject ? [apiData.subject] : [],
+          ageGroups: apiData.ageRange ? [apiData.ageRange] : [],
+          curriculum: apiData.curriculum || "",
+          curriculumType: apiData.curriculumType || "",
+          language: "English",
+          pages: 0,
+          lessonTime: 0,
+          isFree: apiData.price?.toLowerCase().includes('free') || !apiData.price,
+          price: apiData.price ? parseFloat(apiData.price.replace(/[^0-9.]/g, '')) || 0 : 0,
+          currency: apiData.price ? apiData.price.split(' ')[0] : "USD",
+          licenseType: "Single Teacher License",
+          tags: "",
+          categories: [],
+          accessibility: "Standard",
+          visibility: apiData.status === "approved" ? "public" : "private",
+          versionNotes: "",
+          bannerImage: apiData.thumbnail || "",
+          previewImages: apiData.previews || [],
+          resourceFiles: apiData.file ? [apiData.file] : [],
+          status: apiData.status === "approved" ? "published" : "draft",
+          uploadDate: apiData.createdAt || new Date().toISOString(),
+          lastModified: apiData.createdAt || new Date().toISOString(),
+          salesCount: 0,
+          downloadCount: 0,
+          rating: 4.5,
+          reviewCount: 0,
+          authorId: "",
+          authorName: apiData.author || "Unknown Author",
+        };
+
+        setResource(mappedResource);
       } else {
         const errorMessage = response?.message || "Unable to fetch resource details";
         showError("Failed to load resource", errorMessage);

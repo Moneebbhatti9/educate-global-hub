@@ -74,16 +74,16 @@ interface ViewResourceModalProps {
 
 const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: ViewResourceModalProps) => {
   const { handleError, showSuccess, showError } = useErrorHandler();
-  
+
   // State for API operations
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // State for detailed resource data
   const [detailedResource, setDetailedResource] = useState<AdminResourceDetail | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  
+
   // Confirmation dialog states
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
@@ -98,11 +98,11 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
 
   const fetchDetailedResource = async () => {
     if (!resource?.id) return;
-    
+
     setIsLoadingDetails(true);
     try {
       const response = await resourcesAPI.getResourceByIdAdmin(resource.id);
-      
+
       if (response.success && response.data) {
         setDetailedResource(response.data as unknown as AdminResourceDetail);
       } else {
@@ -163,13 +163,13 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
   // API Handler Functions
   const handleApproveResource = async () => {
     if (!resource) return;
-    
+
     try {
       setIsApproving(true);
       const response = await resourcesAPI.updateResourceStatus(resource.id, {
         status: "approved"
       });
-      
+
       if (response.success) {
         showSuccess("Resource approved", "The resource has been approved successfully.");
         onResourceUpdated?.(); // Refresh parent component
@@ -187,13 +187,13 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
 
   const handleRejectResource = async () => {
     if (!resource) return;
-    
+
     try {
       setIsRejecting(true);
       const response = await resourcesAPI.updateResourceStatus(resource.id, {
         status: "rejected"
       });
-      
+
       if (response.success) {
         showSuccess("Resource rejected", "The resource has been rejected successfully.");
         onResourceUpdated?.(); // Refresh parent component
@@ -211,11 +211,11 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
 
   const handleDeleteResource = async () => {
     if (!resource) return;
-    
+
     try {
       setIsDeleting(true);
       const response = await resourcesAPI.deleteResource(resource.id);
-      
+
       if (response.success) {
         showSuccess("Resource deleted", "The resource has been deleted successfully.");
         onResourceUpdated?.(); // Refresh parent component
@@ -279,12 +279,6 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
                   <Eye className="w-4 h-4" />
                   <span>{resource.flags} views</span>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Resource ID:</span>
-                <code className="text-xs bg-muted px-2 py-1 rounded">
-                  {resource.id}
-                </code>
               </div>
             </div>
           </div>
@@ -418,26 +412,61 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
                   {detailedResource && (
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Resource ID:</span>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {detailedResource.id}
-                        </code>
+                        <span className="text-sm text-muted-foreground">Thumbnail(s):</span>
+                        <div className="flex flex-wrap gap-2">
+                          {Array.isArray(detailedResource.thumbnail)
+                            ? detailedResource.thumbnail.map((thumb: string, index: number) => (
+                              <img
+                                key={index}
+                                src={thumb}
+                                alt={`thumbnail-${index}`}
+                                className="h-12 w-12 object-cover rounded"
+                              />
+                            ))
+                            : (
+                              <img
+                                src={detailedResource.thumbnail}
+                                alt="thumbnail"
+                                className="h-12 w-12 object-cover rounded"
+                              />
+                            )}
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Thumbnail ID:</span>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {detailedResource.thumbnail}
-                        </code>
-                      </div>
-                      <div className="flex justify-between items-center">
+
+                      <div className="flex justify-between items-start">
                         <span className="text-sm text-muted-foreground">Preview Images:</span>
-                        <span className="font-medium">{detailedResource.previews.length} file(s)</span>
+                        <div className="flex flex-wrap gap-2">
+                          {detailedResource.previews?.map((preview: string, index: number) => (
+                            <img
+                              key={index}
+                              src={preview}
+                              alt={`preview-${index}`}
+                              className="h-20 w-auto max-w-[100px] object-contain rounded border"
+                            />
+                          ))}
+                        </div>
                       </div>
+
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Main File ID:</span>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {detailedResource.file}
-                        </code>
+                        <span className="text-sm text-muted-foreground">Main File(s):</span>
+                        <div className="flex flex-wrap gap-2">
+                          {Array.isArray(detailedResource.file)
+                            ? detailedResource.file.map((fileUrl: string, index: number) => (
+                              <img
+                                key={index}
+                                src={fileUrl}
+                                alt={`file-${index}`}
+                                className="h-20 w-auto max-w-[100px] object-contain rounded"
+                              />
+                            ))
+                            : (
+                              <img
+                                src={detailedResource.file}
+                                alt="main-file"
+                                className="h-20 w-auto max-w-[100px] object-contain rounded"
+                              />
+                            )}
+                        </div>
                       </div>
                     </>
                   )}
@@ -502,9 +531,9 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
                 <div className="flex flex-wrap gap-2">
                   {resource.status === "pending" && (
                     <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="text-green-600 border-green-600 hover:bg-green-50"
                         onClick={() => setIsApproveDialogOpen(true)}
                         disabled={isApproving}
@@ -512,9 +541,9 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
                         <CheckCircle className="w-4 h-4 mr-2" />
                         {isApproving ? "Approving..." : "Approve Resource"}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="text-red-600 border-red-600 hover:bg-red-50"
                         onClick={() => setIsRejectDialogOpen(true)}
                         disabled={isRejecting}
@@ -524,9 +553,9 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
                       </Button>
                     </>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-red-600 border-red-600 hover:bg-red-50"
                     onClick={() => setIsDeleteDialogOpen(true)}
                     disabled={isDeleting}
@@ -552,7 +581,7 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
             <AlertDialogHeader>
               <AlertDialogTitle>Approve Resource</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to approve "{resource.title}"? 
+                Are you sure you want to approve "{resource.title}"?
                 Once approved, this resource will be published and available for purchase by users.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -584,7 +613,7 @@ const ViewResourceModal = ({ isOpen, onClose, resource, onResourceUpdated }: Vie
             <AlertDialogHeader>
               <AlertDialogTitle>Reject Resource</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to reject "{resource.title}"? 
+                Are you sure you want to reject "{resource.title}"?
                 Once rejected, this resource will not be published and the author will be notified of the rejection.
               </AlertDialogDescription>
             </AlertDialogHeader>

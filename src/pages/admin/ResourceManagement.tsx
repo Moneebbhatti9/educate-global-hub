@@ -51,6 +51,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { resourcesAPI } from "@/apis/resources";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import ViewResourceModal from "@/components/Modals/view-resource-modal";
@@ -59,7 +67,7 @@ import type { AdminResource, AdminResourcesResponse, AdminResourcesQueryParams }
 export default function AdminResourceManagement() {
   const navigate = useNavigate();
   const { handleError, showSuccess, showError } = useErrorHandler();
-  
+
   // State management
   const [resources, setResources] = useState<AdminResource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,15 +90,18 @@ export default function AdminResourceManagement() {
   });
 
   // Confirmation modals state
-  const [resourceToApprove, setResourceToApprove] = useState<AdminResource | null>(null);
+  const [resourceToApprove, setResourceToApprove] =
+    useState<AdminResource | null>(null);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
 
-  const [resourceToReject, setResourceToReject] = useState<AdminResource | null>(null);
+  const [resourceToReject, setResourceToReject] =
+    useState<AdminResource | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  const [resourceToDelete, setResourceToDelete] = useState<AdminResource | null>(null);
+  const [resourceToDelete, setResourceToDelete] =
+    useState<AdminResource | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -123,17 +134,24 @@ export default function AdminResourceManagement() {
       };
 
       const response = await resourcesAPI.getAdminResources(params);
-      
+
       if (response.success && response.data) {
         setResources(response.data.resources);
         setPagination(response.data.pagination);
-        
+
         // Calculate stats for admin resources
         const totalResources = response.data.pagination.total;
-        const pendingApprovals = response.data.resources.filter(r => r.status === "pending").length;
-        const publishedResources = response.data.resources.filter(r => r.status === "approved").length;
-        const totalDownloads = response.data.resources.reduce((sum, r) => sum + r.flags, 0);
-        
+        const pendingApprovals = response.data.resources.filter(
+          (r) => r.status === "pending"
+        ).length;
+        const publishedResources = response.data.resources.filter(
+          (r) => r.status === "approved"
+        ).length;
+        const totalDownloads = response.data.resources.reduce(
+          (sum, r) => sum + r.flags,
+          0
+        );
+
         setStats({
           totalResources,
           pendingApprovals,
@@ -141,7 +159,10 @@ export default function AdminResourceManagement() {
           totalSales: totalDownloads,
         });
       } else {
-        showError("Failed to load resources", response.message || "Unknown error");
+        showError(
+          "Failed to load resources",
+          response.message || "Unknown error"
+        );
       }
     } catch (error) {
       handleError(error, "Failed to load resources");
@@ -153,7 +174,8 @@ export default function AdminResourceManagement() {
   // Load resources on component mount and when filters change
   useEffect(() => {
     loadResources();
-  }, [searchTerm, statusFilter, subjectFilter, pagination.page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, pagination.page]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -202,14 +224,20 @@ export default function AdminResourceManagement() {
     try {
       setIsApproving(true);
       const response = await resourcesAPI.updateResourceStatus(resourceId, {
-        status: "approved"
+        status: "approved",
       });
-      
+
       if (response.success) {
-        showSuccess("Resource approved", "The resource has been approved successfully.");
+        showSuccess(
+          "Resource approved",
+          "The resource has been approved successfully."
+        );
         loadResources();
       } else {
-        showError("Failed to approve resource", response.message || "Unknown error");
+        showError(
+          "Failed to approve resource",
+          response.message || "Unknown error"
+        );
       }
     } catch (error) {
       handleError(error, "Failed to approve resource");
@@ -234,14 +262,20 @@ export default function AdminResourceManagement() {
     try {
       setIsRejecting(true);
       const response = await resourcesAPI.updateResourceStatus(resourceId, {
-        status: "rejected"
+        status: "rejected",
       });
-      
+
       if (response.success) {
-        showSuccess("Resource rejected", "The resource has been rejected successfully.");
+        showSuccess(
+          "Resource rejected",
+          "The resource has been rejected successfully."
+        );
         loadResources();
       } else {
-        showError("Failed to reject resource", response.message || "Unknown error");
+        showError(
+          "Failed to reject resource",
+          response.message || "Unknown error"
+        );
       }
     } catch (error) {
       handleError(error, "Failed to reject resource");
@@ -266,12 +300,18 @@ export default function AdminResourceManagement() {
     try {
       setIsDeleting(true);
       const response = await resourcesAPI.deleteResource(resourceId);
-      
+
       if (response.success) {
-        showSuccess("Resource deleted", "The resource has been deleted successfully.");
+        showSuccess(
+          "Resource deleted",
+          "The resource has been deleted successfully."
+        );
         loadResources();
       } else {
-        showError("Failed to delete resource", response.message || "Unknown error");
+        showError(
+          "Failed to delete resource",
+          response.message || "Unknown error"
+        );
       }
     } catch (error) {
       handleError(error, "Failed to delete resource");
@@ -291,7 +331,6 @@ export default function AdminResourceManagement() {
     setIsDeleteDialogOpen(false);
     setResourceToDelete(null);
   };
-
 
   const handleBulkDelete = async () => {
     try {
@@ -335,7 +374,9 @@ export default function AdminResourceManagement() {
               onClick={loadResources}
               disabled={loading}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </div>
@@ -354,7 +395,11 @@ export default function AdminResourceManagement() {
             value={stats.pendingApprovals}
             icon={AlertTriangle}
             description="Resources awaiting review"
-            badge={stats.pendingApprovals > 0 ? { text: "Action Required", variant: "destructive" } : undefined}
+            badge={
+              stats.pendingApprovals > 0
+                ? { text: "Action Required", variant: "destructive" }
+                : undefined
+            }
           />
           <StatsCard
             title="Published Resources"
@@ -414,7 +459,6 @@ export default function AdminResourceManagement() {
                     <SelectItem value="history">History</SelectItem>
                   </SelectContent>
                 </Select>
-
               </div>
             </div>
 
@@ -462,7 +506,7 @@ export default function AdminResourceManagement() {
                       <Checkbox
                         checked={
                           selectedResources.length ===
-                            filteredResources.length &&
+                          filteredResources.length &&
                           filteredResources.length > 0
                         }
                         onCheckedChange={handleSelectAll}
@@ -508,7 +552,9 @@ export default function AdminResourceManagement() {
                         </TableCell>
                         <TableCell>
                           <img
-                            src={resource.thumbnail || "/api/placeholder/100/60"}
+                            src={
+                              resource.thumbnail || "/api/placeholder/100/60"
+                            }
                             alt={resource.title}
                             className="w-12 h-8 object-cover rounded border"
                           />
@@ -552,24 +598,28 @@ export default function AdminResourceManagement() {
                                 View Resource
                               </DropdownMenuItem>
                               {resource.status === "pending" && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-green-600"
-                                  onClick={() => confirmApproveResource(resource)}
+                                  onClick={() =>
+                                    confirmApproveResource(resource)
+                                  }
                                 >
                                   <Check className="mr-2 h-4 w-4" />
                                   Approve
                                 </DropdownMenuItem>
                               )}
                               {resource.status === "pending" && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-red-600"
-                                  onClick={() => confirmRejectResource(resource)}
+                                  onClick={() =>
+                                    confirmRejectResource(resource)
+                                  }
                                 >
                                   <X className="mr-2 h-4 w-4" />
                                   Reject
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => confirmDeleteResource(resource)}
                               >
@@ -596,7 +646,12 @@ export default function AdminResourceManagement() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page - 1,
+                      }))
+                    }
                     disabled={pagination.page === 1}
                   >
                     Previous
@@ -607,7 +662,12 @@ export default function AdminResourceManagement() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page + 1,
+                      }))
+                    }
                     disabled={pagination.page === pagination.pages}
                   >
                     Next
@@ -619,100 +679,318 @@ export default function AdminResourceManagement() {
         </Card>
 
         {/* Approve Confirmation Dialog */}
-        <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Approve Resource</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to approve "{resourceToApprove?.title}"? 
-                Once approved, this resource will be published and available for purchase by users.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={cancelApprove} disabled={isApproving}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => resourceToApprove && handleApproveResource(resourceToApprove.id)}
+        <Dialog
+          open={isApproveDialogOpen}
+          onOpenChange={setIsApproveDialogOpen}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Check className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-semibold text-green-600">
+                    Approve Resource
+                  </DialogTitle>
+                  <DialogDescription>
+                    This will publish the resource and make it available for
+                    purchase by users.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Resource Details */}
+              {resourceToApprove && (
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <h4 className="font-medium text-foreground">
+                      {resourceToApprove.title}
+                    </h4>
+                    <Badge variant="outline" className="text-xs">
+                      {resourceToApprove.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Author:</span>
+                      <span>{resourceToApprove.author}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Price:</span>
+                      <span>{resourceToApprove.price}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Upload Date:</span>
+                      <span>
+                        {new Date(
+                          resourceToApprove.uploadDate
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Success Message */}
+              <div className="flex items-start space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-green-700">
+                  <p className="font-medium">What happens next:</p>
+                  <ul className="mt-1 space-y-1 list-disc list-inside">
+                    <li>Resource will be published and visible to all users</li>
+                    <li>Author will be notified of the approval</li>
+                    <li>Resource will be available for purchase</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={cancelApprove}
                 disabled={isApproving}
-                className="bg-green-600 text-white hover:bg-green-700"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() =>
+                  resourceToApprove &&
+                  handleApproveResource(resourceToApprove.id)
+                }
+                disabled={isApproving}
+                className="flex-1 bg-green-600 text-white hover:bg-green-700"
               >
                 {isApproving ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     Approving...
                   </>
                 ) : (
-                  "Approve Resource"
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Approve Resource
+                  </>
                 )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Reject Confirmation Dialog */}
-        <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Reject Resource</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to reject "{resourceToReject?.title}"? 
-                Once rejected, this resource will not be published and the author will be notified of the rejection.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={cancelReject} disabled={isRejecting}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => resourceToReject && handleRejectResource(resourceToReject.id)}
+        <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <X className="w-5 h-5 text-red-600" />
+                  </div>
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-semibold text-red-600">
+                    Reject Resource
+                  </DialogTitle>
+                  <DialogDescription>
+                    This will reject the resource and notify the author of the
+                    rejection.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Resource Details */}
+              {resourceToReject && (
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <h4 className="font-medium text-foreground">
+                      {resourceToReject.title}
+                    </h4>
+                    <Badge variant="outline" className="text-xs">
+                      {resourceToReject.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Author:</span>
+                      <span>{resourceToReject.author}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Price:</span>
+                      <span>{resourceToReject.price}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Upload Date:</span>
+                      <span>
+                        {new Date(
+                          resourceToReject.uploadDate
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Warning Message */}
+              <div className="flex items-start space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-red-700">
+                  <p className="font-medium">What happens next:</p>
+                  <ul className="mt-1 space-y-1 list-disc list-inside">
+                    <li>Resource will be marked as rejected</li>
+                    <li>Author will be notified of the rejection</li>
+                    <li>
+                      Resource will not be published or available for purchase
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={cancelReject}
                 disabled={isRejecting}
-                className="bg-red-600 text-white hover:bg-red-700"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() =>
+                  resourceToReject && handleRejectResource(resourceToReject.id)
+                }
+                disabled={isRejecting}
+                className="flex-1 bg-red-600 text-white hover:bg-red-700"
               >
                 {isRejecting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     Rejecting...
                   </>
                 ) : (
-                  "Reject Resource"
+                  <>
+                    <X className="w-4 h-4 mr-2" />
+                    Reject Resource
+                  </>
                 )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Resource</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete "{resourceToDelete?.title}"? This action cannot be undone.
-                The resource will be permanently removed from the platform and will no longer be available for purchase.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={cancelDelete} disabled={isDeleting}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => resourceToDelete && handleDeleteResource(resourceToDelete.id)}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <Trash2 className="w-5 h-5 text-red-600" />
+                  </div>
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-semibold text-red-600">
+                    Delete Resource
+                  </DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    the resource and all associated data.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Resource Details */}
+              {resourceToDelete && (
+                <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <h4 className="font-medium text-foreground">
+                      {resourceToDelete.title}
+                    </h4>
+                    <Badge variant="outline" className="text-xs">
+                      {resourceToDelete.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Author:</span>
+                      <span>{resourceToDelete.author}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Price:</span>
+                      <span>{resourceToDelete.price}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">Upload Date:</span>
+                      <span>
+                        {new Date(
+                          resourceToDelete.uploadDate
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Warning Message */}
+              <div className="flex items-start space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-red-700">
+                  <p className="font-medium">Warning:</p>
+                  <ul className="mt-1 space-y-1 list-disc list-inside">
+                    <li>All downloads and sales data will be lost</li>
+                    <li>Resource will be removed from platform immediately</li>
+                    <li>This action cannot be undone</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={cancelDelete}
                 disabled={isDeleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() =>
+                  resourceToDelete && handleDeleteResource(resourceToDelete.id)
+                }
+                disabled={isDeleting}
+                className="flex-1"
               >
                 {isDeleting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     Deleting...
                   </>
                 ) : (
-                  "Delete Resource"
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Resource
+                  </>
                 )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* View Resource Modal */}
         <ViewResourceModal
