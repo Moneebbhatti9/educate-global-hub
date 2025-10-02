@@ -87,6 +87,43 @@ export interface UpdateResourceRequest {
   mainFile?: File;
 }
 
+// Cloudinary URL-based request types
+export interface CreateResourceWithUrlsRequest {
+  title: string;
+  description: string;
+  resourceType: string; // Changed from 'type' to 'resourceType'
+  publishing?: string;
+  isFree: boolean;
+  price?: number;
+  currency?: string;
+  saveAsDraft: boolean;
+  ageRange: string;
+  curriculum: string;
+  curriculumType: string;
+  subject: string;
+  coverPhotoUrl: string; // Changed from 'bannerUrl' to 'coverPhotoUrl'
+  previewUrls: string[];
+  resourceUrls: string[];
+}
+
+export interface UpdateResourceWithUrlsRequest {
+  title?: string;
+  description?: string;
+  resourceType?: string; // Changed from 'type' to 'resourceType'
+  publishing?: string;
+  isFree?: boolean;
+  price?: number;
+  currency?: string;
+  ageRange?: string;
+  curriculum?: string;
+  curriculumType?: string;
+  subject?: string;
+  status?: string;
+  coverPhotoUrl?: string; // Changed from 'bannerUrl' to 'coverPhotoUrl'
+  previewUrls?: string[];
+  resourceUrls?: string[];
+}
+
 export interface UpdateResourceStatusRequest {
   status: "draft" | "pending" | "approved" | "rejected";
 }

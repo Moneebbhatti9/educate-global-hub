@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { resourcesAPI } from "@/apis/resources";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import ViewResourceModal from "@/components/Modals/view-resource-modal";
 import type { AdminResource, AdminResourcesResponse, AdminResourcesQueryParams } from "@/types/resource";
 
 export default function AdminResourceManagement() {
@@ -92,6 +93,10 @@ export default function AdminResourceManagement() {
   const [resourceToDelete, setResourceToDelete] = useState<AdminResource | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // View resource modal state
+  const [resourceToView, setResourceToView] = useState<AdminResource | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Load resources from API
   const loadResources = async () => {
@@ -300,8 +305,14 @@ export default function AdminResourceManagement() {
     }
   };
 
-  const handleViewResource = (resourceId: string) => {
-    navigate(`/resources/${resourceId}`);
+  const handleViewResource = (resource: AdminResource) => {
+    setResourceToView(resource);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+    setResourceToView(null);
   };
 
   return (
@@ -536,7 +547,7 @@ export default function AdminResourceManagement() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewResource(resource.id)}>
+                              <DropdownMenuItem onClick={() => handleViewResource(resource)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Resource
                               </DropdownMenuItem>
@@ -702,6 +713,14 @@ export default function AdminResourceManagement() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* View Resource Modal */}
+        <ViewResourceModal
+          isOpen={isViewModalOpen}
+          onClose={closeViewModal}
+          resource={resourceToView}
+          onResourceUpdated={loadResources}
+        />
       </div>
     </DashboardLayout>
   );

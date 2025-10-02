@@ -47,6 +47,8 @@ import { resourcesAPI } from "@/apis/resources";
 import type {
   CreateResourceRequest,
   UpdateResourceRequest,
+  CreateResourceWithUrlsRequest,
+  UpdateResourceWithUrlsRequest,
   TeacherResource,
 } from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
@@ -293,6 +295,14 @@ const UploadResource = () => {
   const [resourceFiles, setResourceFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Cloudinary upload states
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [resourceUrls, setResourceUrls] = useState<string[]>([]);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingPreviews, setIsUploadingPreviews] = useState<boolean[]>([]);
+  const [isUploadingResources, setIsUploadingResources] = useState<boolean[]>([]);
 
   // UI states
   const [activeTab, setActiveTab] = useState("details");
@@ -633,6 +643,94 @@ const UploadResource = () => {
     setResourceFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Upload functions for Cloudinary
+  const uploadBannerToCloudinary = async () => {
+    if (!bannerImage) return;
+    
+    setIsUploadingBanner(true);
+    try {
+      const response = await resourcesAPI.uploadDocument(bannerImage);
+      if (response.success && response.data?.documentUrl) {
+        setCoverPhotoUrl(response.data.documentUrl);
+        showSuccess("Banner uploaded successfully!");
+      } else {
+        showError("Upload failed", response.message || "Failed to upload banner");
+      }
+    } catch (error) {
+      handleError(error, "Failed to upload banner");
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  const uploadPreviewToCloudinary = async (index: number) => {
+    const file = previewImages[index];
+    if (!file) return;
+    
+    const newUploadingStates = [...isUploadingPreviews];
+    newUploadingStates[index] = true;
+    setIsUploadingPreviews(newUploadingStates);
+    
+    try {
+      const response = await resourcesAPI.uploadDocument(file);
+      if (response.success && response.data?.documentUrl) {
+        const newUrls = [...previewUrls];
+        newUrls[index] = response.data.documentUrl;
+        setPreviewUrls(newUrls);
+        showSuccess(`Preview ${index + 1} uploaded successfully!`);
+      } else {
+        showError("Upload failed", response.message || "Failed to upload preview");
+      }
+    } catch (error) {
+      handleError(error, "Failed to upload preview");
+    } finally {
+      const finalUploadingStates = [...isUploadingPreviews];
+      finalUploadingStates[index] = false;
+      setIsUploadingPreviews(finalUploadingStates);
+    }
+  };
+
+  const uploadResourceToCloudinary = async (index: number) => {
+    const file = resourceFiles[index];
+    if (!file) return;
+    
+    const newUploadingStates = [...isUploadingResources];
+    newUploadingStates[index] = true;
+    setIsUploadingResources(newUploadingStates);
+    
+    try {
+      const response = await resourcesAPI.uploadDocument(file);
+      if (response.success && response.data?.documentUrl) {
+        const newUrls = [...resourceUrls];
+        newUrls[index] = response.data.documentUrl;
+        setResourceUrls(newUrls);
+        showSuccess(`Resource file ${index + 1} uploaded successfully!`);
+      } else {
+        showError("Upload failed", response.message || "Failed to upload resource file");
+      }
+    } catch (error) {
+      handleError(error, "Failed to upload resource file");
+    } finally {
+      const finalUploadingStates = [...isUploadingResources];
+      finalUploadingStates[index] = false;
+      setIsUploadingResources(finalUploadingStates);
+    }
+  };
+
+  // Check if all files are uploaded to Cloudinary
+  const areAllFilesUploaded = () => {
+    // Check banner
+    const bannerUploaded = coverPhotoUrl || (isEditMode && resourceData?.coverPhoto?.url);
+    
+    // Check previews
+    const previewsUploaded = previewUrls.length > 0 || (isEditMode && resourceData?.previewImages && resourceData.previewImages.length > 0);
+    
+    // Check resources
+    const resourcesUploaded = resourceUrls.length > 0 || (isEditMode && resourceData?.mainFile?.url);
+    
+    return bannerUploaded && previewsUploaded && resourcesUploaded;
+  };
+
   // Clear form function
   const clearForm = () => {
     // Reset form fields
@@ -655,6 +753,14 @@ const UploadResource = () => {
     setPreviewImages([]);
     setResourceFiles([]);
     setUploadProgress(0);
+
+    // Clear Cloudinary URLs
+    setCoverPhotoUrl(null);
+    setPreviewUrls([]);
+    setResourceUrls([]);
+    setIsUploadingBanner(false);
+    setIsUploadingPreviews([]);
+    setIsUploadingResources([]);
 
     // Clear edit mode states
     setResourceData(null);
@@ -683,41 +789,27 @@ const UploadResource = () => {
 
     const isPaid = data.isFree === "paid";
 
-    // File validation checks (not handled by form schema)
-    console.log("🔍 VALIDATION - Banner image:", bannerImage);
-    console.log(
-      "🔍 VALIDATION - Resource data cover photo:",
-      resourceData?.coverPhoto?.url
-    );
-    console.log("🔍 VALIDATION - Preview images:", previewImages.length);
-    console.log(
-      "🔍 VALIDATION - Resource data preview images:",
-      resourceData?.previewImages?.length
-    );
-    console.log("🔍 VALIDATION - Resource files:", resourceFiles.length);
-    console.log(
-      "🔍 VALIDATION - Resource data main file:",
-      resourceData?.mainFile?.url
-    );
+    // File validation checks - require Cloudinary URLs
+    console.log("🔍 VALIDATION - Cover Photo URL:", coverPhotoUrl);
+    console.log("🔍 VALIDATION - Preview URLs:", previewUrls.length);
+    console.log("🔍 VALIDATION - Resource URLs:", resourceUrls.length);
 
-    if (!bannerImage && !resourceData?.coverPhoto?.url) {
+    // Check if all files are uploaded to Cloudinary
+    if (!coverPhotoUrl && !resourceData?.coverPhoto?.url) {
       showError(
-        "Banner image required",
-        "Please upload a banner image for your resource"
+        "Cover photo upload required",
+        "Please upload your cover photo to Cloudinary first"
       );
       return;
     }
 
-    if (
-      previewImages.length < 1 &&
-      (!resourceData?.previewImages || resourceData.previewImages.length === 0)
-    ) {
-      showError("Preview images required", "Please upload 1-5 preview images");
+    if (previewUrls.length < 1 && (!resourceData?.previewImages || resourceData.previewImages.length === 0)) {
+      showError("Preview upload required", "Please upload your preview images to Cloudinary first");
       return;
     }
 
-    if (resourceFiles.length < 1 && !resourceData?.mainFile?.url) {
-      showError("Resource files required", "Please upload 1-3 resource files");
+    if (resourceUrls.length < 1 && !resourceData?.mainFile?.url) {
+      showError("Resource upload required", "Please upload your resource files to Cloudinary first");
       return;
     }
 
@@ -736,11 +828,11 @@ const UploadResource = () => {
     setUploadProgress(0);
 
     try {
-      // Prepare the resource data with safety checks
-      const resourceData: CreateResourceRequest = {
+      // Prepare the resource data with Cloudinary URLs
+      const createResourcePayload: CreateResourceWithUrlsRequest = {
         title: data.title.trim(),
         description: data.description.trim(),
-        type: data.type,
+        resourceType: data.type, // Changed from 'type' to 'resourceType'
         publishing: data.publishing || "public",
         isFree: data.isFree === "free",
         price:
@@ -753,15 +845,9 @@ const UploadResource = () => {
         curriculum: data.curriculum,
         curriculumType: data.curriculumType || "",
         subject: data.subject,
-        banner: bannerImage || new File([], "placeholder"), // Use new banner if uploaded, otherwise placeholder
-        previews:
-          previewImages.length > 0
-            ? previewImages
-            : [new File([], "placeholder")], // Use new previews if uploaded, otherwise placeholder
-        files:
-          resourceFiles.length > 0
-            ? resourceFiles
-            : [new File([], "placeholder")], // Use new files if uploaded, otherwise placeholder
+        coverPhotoUrl: coverPhotoUrl || resourceData?.coverPhoto?.url || "",
+        previewUrls: previewUrls.length > 0 ? previewUrls : (resourceData?.previewImages?.map(img => img.url) || []),
+        resourceUrls: resourceUrls.length > 0 ? resourceUrls : (resourceData?.mainFile?.url ? [resourceData.mainFile.url] : []),
       };
 
       // Simulate upload progress
@@ -786,11 +872,11 @@ const UploadResource = () => {
           typeof resourceId === "string" &&
           resourceId.trim().length > 0
         ) {
-          // Update existing resource
-          const updateData: UpdateResourceRequest = {
+          // Update existing resource with Cloudinary URLs
+          const updateData: UpdateResourceWithUrlsRequest = {
             title: data.title.trim(),
             description: data.description.trim(),
-            type: data.type,
+            resourceType: data.type,
             publishing: data.publishing || "public",
             isFree: data.isFree === "free",
             price:
@@ -802,11 +888,11 @@ const UploadResource = () => {
             curriculum: data.curriculum,
             curriculumType: data.curriculumType || "",
             subject: data.subject,
-            coverPhoto: bannerImage || undefined,
-            previewImages: previewImages.length > 0 ? previewImages : undefined,
-            mainFile: resourceFiles.length > 0 ? resourceFiles[0] : undefined,
+            coverPhotoUrl: coverPhotoUrl || resourceData?.coverPhoto?.url || undefined,
+            previewUrls: previewUrls.length > 0 ? previewUrls : (resourceData?.previewImages?.map(img => img.url) || undefined),
+            resourceUrls: resourceUrls.length > 0 ? resourceUrls : (resourceData?.mainFile?.url ? [resourceData.mainFile.url] : undefined),
           };
-          response = await resourcesAPI.updateResource(
+          response = await resourcesAPI.updateResourceWithUrls(
             resourceId.trim(),
             updateData
           );
@@ -818,8 +904,8 @@ const UploadResource = () => {
           return;
         }
       } else {
-        // Create new resource
-        response = await resourcesAPI.createResource(resourceData);
+        // Create new resource with Cloudinary URLs
+        response = await resourcesAPI.createResourceWithUrls(createResourcePayload);
       }
 
       setUploadProgress(100);
@@ -883,11 +969,11 @@ const UploadResource = () => {
         return;
       }
 
-      // For draft, we need at least a banner image
-      if (!bannerImage && !resourceData?.coverPhoto?.url) {
+      // For draft, we need at least a banner image uploaded to Cloudinary
+      if (!coverPhotoUrl && !resourceData?.coverPhoto?.url) {
         showError(
-          "Banner image required",
-          "Please upload a banner image to save as draft"
+          "Banner upload required",
+          "Please upload your banner image to Cloudinary first to save as draft"
         );
         return;
       }
@@ -896,13 +982,13 @@ const UploadResource = () => {
       setUploadProgress(0);
 
       // Prepare draft data with safety checks
-      const draftData: CreateResourceRequest = {
+      const draftData: CreateResourceWithUrlsRequest = {
         title: formData.title.trim(),
         description:
           formData.description && typeof formData.description === "string"
             ? formData.description.trim()
             : "",
-        type:
+        resourceType:
           formData.type && typeof formData.type === "string"
             ? formData.type
             : "",
@@ -930,15 +1016,9 @@ const UploadResource = () => {
           formData.subject && typeof formData.subject === "string"
             ? formData.subject
             : "",
-        banner: bannerImage || new File([], "placeholder"), // Use new banner if uploaded, otherwise placeholder
-        previews:
-          previewImages.length > 0
-            ? previewImages
-            : [new File([], "placeholder")],
-        files:
-          resourceFiles.length > 0
-            ? resourceFiles
-            : [new File([], "placeholder")],
+        coverPhotoUrl: coverPhotoUrl || resourceData?.coverPhoto?.url || "",
+        previewUrls: previewUrls.length > 0 ? previewUrls : (resourceData?.previewImages?.map(img => img.url) || []),
+        resourceUrls: resourceUrls.length > 0 ? resourceUrls : (resourceData?.mainFile?.url ? [resourceData.mainFile.url] : []),
       };
 
       // Simulate upload progress
@@ -952,8 +1032,8 @@ const UploadResource = () => {
         });
       }, 500);
 
-      // Call the createResource API with saveAsDraft: true
-      const response = await resourcesAPI.createResource(draftData);
+      // Call the createResourceWithUrls API with saveAsDraft: true
+      const response = await resourcesAPI.createResourceWithUrls(draftData);
 
       setUploadProgress(100);
       clearInterval(progressInterval);
@@ -1062,14 +1142,30 @@ const UploadResource = () => {
                             <p className="text-sm text-muted-foreground">
                               {bannerImage.name}
                             </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setBannerImage(null)}
-                            >
-                              Remove
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={uploadBannerToCloudinary}
+                                disabled={isUploadingBanner || !!coverPhotoUrl}
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                {isUploadingBanner ? "Uploading..." : coverPhotoUrl ? "Uploaded ✓" : "Upload"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setBannerImage(null);
+                                  setCoverPhotoUrl(null);
+                                }}
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Remove
+                              </Button>
+                            </div>
                           </div>
                         ) : isEditMode && resourceData?.coverPhoto?.url ? (
                           <div className="space-y-2">
@@ -1160,21 +1256,39 @@ const UploadResource = () => {
                       {previewImages.length > 0 && (
                         <div className="grid grid-cols-2 gap-2 mb-3">
                           {previewImages.map((file, index) => (
-                            <div key={index} className="relative">
+                            <div key={index} className="relative space-y-2">
                               <img
                                 src={URL.createObjectURL(file)}
                                 alt={`Preview ${index + 1}`}
                                 className="w-full h-20 object-cover rounded"
                               />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="absolute -top-2 -right-2 w-6 h-6 p-0"
-                                onClick={() => removePreviewImage(index)}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
+                              <div className="flex space-x-1">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => uploadPreviewToCloudinary(index)}
+                                  disabled={isUploadingPreviews[index] || !!previewUrls[index]}
+                                  className="flex-1 text-xs"
+                                >
+                                  <Upload className="w-3 h-3 mr-1" />
+                                  {isUploadingPreviews[index] ? "Uploading..." : previewUrls[index] ? "Uploaded ✓" : "Upload"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="w-6 h-6 p-0"
+                                  onClick={() => {
+                                    removePreviewImage(index);
+                                    const newUrls = [...previewUrls];
+                                    newUrls.splice(index, 1);
+                                    setPreviewUrls(newUrls);
+                                  }}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1270,22 +1384,40 @@ const UploadResource = () => {
                           {resourceFiles.map((file, index) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between p-2 bg-muted/50 rounded"
+                              className="space-y-2 p-2 bg-muted/50 rounded"
                             >
-                              <div className="flex items-center space-x-2">
-                                <FileText className="w-4 h-4" />
-                                <span className="text-sm">{file.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  ({(file.size / 1024 / 1024).toFixed(1)} MB)
-                                </span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <FileText className="w-4 h-4" />
+                                  <span className="text-sm">{file.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({(file.size / 1024 / 1024).toFixed(1)} MB)
+                                  </span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    removeResourceFile(index);
+                                    const newUrls = [...resourceUrls];
+                                    newUrls.splice(index, 1);
+                                    setResourceUrls(newUrls);
+                                  }}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
                               </div>
                               <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => removeResourceFile(index)}
+                                onClick={() => uploadResourceToCloudinary(index)}
+                                disabled={isUploadingResources[index] || !!resourceUrls[index]}
+                                className="w-full"
                               >
-                                <X className="w-4 h-4" />
+                                <Upload className="w-4 h-4 mr-2" />
+                                {isUploadingResources[index] ? "Uploading..." : resourceUrls[index] ? "Uploaded ✓" : "Upload"}
                               </Button>
                             </div>
                           ))}
@@ -1750,7 +1882,7 @@ const UploadResource = () => {
                     type="button"
                     variant="outline"
                     onClick={saveDraft}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !areAllFilesUploaded()}
                   >
                     <Save className="w-4 h-4 mr-2" />
                     {isEditMode ? "Save Changes" : "Save Draft"}
@@ -1758,7 +1890,7 @@ const UploadResource = () => {
 
                   <Button
                     type="submit"
-                    disabled={isSubmitting || isLoadingResource}
+                    disabled={isSubmitting || isLoadingResource || !areAllFilesUploaded()}
                     className="px-8"
                   >
                     {isEditMode ? (

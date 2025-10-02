@@ -14,6 +14,7 @@ import {
   Check,
 } from "lucide-react";
 import ResourceStatsModal from "@/components/Modals/resource-stats-modal";
+import ViewTeacherResourceModal from "@/components/Modals/view-teacher-resource-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +72,10 @@ export default function ResourceManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedResource, setSelectedResource] = useState<TeacherResource | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  
+  // View resource modal state
+  const [resourceToView, setResourceToView] = useState<TeacherResource | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   
   // Delete confirmation state
   const [resourceToDelete, setResourceToDelete] = useState<TeacherResource | null>(null);
@@ -244,6 +249,17 @@ export default function ResourceManagement() {
   const cancelSubmit = () => {
     setIsSubmitDialogOpen(false);
     setResourceToSubmit(null);
+  };
+
+  // View resource modal handlers
+  const handleViewResource = (resource: TeacherResource) => {
+    setResourceToView(resource);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+    setResourceToView(null);
   };
 
 
@@ -437,6 +453,10 @@ export default function ResourceManagement() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewResource(resource)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Resource
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
                                   if (resource && resource._id) {
@@ -448,7 +468,7 @@ export default function ResourceManagement() {
                                   }
                                 }}
                               >
-                                <Eye className="mr-2 h-4 w-4" />
+                                <BarChart3 className="mr-2 h-4 w-4" />
                                 View Stats
                               </DropdownMenuItem>
                               {(resource.status === "draft" || resource.status === "pending") && (
@@ -589,6 +609,14 @@ export default function ResourceManagement() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* View Resource Modal */}
+        <ViewTeacherResourceModal
+          isOpen={isViewModalOpen}
+          onClose={closeViewModal}
+          resource={resourceToView}
+          onResourceUpdated={loadResources}
+        />
       </div>
     </DashboardLayout>
   );

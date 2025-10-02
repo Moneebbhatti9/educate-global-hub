@@ -44,7 +44,13 @@ import { Progress } from "@/components/ui/progress";
 import { customToast } from "@/components/ui/sonner";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { resourcesAPI } from "@/apis/resources";
-import type { CreateResourceRequest, UpdateResourceRequest, Resource } from "@/types/resource";
+import type { 
+  CreateResourceRequest, 
+  UpdateResourceRequest, 
+  CreateResourceWithUrlsRequest,
+  UpdateResourceWithUrlsRequest,
+  Resource 
+} from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
 
 // Form validation schema
@@ -277,6 +283,14 @@ const AdminUploadResource = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Cloudinary upload states
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [resourceUrls, setResourceUrls] = useState<string[]>([]);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingPreviews, setIsUploadingPreviews] = useState<boolean[]>([]);
+  const [isUploadingResources, setIsUploadingResources] = useState<boolean[]>([]);
+
   // UI states
   const [activeTab, setActiveTab] = useState("details");
   const [expectedEarnings, setExpectedEarnings] = useState(0);
@@ -496,6 +510,94 @@ const AdminUploadResource = () => {
     setResourceFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Upload functions for Cloudinary
+  const uploadBannerToCloudinary = async () => {
+    if (!bannerImage) return;
+    
+    setIsUploadingBanner(true);
+    try {
+      const response = await resourcesAPI.uploadDocument(bannerImage);
+      if (response.success && response.data?.documentUrl) {
+        setCoverPhotoUrl(response.data.documentUrl);
+        showSuccess("Banner uploaded successfully!");
+      } else {
+        showError("Upload failed", response.message || "Failed to upload banner");
+      }
+    } catch (error) {
+      handleError(error, "Failed to upload banner");
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  const uploadPreviewToCloudinary = async (index: number) => {
+    const file = previewImages[index];
+    if (!file) return;
+    
+    const newUploadingStates = [...isUploadingPreviews];
+    newUploadingStates[index] = true;
+    setIsUploadingPreviews(newUploadingStates);
+    
+    try {
+      const response = await resourcesAPI.uploadDocument(file);
+      if (response.success && response.data?.documentUrl) {
+        const newUrls = [...previewUrls];
+        newUrls[index] = response.data.documentUrl;
+        setPreviewUrls(newUrls);
+        showSuccess(`Preview ${index + 1} uploaded successfully!`);
+      } else {
+        showError("Upload failed", response.message || "Failed to upload preview");
+      }
+    } catch (error) {
+      handleError(error, "Failed to upload preview");
+    } finally {
+      const finalUploadingStates = [...isUploadingPreviews];
+      finalUploadingStates[index] = false;
+      setIsUploadingPreviews(finalUploadingStates);
+    }
+  };
+
+  const uploadResourceToCloudinary = async (index: number) => {
+    const file = resourceFiles[index];
+    if (!file) return;
+    
+    const newUploadingStates = [...isUploadingResources];
+    newUploadingStates[index] = true;
+    setIsUploadingResources(newUploadingStates);
+    
+    try {
+      const response = await resourcesAPI.uploadDocument(file);
+      if (response.success && response.data?.documentUrl) {
+        const newUrls = [...resourceUrls];
+        newUrls[index] = response.data.documentUrl;
+        setResourceUrls(newUrls);
+        showSuccess(`Resource file ${index + 1} uploaded successfully!`);
+      } else {
+        showError("Upload failed", response.message || "Failed to upload resource file");
+      }
+    } catch (error) {
+      handleError(error, "Failed to upload resource file");
+    } finally {
+      const finalUploadingStates = [...isUploadingResources];
+      finalUploadingStates[index] = false;
+      setIsUploadingResources(finalUploadingStates);
+    }
+  };
+
+  // Check if all files are uploaded to Cloudinary
+  const areAllFilesUploaded = () => {
+    // Check banner
+    const bannerUploaded = coverPhotoUrl || (isEditMode && resourceData?.bannerImage);
+    
+    // Check previews
+    const previewsUploaded = previewUrls.length > 0 || (isEditMode && resourceData?.previewImages?.length > 0);
+    
+    // Check resources
+    const resourcesUploaded = resourceUrls.length > 0 || (isEditMode && resourceData?.resourceFiles?.length > 0);
+    
+    return bannerUploaded && previewsUploaded && resourcesUploaded;
+  };
+
   // Form submission
   const onSubmit = async (data: ResourceFormData) => {
     // Safety checks for form data
@@ -507,19 +609,27 @@ const AdminUploadResource = () => {
 
     const isPaid = data.isFree === "paid";
 
-    // File validation checks (not handled by form schema)
-    if (!bannerImage) {
-      showError("Banner image required", "Please upload a banner image for your resource");
+    // File validation checks - require Cloudinary URLs
+    console.log("🔍 VALIDATION - Cover Photo URL:", coverPhotoUrl);
+    console.log("🔍 VALIDATION - Preview URLs:", previewUrls.length);
+    console.log("🔍 VALIDATION - Resource URLs:", resourceUrls.length);
+
+    // Check if all files are uploaded to Cloudinary
+    if (!coverPhotoUrl && !resourceData?.bannerImage) {
+      showError(
+        "Cover photo upload required",
+        "Please upload your cover photo to Cloudinary first"
+      );
       return;
     }
 
-    if (previewImages.length < 1 || previewImages.length > 5) {
-      showError("Preview images required", "Please upload 1-5 preview images");
+    if (previewUrls.length < 1 && (!resourceData?.previewImages || resourceData.previewImages.length === 0)) {
+      showError("Preview upload required", "Please upload your preview images to Cloudinary first");
       return;
     }
 
-    if (resourceFiles.length < 1 || resourceFiles.length > 3) {
-      showError("Resource files required", "Please upload 1-3 resource files");
+    if (resourceUrls.length < 1 && (!resourceData?.resourceFiles || resourceData.resourceFiles.length === 0)) {
+      showError("Resource upload required", "Please upload your resource files to Cloudinary first");
       return;
     }
 
@@ -532,11 +642,11 @@ const AdminUploadResource = () => {
     setUploadProgress(0);
 
     try {
-      // Prepare the resource data with safety checks
-      const resourceData: CreateResourceRequest = {
+      // Prepare the resource data with Cloudinary URLs
+      const createResourcePayload: CreateResourceWithUrlsRequest = {
         title: data.title.trim(),
         description: data.description.trim(),
-        type: data.type,
+        resourceType: data.type, // Changed from 'type' to 'resourceType'
         publishing: data.publishing || "public",
         isFree: data.isFree === "free",
         price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
@@ -546,9 +656,9 @@ const AdminUploadResource = () => {
         curriculum: data.curriculum,
         curriculumType: data.curriculumType || "",
         subject: data.subject,
-        banner: bannerImage,
-        previews: previewImages,
-        files: resourceFiles,
+        coverPhotoUrl: coverPhotoUrl || resourceData?.bannerImage || "",
+        previewUrls: previewUrls.length > 0 ? previewUrls : (resourceData?.previewImages || []),
+        resourceUrls: resourceUrls.length > 0 ? resourceUrls : (resourceData?.resourceFiles || []),
       };
 
       // Simulate upload progress
@@ -565,11 +675,11 @@ const AdminUploadResource = () => {
       // Call the appropriate API based on mode
       let response;
       if (isEditMode && id && typeof id === 'string' && id.trim().length > 0) {
-        // Update existing resource
-        const updateData: UpdateResourceRequest = {
+        // Update existing resource with Cloudinary URLs
+        const updateData: UpdateResourceWithUrlsRequest = {
           title: data.title.trim(),
           description: data.description.trim(),
-          type: data.type,
+          resourceType: data.type, // Changed from 'type' to 'resourceType'
           publishing: data.publishing || "public",
           isFree: data.isFree === "free",
           price: isPaid && typeof data.price === 'number' && data.price > 0 ? data.price : undefined,
@@ -578,14 +688,14 @@ const AdminUploadResource = () => {
           curriculum: data.curriculum,
           curriculumType: data.curriculumType || "",
           subject: data.subject,
-          coverPhoto: bannerImage || undefined,
-          previewImages: previewImages.length > 0 ? previewImages : undefined,
-          mainFile: resourceFiles.length > 0 ? resourceFiles[0] : undefined,
+          coverPhotoUrl: coverPhotoUrl || resourceData?.bannerImage || undefined,
+          previewUrls: previewUrls.length > 0 ? previewUrls : (resourceData?.previewImages || undefined),
+          resourceUrls: resourceUrls.length > 0 ? resourceUrls : (resourceData?.resourceFiles || undefined),
         };
-        response = await resourcesAPI.updateResource(id.trim(), updateData);
+        response = await resourcesAPI.updateResourceWithUrls(id.trim(), updateData);
       } else {
-        // Create new resource
-        response = await resourcesAPI.createResource(resourceData);
+        // Create new resource with Cloudinary URLs
+        response = await resourcesAPI.createResourceWithUrls(createResourcePayload);
       }
 
       setUploadProgress(100);

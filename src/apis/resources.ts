@@ -3,6 +3,8 @@ import type {
   Resource,
   CreateResourceRequest,
   UpdateResourceRequest,
+  CreateResourceWithUrlsRequest,
+  UpdateResourceWithUrlsRequest,
   UpdateResourceStatusRequest,
   MyResourcesQueryParams,
   MyResourcesResponse,
@@ -28,6 +30,7 @@ const RESOURCE_ENDPOINTS = {
   
   // Admin Resource Management
   GET_ADMIN_RESOURCES: "adminDashboard/admin-resources",
+  GET_RESOURCE_BY_ID_ADMIN: "/resources/get-resource-by-id-admin",
   
   // Resource Search & Viewing (Public)
   GET_ALL_RESOURCES: "/resources/get-all-resources",
@@ -509,6 +512,95 @@ export const resourcesAPI = {
       return {
         success: false,
         message: error instanceof Error ? error.message : "Failed to fetch resource",
+        data: undefined
+      };
+    }
+  },
+
+  // Get Resource by ID (Admin)
+  getResourceByIdAdmin: async (resourceId: string): Promise<ApiResponse<Resource>> => {
+    try {
+      // Safety checks for resourceId
+      if (!resourceId || typeof resourceId !== 'string' || resourceId.trim().length === 0) {
+        throw new Error("Resource ID is required and must be a valid string");
+      }
+
+      const response = await apiHelpers.get<ApiResponse<Resource>>(
+        `${RESOURCE_ENDPOINTS.GET_RESOURCE_BY_ID_ADMIN}/${resourceId.trim()}`
+      );
+      
+      // Safety check for response structure
+      if (!response || typeof response !== 'object') {
+        throw new Error("Invalid response format from server");
+      }
+
+      return response;
+    } catch (error) {
+      console.error("Error in getResourceByIdAdmin:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to fetch admin resource",
+        data: undefined
+      };
+    }
+  },
+
+  // Upload Document to Cloudinary
+  uploadDocument: async (file: File): Promise<ApiResponse<{ documentUrl: string }>> => {
+    try {
+      const formData = new FormData();
+      formData.append("document", file);
+
+      const response = await apiHelpers.upload<ApiResponse<{ documentUrl: string }>>(
+        "/upload/document",
+        formData
+      );
+
+      return response;
+    } catch (error) {
+      console.error("Error in uploadDocument:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to upload document",
+        data: undefined
+      };
+    }
+  },
+
+  // Create Resource with Cloudinary URLs
+  createResourceWithUrls: async (
+    data: CreateResourceWithUrlsRequest
+  ): Promise<ApiResponse<Resource>> => {
+    try {
+      return await apiHelpers.post<ApiResponse<Resource>>(
+        RESOURCE_ENDPOINTS.CREATE_RESOURCE,
+        data
+      );
+    } catch (error) {
+      console.error("Error in createResourceWithUrls:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to create resource",
+        data: undefined
+      };
+    }
+  },
+
+  // Update Resource with Cloudinary URLs
+  updateResourceWithUrls: async (
+    resourceId: string,
+    data: UpdateResourceWithUrlsRequest
+  ): Promise<ApiResponse<Resource>> => {
+    try {
+      return await apiHelpers.put<ApiResponse<Resource>>(
+        `${RESOURCE_ENDPOINTS.UPDATE_RESOURCE}/${resourceId}`,
+        data
+      );
+    } catch (error) {
+      console.error("Error in updateResourceWithUrls:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to update resource",
         data: undefined
       };
     }
