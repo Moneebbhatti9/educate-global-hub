@@ -71,6 +71,9 @@ const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
 const AdminResourceManagement = lazy(
   () => import("./pages/admin/ResourceManagement")
 );
+const AdminUploadResource = lazy(
+  () => import("./pages/admin/UploadResource")
+);
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -229,6 +232,7 @@ const AppRoutes = () => {
           <Route path="users" element={<UserManagement />} />
           <Route path="jobs" element={<JobManagement />} />
           <Route path="forum" element={<ForumManagement />} />
+          <Route path="upload-resource" element={<AdminUploadResource />} />
           <Route path="resources" element={<AdminResourceManagement />} />
         </Route>
 

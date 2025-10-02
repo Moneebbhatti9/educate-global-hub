@@ -1,14 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Star, Heart, Download, Eye, Calendar, User, BookOpen, GraduationCap, FileText, ExternalLink } from "lucide-react";
+import {
+  Star,
+  Heart,
+  Download,
+  Eye,
+  Calendar,
+  User,
+  BookOpen,
+  GraduationCap,
+  FileText,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { resourcesAPI } from "@/apis/resources";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import type { Resource } from "@/types/resource";
 
 // Mock data - replace with actual API calls
 const mockResource = {
@@ -103,25 +124,198 @@ Students will be able to confidently work with fractions and decimals, understan
 
 const ResourceDetail = () => {
   const { id } = useParams();
+  const { handleError, showError } = useErrorHandler();
+  
+  // State management
+  const [resource, setResource] = useState<Resource | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
 
+
+  // Load resource data when component mounts
+  useEffect(() => {
+    if (id && typeof id === 'string' && id.trim().length > 0) {
+      loadResourceData();
+    } else if (id) {
+      console.error("Invalid resource ID:", id);
+      showError("Invalid resource", "Resource ID is invalid");
+    }
+  }, [id]);
+
+  const loadResourceData = async () => {
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      console.error("Invalid resource ID:", id);
+      showError("Invalid resource", "Resource ID is required");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const response = await resourcesAPI.getResourceById(id.trim());
+      
+      // Safety checks for response
+      if (!response) {
+        showError("Failed to load resource", "No response received from server");
+        return;
+      }
+
+      if (response.success && response.data) {
+        // Safety checks for resource data
+        if (!response.data || typeof response.data !== 'object') {
+          console.warn("Invalid resource data structure:", response.data);
+          showError("Invalid resource data", "Resource data is malformed");
+          return;
+        }
+
+        if (!response.data.id || typeof response.data.id !== 'string') {
+          console.warn("Resource missing valid ID:", response.data);
+          showError("Invalid resource", "Resource ID is missing");
+          return;
+        }
+
+        // Map the API response to Resource interface
+        const apiData = response.data as {
+          id: string;
+          title?: string;
+          description?: string;
+          type?: string;
+          subject?: string;
+          ageRange?: string;
+          curriculum?: string;
+          curriculumType?: string;
+          price?: string;
+          status?: string;
+          thumbnail?: string;
+          previews?: string[];
+          file?: string;
+          author?: string;
+          createdAt?: string;
+        };
+        const mappedResource: Resource = {
+          id: apiData.id,
+          title: apiData.title || "Untitled Resource",
+          shortDescription: apiData.description || "",
+          fullDescription: apiData.description || "",
+          resourceType: apiData.type || "Resource",
+          subjects: apiData.subject ? [apiData.subject] : [],
+          ageGroups: apiData.ageRange ? [apiData.ageRange] : [],
+          curriculum: apiData.curriculum || "",
+          curriculumType: apiData.curriculumType || "",
+          language: "English",
+          pages: 0,
+          lessonTime: 0,
+          isFree: apiData.price?.toLowerCase().includes('free') || !apiData.price,
+          price: apiData.price ? parseFloat(apiData.price.replace(/[^0-9.]/g, '')) || 0 : 0,
+          currency: apiData.price ? apiData.price.split(' ')[0] : "USD",
+          licenseType: "Single Teacher License",
+          tags: "",
+          categories: [],
+          accessibility: "Standard",
+          visibility: apiData.status === "approved" ? "public" : "private",
+          versionNotes: "",
+          bannerImage: apiData.thumbnail || "",
+          previewImages: apiData.previews || [],
+          resourceFiles: apiData.file ? [apiData.file] : [],
+          status: apiData.status === "approved" ? "published" : "draft",
+          uploadDate: apiData.createdAt || new Date().toISOString(),
+          lastModified: apiData.createdAt || new Date().toISOString(),
+          salesCount: 0,
+          downloadCount: 0,
+          rating: 4.5,
+          reviewCount: 0,
+          authorId: "",
+          authorName: apiData.author || "Unknown Author",
+        };
+
+        setResource(mappedResource);
+      } else {
+        const errorMessage = response?.message || "Unable to fetch resource details";
+        showError("Failed to load resource", errorMessage);
+        setResource(null);
+      }
+    } catch (error) {
+      console.error("Error loading resource:", error);
+      handleError(error, "Failed to load resource");
+      setResource(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePurchase = () => {
+    if (!resource || !resource.id) {
+      console.error("Cannot purchase: resource or resource ID is missing");
+      showError("Purchase error", "Resource information is missing");
+      return;
+    }
     setShowPurchaseModal(true);
   };
 
   const handleConfirmPurchase = () => {
+    if (!resource || !resource.id) {
+      console.error("Cannot confirm purchase: resource or resource ID is missing");
+      showError("Purchase error", "Resource information is missing");
+      return;
+    }
     // TODO: Integrate with Stripe
     console.log("Processing purchase...");
     setShowPurchaseModal(false);
     // Redirect to download page
-    window.location.href = `/download/${id}`;
+    window.location.href = `/download/${resource.id}`;
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="aspect-[16/5] rounded-lg bg-gray-200 animate-pulse" />
+              <div className="space-y-4">
+                <div className="h-8 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-32 bg-gray-200 rounded animate-pulse" />
+              <div className="h-24 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state if no resource found
+  if (!resource) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">
+              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">Resource not found</h3>
+              <p className="text-sm">
+                The resource you're looking for doesn't exist or has been removed.
+              </p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -129,39 +323,45 @@ const ResourceDetail = () => {
             {/* Banner Image */}
             <div className="aspect-[16/5] rounded-lg overflow-hidden">
               <img 
-                src={mockResource.bannerImage} 
-                alt={mockResource.title}
+                src={resource.bannerImage || "/placeholder.svg"} 
+                alt={resource.title || "Resource"}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback for broken images
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                }}
               />
             </div>
 
             {/* Title & Author */}
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                {mockResource.title}
+                {resource.title || "Untitled Resource"}
               </h1>
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-2">
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={mockResource.author.avatar} />
-                    <AvatarFallback>{mockResource.author.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                      {resource.authorName ? resource.authorName.charAt(0) : "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <span className="text-sm text-muted-foreground">
                     by <span className="text-primary font-medium cursor-pointer hover:underline">
-                      {mockResource.author.name}
+                      {resource.authorName || "Unknown Author"}
                     </span>
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium">{mockResource.rating}</span>
+                  <span className="text-sm font-medium">4.5</span>
                   <span className="text-sm text-muted-foreground">
-                    ({mockResource.reviewCount} reviews)
+                    (0 reviews)
                   </span>
                 </div>
               </div>
               <p className="text-muted-foreground text-lg">
-                {mockResource.shortDescription}
+                {resource.fullDescription || "No description available"}
               </p>
             </div>
 
@@ -178,32 +378,50 @@ const ResourceDetail = () => {
                   {/* Main Preview */}
                   <div className="aspect-[3/2] rounded-lg overflow-hidden bg-muted">
                     <img 
-                      src={mockResource.previewImages[currentPreviewIndex]} 
+                      src={resource.previewImages?.[currentPreviewIndex] || resource.bannerImage || "/placeholder.svg"} 
                       alt={`Preview ${currentPreviewIndex + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback for broken images
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                      }}
                     />
                   </div>
-                  
+
                   {/* Thumbnail Navigation */}
-                  <div className="flex space-x-2 overflow-x-auto">
-                    {mockResource.previewImages.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPreviewIndex(index)}
-                        className={`flex-shrink-0 w-16 h-12 rounded border-2 overflow-hidden ${
-                          currentPreviewIndex === index 
-                            ? 'border-primary' 
-                            : 'border-muted'
-                        }`}
-                      >
-                        <img 
-                          src={image} 
-                          alt={`Thumbnail ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
+                  {resource.previewImages && Array.isArray(resource.previewImages) && resource.previewImages.length > 1 && (
+                    <div className="flex space-x-2 overflow-x-auto">
+                      {resource.previewImages.map((image, index) => {
+                        if (!image || typeof image !== 'string') {
+                          console.warn("Invalid preview image:", image);
+                          return null;
+                        }
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentPreviewIndex(index)}
+                            className={`flex-shrink-0 w-16 h-12 rounded border-2 overflow-hidden ${
+                              currentPreviewIndex === index 
+                                ? 'border-primary' 
+                                : 'border-muted'
+                            }`}
+                          >
+                            <img 
+                              src={image} 
+                              alt={`Thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback for broken images
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/placeholder.svg";
+                              }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -215,9 +433,7 @@ const ResourceDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none">
-                  {mockResource.fullDescription.split('\n').map((line, index) => (
-                    <p key={index} className="mb-2">{line}</p>
-                  ))}
+                  <p className="mb-2">{resource.fullDescription || "No description available"}</p>
                 </div>
               </CardContent>
             </Card>
@@ -231,27 +447,31 @@ const ResourceDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center space-x-2">
                     <BookOpen className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Subject:</strong> {mockResource.metadata.subject}</span>
+                    <span><strong>Subject:</strong> {resource.subjects?.[0] || "Unknown Subject"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Grades:</strong> {mockResource.metadata.grades.join(", ")}</span>
+                    <span><strong>Age Range:</strong> {resource.ageGroups?.[0] || "Unknown Age Range"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Type:</strong> {mockResource.metadata.type}</span>
+                    <span><strong>Type:</strong> {resource.resourceType || "Unknown Type"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Download className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Format:</strong> {mockResource.metadata.fileFormat}</span>
+                    <span><strong>Curriculum:</strong> {resource.curriculum || "Unknown Curriculum"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Uploaded:</strong> {mockResource.metadata.uploadDate}</span>
+                    <span><strong>Created:</strong> {
+                      resource.uploadDate 
+                        ? new Date(resource.uploadDate).toLocaleDateString() 
+                        : "Unknown Date"
+                    }</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span><strong>Pages:</strong> {mockResource.metadata.pages}</span>
+                    <span><strong>Status:</strong> {resource.status || "Unknown Status"}</span>
                   </div>
                 </div>
               </CardContent>
@@ -263,28 +483,13 @@ const ResourceDetail = () => {
                 <CardTitle>Reviews & Ratings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockResource.reviews.map((review) => (
-                  <div key={review.id} className="border-b pb-4 last:border-b-0">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${
-                              i < review.rating 
-                                ? 'fill-yellow-400 text-yellow-400' 
-                                : 'text-muted-foreground'
-                            }`} 
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        by {review.reviewer} • {review.date}
-                      </span>
-                    </div>
-                    <p className="text-sm">{review.comment}</p>
+                <div className="text-center py-8">
+                  <div className="text-muted-foreground">
+                    <Star className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No reviews yet</p>
+                    <p className="text-xs text-muted-foreground">Be the first to review this resource!</p>
                   </div>
-                ))}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -296,16 +501,16 @@ const ResourceDetail = () => {
               <CardContent className="pt-6">
                 <div className="text-center space-y-4">
                   <div className="text-3xl font-bold text-primary">
-                    {mockResource.currency}{mockResource.price}
+                    {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Button 
                       onClick={handlePurchase}
                       className="w-full text-lg py-6"
                       size="lg"
                     >
-                      Buy Now
+                      {resource.isFree ? "Download Free" : "Buy Now"}
                     </Button>
                     <Button variant="outline" className="w-full">
                       <Heart className="w-4 h-4 mr-2" />
@@ -314,7 +519,9 @@ const ResourceDetail = () => {
                   </div>
 
                   <div className="text-xs text-muted-foreground">
-                    Instant download after purchase
+                    {resource.isFree
+                      ? "Instant download"
+                      : "Instant download after purchase"}
                   </div>
                 </div>
               </CardContent>
@@ -331,25 +538,26 @@ const ResourceDetail = () => {
               <CardContent>
                 <div className="flex items-center space-x-3 mb-3">
                   <Avatar className="w-12 h-12">
-                    <AvatarImage src={mockResource.author.avatar} />
-                    <AvatarFallback>{mockResource.author.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                      {resource.authorName ? resource.authorName.charAt(0) : "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="font-semibold">{mockResource.author.name}</h4>
+                    <h4 className="font-semibold">{resource.authorName || "Unknown Author"}</h4>
                     <div className="flex items-center space-x-1">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs">{mockResource.author.rating}</span>
+                      <span className="text-xs">4.5</span>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <div className="font-medium">{mockResource.author.totalUploads}</div>
+                    <div className="font-medium">0</div>
                     <div className="text-muted-foreground text-xs">Resources</div>
                   </div>
                   <div>
-                    <div className="font-medium">{mockResource.author.totalSales.toLocaleString()}</div>
+                    <div className="font-medium">0</div>
                     <div className="text-muted-foreground text-xs">Sales</div>
                   </div>
                 </div>
@@ -367,28 +575,13 @@ const ResourceDetail = () => {
                 <CardTitle>Related Resources</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {mockResource.relatedResources.map((resource) => (
-                  <div key={resource.id} className="flex space-x-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer">
-                    <img 
-                      src={resource.thumbnail} 
-                      alt={resource.title}
-                      className="w-16 h-12 rounded object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h5 className="font-medium text-sm truncate">{resource.title}</h5>
-                      <p className="text-xs text-muted-foreground">by {resource.author}</p>
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-xs">{resource.rating}</span>
-                        </div>
-                        <span className="text-sm font-medium text-primary">
-                          {resource.currency}{resource.price}
-                        </span>
-                      </div>
-                    </div>
+                <div className="text-center py-4">
+                  <div className="text-muted-foreground">
+                    <BookOpen className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No related resources</p>
+                    <p className="text-xs text-muted-foreground">Check back later for more!</p>
                   </div>
-                ))}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -404,33 +597,44 @@ const ResourceDetail = () => {
               Complete your purchase to access this resource
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
               <img 
-                src={mockResource.bannerImage} 
-                alt={mockResource.title}
+                src={resource.bannerImage || "/placeholder.svg"} 
+                alt={resource.title || "Resource"}
                 className="w-16 h-12 rounded object-cover"
+                onError={(e) => {
+                  // Fallback for broken images
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                }}
               />
               <div className="flex-1">
-                <h4 className="font-medium text-sm">{mockResource.title}</h4>
-                <p className="text-xs text-muted-foreground">by {mockResource.author.name}</p>
+                <h4 className="font-medium text-sm">{resource.title || "Untitled Resource"}</h4>
+                <p className="text-xs text-muted-foreground">by {resource.authorName || "Unknown Author"}</p>
               </div>
               <div className="text-lg font-bold text-primary">
-                {mockResource.currency}{mockResource.price}
+                {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
               </div>
             </div>
 
             <div className="text-sm text-muted-foreground text-center">
-              You will be redirected to our secure payment processor
+              {resource.isFree ? "You can download this resource for free" : "You will be redirected to our secure payment processor"}
             </div>
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setShowPurchaseModal(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowPurchaseModal(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleConfirmPurchase} className="w-full sm:w-auto">
+            <Button
+              onClick={handleConfirmPurchase}
+              className="w-full sm:w-auto"
+            >
               Continue to Payment
             </Button>
           </DialogFooter>
