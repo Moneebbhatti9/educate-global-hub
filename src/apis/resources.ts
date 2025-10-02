@@ -25,17 +25,81 @@ const RESOURCE_ENDPOINTS = {
   UPDATE_RESOURCE_STATUS: "/resources/update-status",
   GET_MY_RESOURCES: "/resources/my-resource-page",
   DELETE_RESOURCE: "/resources/delete-resource",
-  
+
   // Admin Resource Management
   GET_ADMIN_RESOURCES: "adminDashboard/admin-resources",
-  
+
   // Resource Search & Viewing (Public)
   GET_ALL_RESOURCES: "/resources/get-all-resources",
   GET_RESOURCE_BY_ID: "/resources/get-resource-by-id",
+
+  // Upload Document
+  UPLOAD_DOCUMENT: "/upload/document",
 } as const;
+
+// Upload Document Response Type
+export interface UploadDocumentResponse {
+  documentUrl: string;
+  publicId: string;
+}
 
 // Resources API functions
 export const resourcesAPI = {
+  // Upload Document
+  uploadDocument: async (
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<ApiResponse<UploadDocumentResponse>> => {
+    try {
+      // Safety checks for file
+      if (!file || !(file instanceof File)) {
+        throw new Error("Invalid file: must be a valid File object");
+      }
+
+      if (file.size === 0) {
+        throw new Error("Invalid file: file is empty");
+      }
+
+      const maxSize = 500 * 1024 * 1024; // 500MB
+      if (file.size > maxSize) {
+        throw new Error("File is too large. Maximum size is 500MB");
+      }
+
+      const formData = new FormData();
+      formData.append("document", file);
+
+      // Simulate progress for now (in real implementation, use axios onUploadProgress)
+      if (onProgress) {
+        const progressInterval = setInterval(() => {
+          const currentProgress = Math.min(90, Math.random() * 100);
+          onProgress(currentProgress);
+        }, 200);
+
+        const response = await apiHelpers.upload<ApiResponse<UploadDocumentResponse>>(
+          RESOURCE_ENDPOINTS.UPLOAD_DOCUMENT,
+          formData
+        );
+
+        clearInterval(progressInterval);
+        if (onProgress) onProgress(100);
+
+        return response;
+      }
+
+      return await apiHelpers.upload<ApiResponse<UploadDocumentResponse>>(
+        RESOURCE_ENDPOINTS.UPLOAD_DOCUMENT,
+        formData
+      );
+    } catch (error) {
+      console.error("Error in uploadDocument:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to upload document",
+        data: undefined
+      };
+    }
+  },
+
   // Create Resource
   createResource: async (
     data: CreateResourceRequest
@@ -54,7 +118,7 @@ export const resourcesAPI = {
         throw new Error("Description is required and must be a non-empty string");
       }
 
-      if (!data.type || typeof data.type !== 'string') {
+      if (!data.resourceType || typeof data.resourceType !== 'string') {
         throw new Error("Resource type is required");
       }
 
@@ -70,45 +134,17 @@ export const resourcesAPI = {
         throw new Error("Subject is required");
       }
 
-      // Safety checks for files
-      if (!data.banner || !(data.banner instanceof File)) {
-        throw new Error("Banner image is required and must be a valid file");
+      // Safety checks for URLs
+      if (!data.coverPhotoUrl || typeof data.coverPhotoUrl !== 'string' || data.coverPhotoUrl.trim().length === 0) {
+        throw new Error("Cover photo URL is required");
       }
 
-      if (!data.previews || !Array.isArray(data.previews) || data.previews.length === 0) {
-        throw new Error("At least one preview image is required");
+      if (!data.previewImageUrls || !Array.isArray(data.previewImageUrls) || data.previewImageUrls.length === 0) {
+        throw new Error("At least one preview image URL is required");
       }
 
-      if (!data.files || !Array.isArray(data.files) || data.files.length === 0) {
-        throw new Error("At least one resource file is required");
-      }
-
-      // Validate file sizes and types
-      const maxBannerSize = 5 * 1024 * 1024; // 5MB
-      if (data.banner.size > maxBannerSize) {
-        throw new Error("Banner image must be under 5MB");
-      }
-
-      const maxPreviewSize = 3 * 1024 * 1024; // 3MB per preview
-      for (const preview of data.previews) {
-        if (!(preview instanceof File)) {
-          throw new Error("All preview images must be valid files");
-        }
-        if (preview.size > maxPreviewSize) {
-          throw new Error(`Preview image ${preview.name} must be under 3MB`);
-        }
-      }
-
-      const maxResourceSize = 500 * 1024 * 1024; // 500MB total
-      let totalResourceSize = 0;
-      for (const file of data.files) {
-        if (!(file instanceof File)) {
-          throw new Error("All resource files must be valid files");
-        }
-        totalResourceSize += file.size;
-      }
-      if (totalResourceSize > maxResourceSize) {
-        throw new Error("Total resource files size must be under 500MB");
+      if (!data.mainFileUrl || typeof data.mainFileUrl !== 'string' || data.mainFileUrl.trim().length === 0) {
+        throw new Error("Main file URL is required");
       }
 
       // Safety check for paid resources
@@ -116,46 +152,27 @@ export const resourcesAPI = {
         throw new Error("Price is required for paid resources and must be greater than 0");
       }
 
-      const formData = new FormData();
-      
-      // Add required text fields with safety checks
-      formData.append("title", data.title.trim());
-      formData.append("description", data.description.trim());
-      formData.append("resourceType", data.type);
-      formData.append("ageRange", data.ageRange);
-      formData.append("curriculum", data.curriculum);
-      formData.append("curriculumType", data.curriculumType);
-      formData.append("subject", data.subject);
-      formData.append("isFree", data.isFree.toString());
-      formData.append("saveAsDraft", data.saveAsDraft.toString());
-      
-      // Add optional fields with safety checks
-      if (data.publishing && typeof data.publishing === 'string') {
-        formData.append("visibility", data.publishing);
-      }
-      if (data.price && typeof data.price === 'number' && data.price > 0) {
-        formData.append("price", data.price.toString());
-      }
-      if (data.currency && typeof data.currency === 'string') {
-        formData.append("currency", data.currency);
-      }
-      
-      // Add files with safety checks
-      formData.append("banner", data.banner);
-      data.previews.forEach((file) => {
-        if (file instanceof File) {
-          formData.append("previews", file);
-        }
-      });
-      data.files.forEach((file) => {
-        if (file instanceof File) {
-          formData.append("files", file);
-        }
-      });
-      
-      return await apiHelpers.upload<ApiResponse<Resource>>(
+      const requestBody = {
+        title: data.title.trim(),
+        description: data.description.trim(),
+        resourceType: data.resourceType,
+        ageRange: data.ageRange,
+        curriculum: data.curriculum,
+        curriculumType: data.curriculumType || "",
+        subject: data.subject,
+        isFree: data.isFree,
+        saveAsDraft: data.saveAsDraft,
+        visibility: data.visibility || "public",
+        price: data.isFree ? undefined : data.price,
+        currency: data.isFree ? undefined : (data.currency || "USD"),
+        coverPhotoUrl: data.coverPhotoUrl.trim(),
+        previewImageUrls: data.previewImageUrls.map(url => url.trim()),
+        mainFileUrl: data.mainFileUrl.trim(),
+      };
+
+      return await apiHelpers.post<ApiResponse<Resource>>(
         RESOURCE_ENDPOINTS.CREATE_RESOURCE,
-        formData
+        requestBody
       );
     } catch (error) {
       console.error("Error in createResource:", error);
@@ -285,83 +302,60 @@ export const resourcesAPI = {
         throw new Error("Update data is required and must be a valid object");
       }
 
-      const formData = new FormData();
-      
+      const requestBody: Record<string, any> = {};
+
       // Add text fields with safety checks
       if (data.title && typeof data.title === 'string' && data.title.trim().length > 0) {
-        formData.append("title", data.title.trim());
+        requestBody.title = data.title.trim();
       }
       if (data.description && typeof data.description === 'string' && data.description.trim().length > 0) {
-        formData.append("description", data.description.trim());
+        requestBody.description = data.description.trim();
       }
       if (data.type && typeof data.type === 'string') {
-        formData.append("type", data.type);
+        requestBody.type = data.type;
       }
       if (data.publishing && typeof data.publishing === 'string') {
-        formData.append("publishing", data.publishing);
+        requestBody.publishing = data.publishing;
       }
       if (data.isFree !== undefined && typeof data.isFree === 'boolean') {
-        formData.append("isFree", data.isFree.toString());
+        requestBody.isFree = data.isFree;
       }
       if (data.price && typeof data.price === 'number' && data.price > 0) {
-        formData.append("price", data.price.toString());
+        requestBody.price = data.price;
       }
       if (data.currency && typeof data.currency === 'string') {
-        formData.append("currency", data.currency);
+        requestBody.currency = data.currency;
       }
       if (data.ageRange && typeof data.ageRange === 'string') {
-        formData.append("ageRange", data.ageRange);
+        requestBody.ageRange = data.ageRange;
       }
       if (data.curriculum && typeof data.curriculum === 'string') {
-        formData.append("curriculum", data.curriculum);
+        requestBody.curriculum = data.curriculum;
       }
       if (data.curriculumType && typeof data.curriculumType === 'string') {
-        formData.append("curriculumType", data.curriculumType);
+        requestBody.curriculumType = data.curriculumType;
       }
       if (data.subject && typeof data.subject === 'string') {
-        formData.append("subject", data.subject);
+        requestBody.subject = data.subject;
       }
       if (data.status && typeof data.status === 'string') {
-        formData.append("status", data.status);
+        requestBody.status = data.status;
       }
-      
-      // Add files with safety checks
-      if (data.coverPhoto && data.coverPhoto instanceof File) {
-        // Validate file size
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (data.coverPhoto.size > maxSize) {
-          throw new Error("Cover photo must be under 5MB");
-        }
-        formData.append("coverPhoto", data.coverPhoto);
+
+      // Add URLs with safety checks
+      if (data.coverPhotoUrl && typeof data.coverPhotoUrl === 'string' && data.coverPhotoUrl.trim().length > 0) {
+        requestBody.coverPhotoUrl = data.coverPhotoUrl.trim();
       }
-      if (data.previewImages && Array.isArray(data.previewImages)) {
-        const maxSize = 3 * 1024 * 1024; // 3MB per image
-        for (const file of data.previewImages) {
-          if (!(file instanceof File)) {
-            throw new Error("All preview images must be valid files");
-          }
-          if (file.size > maxSize) {
-            throw new Error(`Preview image ${file.name} must be under 3MB`);
-          }
-          formData.append("previewImages", file);
-        }
+      if (data.previewImageUrls && Array.isArray(data.previewImageUrls) && data.previewImageUrls.length > 0) {
+        requestBody.previewImageUrls = data.previewImageUrls.map(url => url.trim());
       }
-      if (data.mainFile && data.mainFile instanceof File) {
-        const maxSize = 500 * 1024 * 1024; // 500MB
-        if (data.mainFile.size > maxSize) {
-          throw new Error("Main file must be under 500MB");
-        }
-        formData.append("mainFile", data.mainFile);
+      if (data.mainFileUrl && typeof data.mainFileUrl === 'string' && data.mainFileUrl.trim().length > 0) {
+        requestBody.mainFileUrl = data.mainFileUrl.trim();
       }
-      
+
       return await apiHelpers.put<ApiResponse<Resource>>(
         `${RESOURCE_ENDPOINTS.UPDATE_RESOURCE}/${resourceId.trim()}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        requestBody
       );
     } catch (error) {
       console.error("Error in updateResource:", error);
