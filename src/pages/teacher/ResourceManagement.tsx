@@ -430,15 +430,16 @@ export default function ResourceManagement() {
                           <TableCell>
                             <img
                               src={
-                                resource.coverPhoto?.url ||
-                                "/api/placeholder/100/60"
+                                (typeof resource.coverPhoto === 'string'
+                                  ? resource.coverPhoto
+                                  : resource.coverPhoto?.url) 
                               }
                               alt={resource.title || "Resource"}
                               className="w-16 h-10 object-cover rounded border"
                               onError={(e) => {
                                 // Fallback for broken images
                                 const target = e.target as HTMLImageElement;
-                                target.src = "/api/placeholder/100/60";
+                                target.src = "";
                               }}
                             />
                           </TableCell>
@@ -599,7 +600,9 @@ export default function ResourceManagement() {
                   id: selectedResource._id,
                   title: selectedResource.title || "Untitled Resource",
                   thumbnail:
-                    selectedResource.coverPhoto?.url ||
+                    (typeof selectedResource.coverPhoto === 'string'
+                      ? selectedResource.coverPhoto
+                      : selectedResource.coverPhoto?.url) ||
                     "/api/placeholder/100/60",
                   price: selectedResource.price || 0,
                   status: selectedResource.status || "unknown",

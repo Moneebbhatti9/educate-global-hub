@@ -54,8 +54,8 @@ export type ResourceStatus = "draft" | "published" | "flagged" | "archived";
 export interface CreateResourceRequest {
   title: string;
   description: string;
-  type: string;
-  publishing?: string;
+  resourceType: string;  // Changed from 'type'
+  visibility?: string;    // Changed from 'publishing'
   isFree: boolean;
   price?: number;
   currency?: string;
@@ -64,9 +64,9 @@ export interface CreateResourceRequest {
   curriculum: string;
   curriculumType: string;
   subject: string;
-  banner: File;
-  previews: File[];
-  files: File[];
+  coverPhotoUrl: string;           // Changed from 'banner: File'
+  previewImageUrls: string[];      // Changed from 'previews: File[]'
+  mainFileUrl: string;             // Changed from 'files: File[]'
 }
 
 export interface UpdateResourceRequest {
@@ -82,9 +82,19 @@ export interface UpdateResourceRequest {
   curriculumType?: string;
   subject?: string;
   status?: string;
-  coverPhoto?: File;
-  previewImages?: File[];
-  mainFile?: File;
+  coverPhotoUrl?: string;          // Changed from 'coverPhoto?: File'
+  previewImageUrls?: string[];     // Changed from 'previewImages?: File[]'
+  mainFileUrl?: string;            // Changed from 'mainFile?: File'
+}
+
+// Add new interface for file upload metadata
+export interface UploadedFileMetadata {
+  file: File;
+  url: string | null;
+  publicId: string | null;
+  progress: number;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  error?: string;
 }
 
 export interface UpdateResourceStatusRequest {
@@ -123,7 +133,7 @@ export interface TeacherResource {
     userId: string;
     role: string;
   };
-  coverPhoto: {
+  coverPhoto: string | {
     _id: string;
     resourceId: string;
     fileType: string;
@@ -133,7 +143,7 @@ export interface TeacherResource {
     updatedAt: string;
     __v: number;
   };
-  previewImages: Array<{
+  previewImages: string[] | Array<{
     _id: string;
     resourceId: string;
     fileType: string;
@@ -143,7 +153,7 @@ export interface TeacherResource {
     updatedAt: string;
     __v: number;
   }>;
-  mainFile: {
+  mainFile: string | {
     _id: string;
     resourceId: string;
     fileType: string;
