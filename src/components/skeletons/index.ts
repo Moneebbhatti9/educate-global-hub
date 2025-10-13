@@ -75,3 +75,12 @@ export {
   UserCardSkeleton,
   UserGridSkeleton,
 } from "./user-management-skeleton";
+
+// Admin Forum Management Skeletons
+export {
+  AdminForumManagementSkeleton,
+  ForumStatsSkeleton,
+  ForumFiltersSkeleton,
+  DiscussionTableRowSkeleton,
+  DiscussionsListSkeleton,
+} from "./admin-forum-management-skeleton";

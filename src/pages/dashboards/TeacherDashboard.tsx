@@ -35,6 +35,7 @@ import {
   Download,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   useMyApplications,
   useTeacherDashboardCardData,
@@ -56,8 +57,15 @@ import { useRemoveSavedJob } from "@/hooks/useSavedJobs";
 import { customToast } from "@/components/ui/sonner";
 import { useTeacherRecommendedJobs } from "@/hooks/useJobs";
 import { TeacherDashboardSkeleton } from "@/components/skeletons";
-import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
-import { EmptyApplications, EmptySavedJobs, EmptyRecommendations } from "@/components/ui/empty-state";
+import {
+  DashboardErrorFallback,
+  SectionErrorFallback,
+} from "@/components/ui/error-fallback";
+import {
+  EmptyApplications,
+  EmptySavedJobs,
+  EmptyRecommendations,
+} from "@/components/ui/empty-state";
 
 // Interface for the actual API response structure
 interface TeacherApplicationResponse {
@@ -99,6 +107,7 @@ interface NotificationResponse {
 
 const TeacherDashboard = () => {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     "overview" | "applications" | "saved"
   >("overview");
@@ -179,7 +188,7 @@ const TeacherDashboard = () => {
   if (hasErrors) {
     return (
       <DashboardLayout role="teacher">
-        <DashboardErrorFallback 
+        <DashboardErrorFallback
           error="Failed to load dashboard data"
           onRetry={() => window.location.reload()}
           title="Teacher Dashboard Unavailable"
@@ -350,6 +359,23 @@ const TeacherDashboard = () => {
     return "Salary not specified";
   };
 
+  // Navigation functions
+  const handleUpdateProfile = () => {
+    navigate("/dashboard/teacher/teacher-profile");
+  };
+
+  const handleBrowseJobs = () => {
+    navigate("/dashboard/teacher/jobs");
+  };
+
+  const handleViewAllApplications = () => {
+    navigate("/dashboard/teacher/applications");
+  };
+
+  const handleViewJob = (jobId: string) => {
+    navigate(`/dashboard/teacher/job/${jobId}`);
+  };
+
   return (
     <DashboardLayout role="teacher">
       <div className="space-y-6">
@@ -431,7 +457,11 @@ const TeacherDashboard = () => {
                     <CardTitle className="font-heading text-xl">
                       Recommended Jobs
                     </CardTitle>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBrowseJobs}
+                    >
                       View All
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -493,7 +523,10 @@ const TeacherDashboard = () => {
                               <Bookmark className="w-4 h-4 mr-2" />
                               Save
                             </Button>
-                            <Button size="sm">
+                            <Button
+                              size="sm"
+                              onClick={() => handleViewJob(job._id)}
+                            >
                               <Eye className="w-4 h-4 mr-2" />
                               View
                             </Button>
@@ -503,7 +536,7 @@ const TeacherDashboard = () => {
                     ))
                   ) : (
                     <EmptyRecommendations
-                      onUpdateProfile={() => console.log("Navigate to profile")}
+                      onUpdateProfile={handleUpdateProfile}
                     />
                   )}
                 </CardContent>
@@ -563,13 +596,16 @@ const TeacherDashboard = () => {
                     ))
                   ) : (
                     <div className="text-center py-4">
-                      <EmptyApplications
-                        onBrowseJobs={() => console.log("Navigate to jobs")}
-                      />
+                      <EmptyApplications onBrowseJobs={handleBrowseJobs} />
                     </div>
                   )}
 
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleViewAllApplications}
+                  >
                     View All Applications
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -683,7 +719,11 @@ const TeacherDashboard = () => {
                               Withdraw
                             </Button>
                           )}
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewJob(application.jobId._id)}
+                          >
                             View Details
                           </Button>
                         </div>
@@ -692,9 +732,7 @@ const TeacherDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <EmptyApplications
-                  onBrowseJobs={() => console.log("Navigate to jobs")}
-                />
+                <EmptyApplications onBrowseJobs={handleBrowseJobs} />
               )}
             </CardContent>
           </Card>
@@ -763,9 +801,7 @@ const TeacherDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            (window.location.href = `/dashboard/teacher/job/${savedJob.jobId._id}`)
-                          }
+                          onClick={() => handleViewJob(savedJob.jobId._id)}
                         >
                           View Job
                         </Button>
@@ -774,9 +810,7 @@ const TeacherDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <EmptySavedJobs
-                  onBrowseJobs={() => console.log("Navigate to jobs")}
-                />
+                <EmptySavedJobs onBrowseJobs={handleBrowseJobs} />
               )}
             </CardContent>
           </Card>

@@ -26,10 +26,20 @@ import {
   Target,
   Award,
 } from "lucide-react";
-import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
-import { EmptyJobPostings, EmptyCandidates, EmptyApplications } from "@/components/ui/empty-state";
+import {
+  DashboardErrorFallback,
+  SectionErrorFallback,
+} from "@/components/ui/error-fallback";
+import {
+  EmptyJobPostings,
+  EmptyCandidates,
+  EmptyApplications,
+} from "@/components/ui/empty-state";
+import { useNavigate } from "react-router-dom";
 
 const RecruiterDashboard = () => {
+  const navigate = useNavigate();
+
   const stats = [
     {
       title: "Active Placements",
@@ -190,6 +200,31 @@ const RecruiterDashboard = () => {
     }
   };
 
+  // Navigation functions
+  const handleNewPlacement = () => {
+    navigate("/dashboard/recruiter/new-placement");
+  };
+
+  const handleViewAllRequests = () => {
+    navigate("/dashboard/recruiter/requests");
+  };
+
+  const handleBrowseCandidates = () => {
+    navigate("/dashboard/recruiter/candidates");
+  };
+
+  const handleViewDetails = (placementId: number) => {
+    navigate(`/dashboard/recruiter/placement/${placementId}`);
+  };
+
+  const handleUpdatePlacement = (placementId: number) => {
+    navigate(`/dashboard/recruiter/placement/${placementId}/edit`);
+  };
+
+  const handleViewRequestDetails = (requestId: number) => {
+    navigate(`/dashboard/recruiter/request/${requestId}`);
+  };
+
   return (
     <DashboardLayout role="recruiter">
       <div className="space-y-6">
@@ -242,7 +277,7 @@ const RecruiterDashboard = () => {
                   <CardTitle className="font-heading text-xl">
                     Active Placements
                   </CardTitle>
-                  <Button variant="default">
+                  <Button variant="default" onClick={handleNewPlacement}>
                     <Target className="w-4 h-4 mr-2" />
                     New Placement
                   </Button>
@@ -293,10 +328,18 @@ const RecruiterDashboard = () => {
                         Due: {placement.deadline}
                       </span>
                       <div className="space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUpdatePlacement(placement.id)}
+                        >
                           Update
                         </Button>
-                        <Button variant="default" size="sm">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleViewDetails(placement.id)}
+                        >
                           Details
                         </Button>
                       </div>
@@ -355,13 +398,23 @@ const RecruiterDashboard = () => {
                       <div className="text-xs">{request.requirements}</div>
                     </div>
 
-                    <Button variant="outline" size="sm" className="w-full mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => handleViewRequestDetails(request.id)}
+                    >
                       View Details
                     </Button>
                   </div>
                 ))}
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleViewAllRequests}
+                >
                   View All Requests
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -429,7 +482,12 @@ const RecruiterDashboard = () => {
                   </div>
                 ))}
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleBrowseCandidates}
+                >
                   Browse All Candidates
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

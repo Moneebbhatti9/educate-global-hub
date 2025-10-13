@@ -310,13 +310,12 @@ const TeacherProfileForm = ({
           {[1, 2, 3].map((step) => (
             <div key={step} className="flex flex-col items-center flex-1">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  step < currentStep
+                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${step < currentStep
                     ? "bg-green-500 border-green-500 text-white"
                     : step === currentStep
-                    ? "bg-brand-primary border-brand-primary text-white"
-                    : "border-muted-foreground text-muted-foreground"
-                }`}
+                      ? "bg-brand-primary border-brand-primary text-white"
+                      : "border-muted-foreground text-muted-foreground"
+                  }`}
               >
                 {step < currentStep ? (
                   <CheckCircle className="w-5 h-5" />
@@ -521,12 +520,12 @@ const TeacherProfileForm = ({
                       setValue(
                         "qualification",
                         value as
-                          | "Bachelor"
-                          | "Master"
-                          | "PhD"
-                          | "Diploma"
-                          | "Certificate"
-                          | "Other"
+                        | "Bachelor"
+                        | "Master"
+                        | "PhD"
+                        | "Diploma"
+                        | "Certificate"
+                        | "Other"
                       )
                     }
                   >
@@ -625,8 +624,8 @@ const TeacherProfileForm = ({
                   <ul className="text-sm text-amber-700 space-y-1">
                     {(!formData.professionalBio ||
                       formData.professionalBio.length < 50) && (
-                      <li>• Professional Bio (minimum 50 characters)</li>
-                    )}
+                        <li>• Professional Bio (minimum 50 characters)</li>
+                      )}
                   </ul>
                 </div>
               )}
@@ -810,15 +809,15 @@ const TeacherProfileForm = ({
           )}
 
           {/* Navigation */}
-          <div className="flex justify-end pt-6">
-            {/* <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 1 && !onBack}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
-            </Button> */}
+          <div className="flex justify-between pt-6">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 1}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
 
             <Button
               onClick={handleNext}

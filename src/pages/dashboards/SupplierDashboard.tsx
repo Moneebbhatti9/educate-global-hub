@@ -25,10 +25,19 @@ import {
   Eye,
   FileText,
 } from "lucide-react";
-import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
-import { EmptyJobPostings, EmptySearchResults } from "@/components/ui/empty-state";
+import {
+  DashboardErrorFallback,
+  SectionErrorFallback,
+} from "@/components/ui/error-fallback";
+import {
+  EmptyJobPostings,
+  EmptySearchResults,
+} from "@/components/ui/empty-state";
+import { useNavigate } from "react-router-dom";
 
 const SupplierDashboard = () => {
+  const navigate = useNavigate();
+
   const stats = [
     {
       title: "Active Products",
@@ -190,6 +199,31 @@ const SupplierDashboard = () => {
     }
   };
 
+  // Navigation functions
+  const handleCreateQuote = () => {
+    navigate("/dashboard/supplier/create-quote");
+  };
+
+  const handleViewAllInquiries = () => {
+    navigate("/dashboard/supplier/inquiries");
+  };
+
+  const handleManageProducts = () => {
+    navigate("/dashboard/supplier/products");
+  };
+
+  const handleViewOrderDetails = (orderId: string) => {
+    navigate(`/dashboard/supplier/order/${orderId}`);
+  };
+
+  const handleUpdateOrderStatus = (orderId: string) => {
+    navigate(`/dashboard/supplier/order/${orderId}/update`);
+  };
+
+  const handleRespondToInquiry = (inquiryId: number) => {
+    navigate(`/dashboard/supplier/inquiry/${inquiryId}/respond`);
+  };
+
   return (
     <DashboardLayout role="supplier">
       <div className="space-y-6">
@@ -241,7 +275,7 @@ const SupplierDashboard = () => {
                   <CardTitle className="font-heading text-xl">
                     Recent Orders
                   </CardTitle>
-                  <Button variant="default">
+                  <Button variant="default" onClick={handleCreateQuote}>
                     <Plus className="w-4 h-4 mr-2" />
                     Create Quote
                   </Button>
@@ -290,10 +324,18 @@ const SupplierDashboard = () => {
                     </div>
 
                     <div className="flex justify-end space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewOrderDetails(order.id)}
+                      >
                         View Details
                       </Button>
-                      <Button variant="default" size="sm">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleUpdateOrderStatus(order.id)}
+                      >
                         Update Status
                       </Button>
                     </div>
@@ -356,14 +398,23 @@ const SupplierDashboard = () => {
                       >
                         {inquiry.status}
                       </Badge>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRespondToInquiry(inquiry.id)}
+                      >
                         Respond
                       </Button>
                     </div>
                   </div>
                 ))}
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleViewAllInquiries}
+                >
                   View All Inquiries
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -421,7 +472,12 @@ const SupplierDashboard = () => {
                   </div>
                 ))}
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleManageProducts}
+                >
                   Manage Products
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
