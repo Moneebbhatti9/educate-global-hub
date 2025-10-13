@@ -1,19 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -33,34 +25,26 @@ import {
 } from "@/components/ui/select";
 import {
   Search,
-  MessageCircle,
-  Users,
-  ThumbsUp,
-  Clock,
-  Pin,
   TrendingUp,
   BookOpen,
   HelpCircle,
   Lightbulb,
   Plus,
-  Tag,
   Send,
   Loader2,
   AlertCircle,
+  Briefcase,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { useForum } from "@/hooks/useForum";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreateDiscussionData } from "@/types/forum";
-import {
-  formatDate,
-  getUserDisplayName,
-  getUserInitials,
-  hasUserLiked,
-  getLikeCount,
-  parseTags,
-  generateExcerpt,
-} from "@/utils/forumTransformers";
+import { parseTags } from "@/utils/forumTransformers";
 import { toast } from "@/hooks/use-toast";
+import PostCard from "@/components/Forum/PostCard";
+import NotificationBell from "@/components/Forum/NotificationBell";
+import socketService from "@/services/socketService";
 
 const Forum = () => {
   const { user } = useAuth();
@@ -76,7 +60,6 @@ const Forum = () => {
     createDiscussion,
     toggleLikeDiscussion,
     searchDiscussions,
-    clearError,
   } = useForum();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,6 +72,8 @@ const Forum = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("recent");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   // Load initial data on component mount
   useEffect(() => {
@@ -103,10 +88,71 @@ const Forum = () => {
       loadDiscussions({
         tab: activeTab as "recent" | "trending" | "unanswered" | "following",
         page: 1,
-        limit: 10,
+        limit: 20,
       });
     }
   }, [activeTab, searchTerm, loadDiscussions, searchDiscussions]);
+
+  // Listen for real-time post updates
+  useEffect(() => {
+    const handleNewPost = () => {
+      loadDiscussions({
+        tab: activeTab as "recent" | "trending" | "unanswered" | "following",
+        page: 1,
+        limit: 20,
+      });
+    };
+
+    socketService.onNewPost(handleNewPost);
+
+    return () => {
+      socketService.off("post:new", handleNewPost);
+    };
+  }, [activeTab, loadDiscussions]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    // Limit to 4 images
+    const validFiles = files.slice(0, 4 - selectedImages.length);
+
+    // Validate file types and sizes
+    const imageFiles = validFiles.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File",
+          description: `${file.name} is not an image file`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    setSelectedImages(prev => [...prev, ...imageFiles]);
+
+    // Create previews
+    imageFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleCreateDiscussion = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -114,7 +160,7 @@ const Forum = () => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to create a discussion.",
+        description: "Please sign in to create a post.",
         variant: "destructive",
       });
       return;
@@ -123,29 +169,42 @@ const Forum = () => {
     try {
       setIsSubmitting(true);
 
+      // Convert images to base64
+      const imagePromises = selectedImages.map(file => {
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const base64Images = await Promise.all(imagePromises);
+
       const discussionData: CreateDiscussionData = {
         title: newDiscussion.title.trim(),
         content: newDiscussion.content.trim(),
         category: newDiscussion.category,
         tags: parseTags(newDiscussion.tags),
+        images: base64Images, // Send base64 images to backend
       };
 
       await createDiscussion(discussionData);
 
       toast({
         title: "Success",
-        description: "Discussion created successfully!",
+        description: "Post created successfully!",
       });
 
       setIsDialogOpen(false);
       setNewDiscussion({ title: "", content: "", category: "", tags: "" });
+      setSelectedImages([]);
+      setImagePreviews([]);
     } catch (error) {
       toast({
         title: "Error",
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to create discussion",
+          error instanceof Error ? error.message : "Failed to create post",
         variant: "destructive",
       });
     } finally {
@@ -157,7 +216,7 @@ const Forum = () => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to like discussions.",
+        description: "Please sign in to like posts.",
         variant: "destructive",
       });
       return;
@@ -168,7 +227,7 @@ const Forum = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to like discussion",
+        description: "Failed to like post",
         variant: "destructive",
       });
     }
@@ -182,809 +241,387 @@ const Forum = () => {
       loadDiscussions({
         tab: activeTab as "recent" | "trending" | "unanswered" | "following",
         page: 1,
-        limit: 10,
+        limit: 20,
       });
     }
   };
 
-  // Category mapping for icons and colors
   const getCategoryIcon = (categoryName: string) => {
-    const iconMap: Record<
-      string,
-      React.ComponentType<{ className?: string }>
-    > = {
+    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
       "Teaching Tips & Strategies": Lightbulb,
       "Curriculum & Resources": BookOpen,
-      "Career Advice": TrendingUp,
+      "Career Advice": Briefcase,
       "Help & Support": HelpCircle,
     };
-    return iconMap[categoryName] || MessageCircle;
+    return iconMap[categoryName] || HelpCircle;
   };
 
   const getCategoryColor = (categoryName: string) => {
     const colorMap: Record<string, string> = {
-      "Teaching Tips & Strategies":
-        "bg-brand-accent-orange/10 text-brand-accent-orange",
-      "Curriculum & Resources":
-        "bg-brand-accent-green/10 text-brand-accent-green",
-      "Career Advice": "bg-brand-secondary/10 text-brand-secondary",
-      "Help & Support": "bg-brand-primary/10 text-brand-primary",
+      "Teaching Tips & Strategies": "bg-[#0A66C2]/10 text-[#0A66C2]",
+      "Curriculum & Resources": "bg-[#057642]/10 text-[#057642]",
+      "Career Advice": "bg-[#7C3AED]/10 text-[#7C3AED]",
+      "Help & Support": "bg-[#F97316]/10 text-[#F97316]",
     };
     return colorMap[categoryName] || "bg-gray-100 text-gray-600";
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F3F2EF] flex flex-col">
       <Navigation />
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-4">
-            <div className="flex-1">
-              <h1 className="font-heading font-bold text-2xl sm:text-3xl lg:text-4xl text-foreground mb-4">
-                Education Forum
-              </h1>
-              <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl">
-                Connect with educators worldwide. Share knowledge, ask
-                questions, and grow together as a global education community.
-              </p>
-            </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="hero"
-                  className="ml-0 sm:ml-4 w-full sm:w-auto"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span className="sm:inline">New Discussion</span>
-                  <span className="sm:hidden">New Post</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto sm:w-full sm:max-w-2xl">
-                <DialogHeader className="pb-4">
-                  <DialogTitle className="font-heading text-lg sm:text-xl">
-                    Start a New Discussion
-                  </DialogTitle>
-                  <DialogDescription className="text-sm sm:text-base">
-                    Share your thoughts, ask questions, or start a conversation
-                    with the community.
-                  </DialogDescription>
-                </DialogHeader>
+      {/* LinkedIn-style Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <h1 className="font-heading font-semibold text-xl text-gray-900">
+              Educator Forum
+            </h1>
+            <div className="flex items-center space-x-4">
+              <NotificationBell />
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold">
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Post
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-semibold">Create a post</DialogTitle>
+                    <DialogDescription>
+                      Share your knowledge with the educator community
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <form
-                  className="space-y-4 sm:space-y-6"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-sm font-medium">
-                      Discussion Title *
-                    </Label>
-                    <Input
-                      id="title"
-                      placeholder="Enter a clear, descriptive title for your discussion"
-                      value={newDiscussion.title}
-                      onChange={(e) =>
-                        setNewDiscussion({
-                          ...newDiscussion,
-                          title: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="category" className="text-sm font-medium">
-                      Category *
-                    </Label>
-                    <Select
-                      value={newDiscussion.category}
-                      onValueChange={(value) =>
-                        setNewDiscussion({ ...newDiscussion, category: value })
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Teaching Tips & Strategies">
-                          Teaching Tips & Strategies
-                        </SelectItem>
-                        <SelectItem value="Curriculum & Resources">
-                          Curriculum & Resources
-                        </SelectItem>
-                        <SelectItem value="Career Advice">
-                          Career Advice
-                        </SelectItem>
-                        <SelectItem value="Help & Support">
-                          Help & Support
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="content" className="text-sm font-medium">
-                      Content *
-                    </Label>
-                    <Textarea
-                      id="content"
-                      placeholder="Share your thoughts, ask your question, or describe your topic in detail..."
-                      value={newDiscussion.content}
-                      onChange={(e) =>
-                        setNewDiscussion({
-                          ...newDiscussion,
-                          content: e.target.value,
-                        })
-                      }
-                      rows={4}
-                      className="w-full resize-none sm:resize-y min-h-[100px] sm:min-h-[120px]"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="tags" className="text-sm font-medium">
-                      Tags
-                    </Label>
-                    <div className="relative">
-                      <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <form className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title *</Label>
                       <Input
-                        id="tags"
-                        placeholder="e.g., mathematics, classroom-management, new-teacher (separate with commas)"
-                        value={newDiscussion.tags}
+                        id="title"
+                        placeholder="What do you want to talk about?"
+                        value={newDiscussion.title}
                         onChange={(e) =>
-                          setNewDiscussion({
-                            ...newDiscussion,
-                            tags: e.target.value,
-                          })
+                          setNewDiscussion({ ...newDiscussion, title: e.target.value })
                         }
-                        className="pl-10 w-full"
+                        required
                       />
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Add relevant tags to help others find your discussion
-                    </p>
-                  </div>
 
-                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 sm:pt-6">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
-                      className="w-full sm:w-auto order-2 sm:order-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="hero"
-                      disabled={isSubmitting}
-                      onClick={handleCreateDiscussion}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Start Discussion
-                        </>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <Select
+                        value={newDiscussion.category}
+                        onValueChange={(value) =>
+                          setNewDiscussion({ ...newDiscussion, category: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Teaching Tips & Strategies">
+                            Teaching Tips & Strategies
+                          </SelectItem>
+                          <SelectItem value="Curriculum & Resources">
+                            Curriculum & Resources
+                          </SelectItem>
+                          <SelectItem value="Career Advice">Career Advice</SelectItem>
+                          <SelectItem value="Help & Support">Help & Support</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="content">What's on your mind? *</Label>
+                      <Textarea
+                        id="content"
+                        placeholder="Share your thoughts, questions, or insights..."
+                        value={newDiscussion.content}
+                        onChange={(e) =>
+                          setNewDiscussion({ ...newDiscussion, content: e.target.value })
+                        }
+                        rows={6}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="tags">Tags (optional)</Label>
+                      <Input
+                        id="tags"
+                        placeholder="e.g., math, classroom-management, assessment"
+                        value={newDiscussion.tags}
+                        onChange={(e) =>
+                          setNewDiscussion({ ...newDiscussion, tags: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    {/* Image Upload */}
+                    <div className="space-y-2">
+                      <Label>Add Images (optional)</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#0A66C2] transition-colors">
+                        <input
+                          type="file"
+                          id="image-upload"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageSelect}
+                          className="hidden"
+                          disabled={selectedImages.length >= 4}
+                        />
+                        <label
+                          htmlFor="image-upload"
+                          className={`flex flex-col items-center justify-center cursor-pointer ${selectedImages.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <ImagePlus className="w-10 h-10 text-gray-400 mb-2" />
+                          <span className="text-sm text-gray-600 font-medium">
+                            {selectedImages.length >= 4 ? 'Maximum 4 images' : 'Click to add images'}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            PNG, JPG, GIF up to 5MB (max 4 images)
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Image Previews */}
+                      {imagePreviews.length > 0 && (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Search and Tabs */}
-            <div className="space-y-4">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search discussions, topics, or users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </form>
-
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="w-full"
-              >
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="recent">Recent</TabsTrigger>
-                  <TabsTrigger value="trending">Trending</TabsTrigger>
-                  <TabsTrigger value="unanswered">Unanswered</TabsTrigger>
-                  <TabsTrigger value="following">Following</TabsTrigger>
-                </TabsList>
-
-                {/* Error Display */}
-                {error && (
-                  <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center space-x-2">
-                    <AlertCircle className="w-5 h-5 text-destructive" />
-                    <span className="text-destructive">{error}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearError}
-                      className="ml-auto"
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
-                )}
-
-                {/* Loading State */}
-                {loading && (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                    <span>Loading discussions...</span>
-                  </div>
-                )}
-
-                <TabsContent value="recent" className="space-y-4 mt-6">
-                  {!loading &&
-                    discussions.map((discussion) => (
-                      <Card
-                        key={discussion._id}
-                        className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20"
-                      >
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                {discussion.isPinned && (
-                                  <Pin className="w-4 h-4 text-brand-accent-orange" />
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {discussion.category}
-                                </Badge>
-                              </div>
-                              <CardTitle className="font-heading text-lg">
-                                <Link
-                                  to={`/forum/${discussion._id}`}
-                                  className="hover:text-brand-primary transition-colors cursor-pointer block hover:underline"
-                                >
-                                  {discussion.title}
-                                </Link>
-                              </CardTitle>
-                              <CardDescription className="mt-2 line-clamp-2">
-                                {generateExcerpt(discussion.content)}
-                              </CardDescription>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {discussion.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardHeader>
-
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage
-                                  src={discussion.createdBy.avatarUrl}
-                                />
-                                <AvatarFallback>
-                                  {getUserInitials(discussion.createdBy)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {getUserDisplayName(discussion.createdBy)}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {discussion.createdBy.role}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <div className="flex items-center">
-                                <MessageCircle className="w-4 h-4 mr-1" />
-                                {discussion.replyCount || 0}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleLikeDiscussion(discussion._id)
-                                }
-                                className={`h-8 px-2 ${
-                                  user &&
-                                  hasUserLiked(discussion.likes, user.id || "")
-                                    ? "text-brand-primary"
-                                    : ""
-                                }`}
-                              >
-                                <ThumbsUp className="w-4 h-4 mr-1" />
-                                {getLikeCount(discussion.likes)}
-                              </Button>
-                              <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {formatDate(discussion.createdAt)}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                  {/* Empty State */}
-                  {!loading && discussions.length === 0 && (
-                    <div className="text-center py-12">
-                      <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">
-                        No discussions found
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {searchTerm
-                          ? "Try adjusting your search terms"
-                          : "Be the first to start a discussion!"}
-                      </p>
                     </div>
-                  )}
-                </TabsContent>
 
-                <TabsContent value="trending" className="space-y-4 mt-6">
-                  {!loading &&
-                    discussions.map((discussion) => (
-                      <Card
-                        key={discussion._id}
-                        className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20"
+                    <div className="flex justify-end space-x-3 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsDialogOpen(false)}
                       >
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                {discussion.isPinned && (
-                                  <Pin className="w-4 h-4 text-brand-accent-orange" />
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {discussion.category}
-                                </Badge>
-                              </div>
-                              <CardTitle className="font-heading text-lg">
-                                <Link
-                                  to={`/forum/${discussion._id}`}
-                                  className="hover:text-brand-primary transition-colors cursor-pointer block hover:underline"
-                                >
-                                  {discussion.title}
-                                </Link>
-                              </CardTitle>
-                              <CardDescription className="mt-2 line-clamp-2">
-                                {generateExcerpt(discussion.content)}
-                              </CardDescription>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {discussion.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardHeader>
-
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage
-                                  src={discussion.createdBy.avatarUrl}
-                                />
-                                <AvatarFallback>
-                                  {getUserInitials(discussion.createdBy)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {getUserDisplayName(discussion.createdBy)}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {discussion.createdBy.role}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <div className="flex items-center">
-                                <MessageCircle className="w-4 h-4 mr-1" />
-                                {discussion.replyCount || 0}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleLikeDiscussion(discussion._id)
-                                }
-                                className={`h-8 px-2 ${
-                                  user &&
-                                  hasUserLiked(discussion.likes, user.id || "")
-                                    ? "text-brand-primary"
-                                    : ""
-                                }`}
-                              >
-                                <ThumbsUp className="w-4 h-4 mr-1" />
-                                {getLikeCount(discussion.likes)}
-                              </Button>
-                              <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {formatDate(discussion.createdAt)}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                  {!loading && discussions.length === 0 && (
-                    <div className="text-center py-12">
-                      <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">
-                        No trending discussions
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Check back later for trending topics!
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="unanswered" className="space-y-4 mt-6">
-                  {!loading &&
-                    discussions.map((discussion) => (
-                      <Card
-                        key={discussion._id}
-                        className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20"
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={handleCreateDiscussion}
+                        className="bg-[#0A66C2] hover:bg-[#004182]"
                       >
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                {discussion.isPinned && (
-                                  <Pin className="w-4 h-4 text-brand-accent-orange" />
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {discussion.category}
-                                </Badge>
-                              </div>
-                              <CardTitle className="font-heading text-lg">
-                                <Link
-                                  to={`/forum/${discussion._id}`}
-                                  className="hover:text-brand-primary transition-colors cursor-pointer block hover:underline"
-                                >
-                                  {discussion.title}
-                                </Link>
-                              </CardTitle>
-                              <CardDescription className="mt-2 line-clamp-2">
-                                {generateExcerpt(discussion.content)}
-                              </CardDescription>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {discussion.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardHeader>
-
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage
-                                  src={discussion.createdBy.avatarUrl}
-                                />
-                                <AvatarFallback>
-                                  {getUserInitials(discussion.createdBy)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {getUserDisplayName(discussion.createdBy)}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {discussion.createdBy.role}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <div className="flex items-center">
-                                <MessageCircle className="w-4 h-4 mr-1" />
-                                {discussion.replyCount || 0}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleLikeDiscussion(discussion._id)
-                                }
-                                className={`h-8 px-2 ${
-                                  user &&
-                                  hasUserLiked(discussion.likes, user.id || "")
-                                    ? "text-brand-primary"
-                                    : ""
-                                }`}
-                              >
-                                <ThumbsUp className="w-4 h-4 mr-1" />
-                                {getLikeCount(discussion.likes)}
-                              </Button>
-                              <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {formatDate(discussion.createdAt)}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                  {!loading && discussions.length === 0 && (
-                    <div className="text-center py-12">
-                      <HelpCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">
-                        No unanswered discussions
-                      </h3>
-                      <p className="text-muted-foreground">
-                        All discussions have replies! Great community
-                        engagement.
-                      </p>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Posting...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Post
+                          </>
+                        )}
+                      </Button>
                     </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="following" className="space-y-4 mt-6">
-                  {!loading &&
-                    discussions.map((discussion) => (
-                      <Card
-                        key={discussion._id}
-                        className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20"
-                      >
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                {discussion.isPinned && (
-                                  <Pin className="w-4 h-4 text-brand-accent-orange" />
-                                )}
-                                <Badge variant="outline" className="text-xs">
-                                  {discussion.category}
-                                </Badge>
-                              </div>
-                              <CardTitle className="font-heading text-lg">
-                                <Link
-                                  to={`/forum/${discussion._id}`}
-                                  className="hover:text-brand-primary transition-colors cursor-pointer block hover:underline"
-                                >
-                                  {discussion.title}
-                                </Link>
-                              </CardTitle>
-                              <CardDescription className="mt-2 line-clamp-2">
-                                {generateExcerpt(discussion.content)}
-                              </CardDescription>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {discussion.tags.map((tag, index) => (
-                              <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardHeader>
-
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage
-                                  src={discussion.createdBy.avatarUrl}
-                                />
-                                <AvatarFallback>
-                                  {getUserInitials(discussion.createdBy)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {getUserDisplayName(discussion.createdBy)}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {discussion.createdBy.role}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <div className="flex items-center">
-                                <MessageCircle className="w-4 h-4 mr-1" />
-                                {discussion.replyCount || 0}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleLikeDiscussion(discussion._id)
-                                }
-                                className={`h-8 px-2 ${
-                                  user &&
-                                  hasUserLiked(discussion.likes, user.id || "")
-                                    ? "text-brand-primary"
-                                    : ""
-                                }`}
-                              >
-                                <ThumbsUp className="w-4 h-4 mr-1" />
-                                {getLikeCount(discussion.likes)}
-                              </Button>
-                              <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {formatDate(discussion.createdAt)}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                  {!loading && discussions.length === 0 && (
-                    <div className="text-center py-12">
-                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">
-                        No followed discussions
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Follow topics and users to see their discussions here.
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Categories */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">
-                  Categories
-                </CardTitle>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 overflow-hidden">
+        {/* LinkedIn-style 3-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+          {/* Left Sidebar - Fixed height with scroll */}
+          <div className="lg:col-span-3 space-y-4 overflow-y-auto h-full max-h-[calc(100vh-180px)]">
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <h3 className="font-semibold text-base">Categories</h3>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2">
                 {categoryStats.map((category) => {
                   const IconComponent = getCategoryIcon(category.category);
                   return (
-                    <div
+                    <button
                       key={category.category}
-                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+                      className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
                     >
-                      <div
-                        className={`w-10 h-10 rounded-lg ${getCategoryColor(
-                          category.category
-                        )} flex items-center justify-center group-hover:scale-110 transition-transform`}
-                      >
+                      <div className={`w-10 h-10 rounded-lg ${getCategoryColor(category.category)} flex items-center justify-center`}>
                         <IconComponent className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm group-hover:text-brand-primary transition-colors">
-                          {category.category}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {category.posts} posts · {category.members} members
-                        </div>
+                        <div className="font-medium text-sm truncate">{category.category}</div>
+                        <div className="text-xs text-gray-500">{category.posts} posts</div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </CardContent>
             </Card>
 
-            {/* Trending Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg flex items-center">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Trending Topics
-                </CardTitle>
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <h3 className="font-semibold text-base">Community</h3>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {trendingTopics.map((topic) => (
-                    <div
-                      key={topic._id}
-                      className="flex justify-between items-center py-2 hover:bg-muted/30 -mx-2 px-2 rounded cursor-pointer"
-                    >
-                      <span className="text-sm font-medium">
-                        #{topic.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {topic.replyCount}
-                      </span>
+              <CardContent className="space-y-3">
+                <div className="text-center p-3 bg-gradient-to-br from-[#0A66C2]/10 to-[#0A66C2]/5 rounded-lg">
+                  <div className="text-2xl font-bold text-[#0A66C2]">
+                    {communityOverview?.activeMembers.toLocaleString() || "0"}
+                  </div>
+                  <div className="text-xs text-gray-600 font-medium">Active Educators</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-2 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {communityOverview?.totalDiscussions.toLocaleString() || "0"}
                     </div>
-                  ))}
+                    <div className="text-xs text-gray-600">Posts</div>
+                  </div>
+                  <div className="text-center p-2 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {communityOverview?.totalReplies.toLocaleString() || "0"}
+                    </div>
+                    <div className="text-xs text-gray-600">Comments</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Community Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">
-                  Community
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-brand-primary">
-                    {communityOverview?.activeMembers.toLocaleString() || "0"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Active Members
+          {/* Main Feed - Scrollable area */}
+          <div className="lg:col-span-6 space-y-4 overflow-y-auto h-full max-h-[calc(100vh-180px)] pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+            {/* Search Bar */}
+            <div className="bg-white rounded-lg shadow-sm p-3">
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search posts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-0 focus-visible:ring-0 bg-gray-100"
+                />
+              </form>
+            </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full bg-white h-12 p-1 rounded-lg shadow-sm">
+                <TabsTrigger value="recent" className="flex-1">Latest</TabsTrigger>
+                <TabsTrigger value="trending" className="flex-1">Trending</TabsTrigger>
+                <TabsTrigger value="unanswered" className="flex-1">Unanswered</TabsTrigger>
+                <TabsTrigger value="following" className="flex-1">Following</TabsTrigger>
+              </TabsList>
+
+              {/* Error */}
+              {error && (
+                <div className="bg-white rounded-lg p-4 border border-red-200 mt-4">
+                  <div className="flex items-center space-x-2 text-red-600">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="font-medium">{error}</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-lg font-semibold text-foreground">
-                      {communityOverview?.totalDiscussions.toLocaleString() ||
-                        "0"}
+              )}
+
+              {/* Loading */}
+              {loading && (
+                <div className="bg-white rounded-lg p-8 text-center mt-4">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#0A66C2]" />
+                  <p className="mt-2 text-gray-600">Loading posts...</p>
+                </div>
+              )}
+
+              {/* Posts Feed */}
+              {!loading && discussions.length > 0 && (
+                <div className="space-y-4 mt-4">
+                  {discussions.map((discussion) => (
+                    <PostCard
+                      key={discussion._id}
+                      discussion={discussion}
+                      onLike={handleLikeDiscussion}
+                      currentUserId={user?.id}
+                      showEngagementAnimation={true}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!loading && discussions.length === 0 && (
+                <Card className="bg-white p-12 text-center mt-4">
+                  <div className="max-w-sm mx-auto">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Search className="w-8 h-8 text-gray-400" />
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Discussions
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts found</h3>
+                    <p className="text-gray-600 mb-4">
+                      {searchTerm ? "Try adjusting your search" : "Be the first to post!"}
+                    </p>
+                  </div>
+                </Card>
+              )}
+            </Tabs>
+          </div>
+
+          {/* Right Sidebar - Fixed height with scroll */}
+          <div className="lg:col-span-3 space-y-4 overflow-y-auto h-full max-h-[calc(100vh-180px)]">
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="w-4 h-4 text-[#0A66C2]" />
+                  <h3 className="font-semibold text-base">Trending</h3>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {trendingTopics.slice(0, 5).map((topic) => (
+                  <div
+                    key={topic._id}
+                    className="py-2 hover:bg-gray-50 -mx-3 px-3 rounded cursor-pointer"
+                  >
+                    <p className="text-sm font-medium line-clamp-2">{topic.title}</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Badge variant="outline" className="text-xs">{topic.category}</Badge>
+                      <span className="text-xs text-gray-500">{topic.replyCount} comments</span>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-lg font-semibold text-foreground">
-                      {communityOverview?.totalReplies.toLocaleString() || "0"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Replies</div>
-                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <h3 className="font-semibold text-base">Popular Hashtags</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {["teaching", "classroom", "assessment", "engagement"].map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-[#0A66C2]/10"
+                    >
+                      #{tag}
+                    </Badge>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

@@ -16,6 +16,7 @@ export const transformDiscussion = (
   content: apiDiscussion.content,
   category: apiDiscussion.category,
   tags: apiDiscussion.tags || [],
+  images: apiDiscussion.images || [],
   createdBy: transformUser(apiDiscussion.user || apiDiscussion.createdBy),
   views: apiDiscussion.views || 0,
   likes: apiDiscussion.likes || [],

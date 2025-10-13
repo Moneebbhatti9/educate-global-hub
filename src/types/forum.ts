@@ -24,6 +24,7 @@ export interface Discussion {
     | "Career Advice"
     | "Help & Support";
   tags: string[];
+  images?: { url: string; publicId: string }[]; // Added images field
   createdBy: User;
   views: number;
   likes: string[]; // Array of user IDs
@@ -73,6 +74,7 @@ export interface CreateDiscussionData {
   content: string;
   category: string;
   tags: string[];
+  images?: string[]; // Base64 encoded images
 }
 
 export interface CreateReplyData {

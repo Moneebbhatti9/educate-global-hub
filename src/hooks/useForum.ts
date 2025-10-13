@@ -382,7 +382,7 @@ export const useForumDetail = (discussionId: string) => {
 
       try {
         setSubmittingReply(true);
-        setError(null);
+        // Don't set error state here - let the component handle validation errors
 
         // Validate reply data
         const validation = validateReplyData(data.content);
@@ -393,15 +393,57 @@ export const useForumDetail = (discussionId: string) => {
         const newReply = await forumAPI.postReply(data);
         const transformed = transformReply(newReply);
 
+        // Add reply to the list
         setReplies((prev) => [...prev, transformed]);
+
+        // Update discussion reply count
+        setDiscussion((prev) =>
+          prev ? { ...prev, replyCount: (prev.replyCount || 0) + 1 } : null
+        );
+
         return transformed;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to post reply";
-        setError(errorMessage);
+        // Only set error state for API failures, not validation errors
+        if (!errorMessage.includes("must be")) {
+          setError(errorMessage);
+        }
         throw new Error(errorMessage);
       } finally {
         setSubmittingReply(false);
+      }
+    },
+    [user]
+  );
+
+  // Toggle like on discussion (for detail page)
+  const toggleLikeDiscussion = useCallback(
+    async (discussionId: string) => {
+      if (!user) {
+        throw new Error("You must be logged in to like discussions");
+      }
+
+      try {
+        await forumAPI.toggleLikeDiscussion(discussionId);
+
+        // Update local state optimistically
+        setDiscussion((prev) => {
+          if (!prev || prev._id !== discussionId) return prev;
+
+          const userId = (user as any)?._id || (user as any)?.id;
+          const isLiked = prev.likes.includes(userId);
+
+          return {
+            ...prev,
+            likes: isLiked
+              ? prev.likes.filter(id => id !== userId)
+              : [...prev.likes, userId],
+          };
+        });
+      } catch (err) {
+        console.error("Failed to toggle like:", err);
+        throw err;
       }
     },
     [user]
@@ -480,6 +522,7 @@ export const useForumDetail = (discussionId: string) => {
     // Actions
     loadDiscussion,
     postReply,
+    toggleLikeDiscussion,
     toggleLikeReply,
     loadMoreReplies,
     clearError,

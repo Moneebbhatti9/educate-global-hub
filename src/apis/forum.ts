@@ -379,4 +379,79 @@ export const forumAPI = {
       throw new Error(response.message || "Failed to delete discussion");
     }
   },
+
+  // Forum Notification endpoints (LinkedIn-style)
+  getForumNotifications: async (params: {
+    page?: number;
+    limit?: number;
+    unreadOnly?: boolean;
+  }): Promise<{
+    notifications: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    unreadCount: number;
+  }> => {
+    const queryString = new URLSearchParams();
+    if (params.page) queryString.append("page", params.page.toString());
+    if (params.limit) queryString.append("limit", params.limit.toString());
+    if (params.unreadOnly) queryString.append("unreadOnly", "true");
+
+    const response = await apiHelpers.get<
+      ApiResponse<{
+        notifications: any[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+        unreadCount: number;
+      }>
+    >(`/forum-notifications?${queryString.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Failed to fetch notifications");
+    }
+
+    return response.data;
+  },
+
+  getUnreadNotificationCount: async (): Promise<{ count: number }> => {
+    const response = await apiHelpers.get<ApiResponse<{ count: number }>>(
+      "/forum-notifications/unread-count"
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Failed to fetch unread count");
+    }
+
+    return response.data;
+  },
+
+  markNotificationsAsRead: async (
+    notificationIds: string[] | "all"
+  ): Promise<void> => {
+    const response = await apiHelpers.patch<ApiResponse<void>>(
+      "/forum-notifications/mark-read",
+      { notificationIds }
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to mark as read");
+    }
+  },
+
+  deleteNotification: async (id: string): Promise<void> => {
+    const response = await apiHelpers.delete<ApiResponse<void>>(
+      `/forum-notifications/${id}`
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to delete notification");
+    }
+  },
 };
