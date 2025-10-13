@@ -158,6 +158,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: MessagesSquare,
         },
         {
+          name: "Upload Resource",
+          href: `/dashboard/admin/upload-resource`,
+          icon: Upload,
+        },
+        {
           name: "Resources",
           href: `/dashboard/admin/resources`,
           icon: FolderOpen,
