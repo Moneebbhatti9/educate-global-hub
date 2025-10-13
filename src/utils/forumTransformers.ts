@@ -118,7 +118,7 @@ export const formatDetailedDate = (dateString: string): string => {
 };
 
 // Get user display name
-export const getUserDisplayName = (user: User): string => {
+export const getUserDisplayName = (user: User ): string  => {
   return `${user.firstName} ${user.lastName}`;
 };
 

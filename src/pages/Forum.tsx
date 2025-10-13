@@ -42,8 +42,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CreateDiscussionData } from "@/types/forum";
 import { parseTags } from "@/utils/forumTransformers";
 import { toast } from "@/hooks/use-toast";
-import PostCard from "@/components/Forum/PostCard";
-import NotificationBell from "@/components/Forum/NotificationBell";
+import PostCard from "@/components/forum/PostCard";
+import NotificationBell from "@/components/forum/NotificationBell";
 import socketService from "@/services/socketService";
 
 const Forum = () => {
@@ -396,6 +396,7 @@ const Forum = () => {
                                 className="w-full h-32 object-cover rounded-lg border border-gray-200"
                               />
                               <button
+                                title="cross"
                                 type="button"
                                 onClick={() => removeImage(index)}
                                 className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"

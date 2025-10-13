@@ -80,8 +80,8 @@ const ForumDetail = () => {
   // Set initial like state
   useEffect(() => {
     if (discussion && user) {
-      setIsLiked(discussion.likes?.includes(user.id || "") || false);
-      setLikeCount(discussion.likes?.length || 0);
+      setIsLiked(discussion?.likes?.includes(user.id || "") || false);
+      setLikeCount(discussion?.likes?.length || 0);
     }
   }, [discussion, user]);
 
@@ -306,14 +306,16 @@ const ForumDetail = () => {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/forum/${discussion._id}`;
-    const shareText = `${discussion.title} - ${getUserDisplayName(discussion.createdBy)}`;
+    if (!discussion) return;
+
+    const shareUrl = `${window.location.origin}/forum/${discussion?._id}`;
+    const shareText = `${discussion?.title} - ${getUserDisplayName(discussion?.createdBy)}`;
 
     // Try native Web Share API first (works on mobile)
     if (navigator.share) {
       try {
         await navigator.share({
-          title: discussion.title,
+          title: discussion?.title,
           text: shareText,
           url: shareUrl,
         });
@@ -408,7 +410,7 @@ const ForumDetail = () => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-3 flex-1">
                 <Avatar className="w-12 h-12 ring-2 ring-offset-2 ring-transparent">
-                  <AvatarImage src={discussion.createdBy.avatarUrl} />
+                  <AvatarImage src={discussion?.createdBy.avatarUrl} />
                   <AvatarFallback className="bg-gradient-to-br from-[#0A66C2] to-[#004182] text-white font-semibold">
                     {getUserInitials(discussion.createdBy)}
                   </AvatarFallback>
@@ -420,12 +422,12 @@ const ForumDetail = () => {
                       {getUserDisplayName(discussion.createdBy)}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600">{discussion.createdBy.role}</div>
+                  <div className="text-sm text-gray-600">{discussion?.createdBy.role}</div>
                   <div className="text-xs text-gray-500 flex items-center space-x-1 mt-1">
                     <span>{getTimeAgo(discussion.createdAt)}</span>
                     <span>•</span>
                     <Eye className="w-3 h-3" />
-                    <span>{discussion.views}</span>
+                    <span>{discussion?.views}</span>
                   </div>
                 </div>
               </div>
@@ -447,32 +449,32 @@ const ForumDetail = () => {
             </div>
 
             {/* Category Badge */}
-            <Badge variant="outline" className={`${getCategoryColor(discussion.category)} text-xs mb-3`}>
-              {discussion.category}
+            <Badge variant="outline" className={`${getCategoryColor(discussion?.category)} text-xs mb-3`}>
+              {discussion?.category}
             </Badge>
 
             {/* Post Title */}
             <h1 className="font-semibold text-[20px] text-gray-900 mb-3 leading-tight">
-              {discussion.title}
+              {discussion?.title}
             </h1>
 
             {/* Post Content */}
             <div className="text-[15px] text-gray-800 leading-relaxed mb-4 whitespace-pre-wrap">
-              {discussion.content}
+              {discussion?.content}
             </div>
 
             {/* Post Images */}
-            {discussion.images && discussion.images.length > 0 && (
+            {discussion?.images && discussion?.images.length > 0 && (
               <div className="mb-4">
-                {discussion.images.length === 1 ? (
+                {discussion?.images.length === 1 ? (
                   <img
-                    src={discussion.images[0].url}
+                    src={discussion?.images[0].url}
                     alt="Post image"
                     className="w-full h-auto max-h-[600px] object-contain rounded-lg border border-gray-200"
                   />
-                ) : discussion.images.length === 2 ? (
+                ) : discussion?.images.length === 2 ? (
                   <div className="grid grid-cols-2 gap-3">
-                    {discussion.images.map((img, idx) => (
+                    {discussion?.images.map((img, idx) => (
                       <img
                         key={idx}
                         src={img.url}
@@ -481,14 +483,14 @@ const ForumDetail = () => {
                       />
                     ))}
                   </div>
-                ) : discussion.images.length === 3 ? (
+                ) : discussion?.images.length === 3 ? (
                   <div className="grid grid-cols-2 gap-3">
                     <img
-                      src={discussion.images[0].url}
+                      src={discussion?.images[0].url}
                       alt="Post image 1"
                       className="col-span-2 w-full h-96 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
                     />
-                    {discussion.images.slice(1).map((img, idx) => (
+                    {discussion?.images.slice(1).map((img, idx) => (
                       <img
                         key={idx}
                         src={img.url}
@@ -499,7 +501,7 @@ const ForumDetail = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    {discussion.images.slice(0, 4).map((img, idx) => (
+                    {discussion?.images.slice(0, 4).map((img, idx) => (
                       <img
                         key={idx}
                         src={img.url}
@@ -513,9 +515,9 @@ const ForumDetail = () => {
             )}
 
             {/* Tags */}
-            {discussion.tags && discussion.tags.length > 0 && (
+            {discussion?.tags && discussion?.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {discussion.tags.map((tag, index) => (
+                {discussion?.tags.map((tag, index) => (
                   <Badge
                     key={index}
                     variant="secondary"
