@@ -1,467 +1,796 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   ArrowLeft,
-  MessageCircle, 
-  ThumbsUp, 
-  ThumbsDown,
+  ThumbsUp,
+  MessageCircle,
   Share2,
-  Bookmark,
   MoreHorizontal,
-  Reply,
-  Edit3,
-  Bold,
-  Italic,
-  Link as LinkIcon,
-  Code,
-  Quote,
-  Flag,
-  Award,
-  Calendar,
   Eye,
-  Pin,
-  Heart,
-  Laugh,
-  Angry
+  Send,
+  Loader2,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useForumDetail } from "@/hooks/useForum";
+import { useSocket } from "@/contexts/SocketContext";
+import socketService from "@/services/socketService";
+import { useAuth } from "@/contexts/AuthContext";
+import { CreateReplyData } from "@/types/forum";
+import {
+  getUserDisplayName,
+  getUserInitials,
+} from "@/utils/forumTransformers";
+import { toast } from "@/hooks/use-toast";
 
 const ForumDetail = () => {
-  const { id } = useParams();
-  const [sortBy, setSortBy] = useState("newest");
-  const [showReplyForm, setShowReplyForm] = useState(false);
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { joinDiscussion, leaveDiscussion } = useSocket();
+  const {
+    discussion,
+    replies,
+    loading,
+    error,
+    submittingReply,
+    loadDiscussion,
+    postReply,
+    toggleLikeDiscussion,
+    toggleLikeReply,
+  } = useForumDetail(id!);
+
   const [replyContent, setReplyContent] = useState("");
-  const [likedComments, setLikedComments] = useState(new Set());
-  const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [nestedReplyContent, setNestedReplyContent] = useState("");
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [replyError, setReplyError] = useState<string>("");
+  const [nestedReplyError, setNestedReplyError] = useState<string>("");
 
-  // Mock topic data - replace with API call
-  const topic = {
-    id: 1,
-    title: "How to engage reluctant learners in mathematics?",
-    content: `I'm struggling with a few students who seem disinterested in math. They're bright kids, but they've convinced themselves they're "not math people." 
-
-I've tried different approaches:
-- Making math more visual with manipulatives
-- Connecting to real-world applications  
-- Breaking problems into smaller steps
-- Offering different ways to show understanding
-
-But I'm still seeing blank stares and "I can't do this" attitudes. Has anyone found effective strategies to make mathematics more engaging and help students overcome their math anxiety?
-
-**Background:** I teach 7th grade algebra concepts to students with mixed math backgrounds. Some come in already feeling defeated about math.
-
-Any specific activities, mindset work, or classroom culture strategies you've seen work would be incredibly helpful!`,
-    author: {
-      name: "Sarah Johnson",
-      avatar: "/api/placeholder/60/60",
-      role: "Mathematics Teacher",
-      reputation: 1250,
-      badges: ["Verified Teacher", "Math Expert", "Community Helper"]
-    },
-    category: "Teaching Tips & Strategies",
-    createdAt: "2024-01-15T10:30:00Z",
-    replies: 23,
-    likes: 45,
-    views: 234,
-    tags: ["mathematics", "engagement", "classroom-management", "middle-school", "algebra"]
-  };
-
-  const reactions = [
-    { emoji: "👍", count: 45, label: "Helpful" },
-    { emoji: "❤️", count: 12, label: "Love" },
-    { emoji: "😊", count: 8, label: "Happy" },
-    { emoji: "🤔", count: 3, label: "Thinking" }
-  ];
-
-  // Mock comments data
-  const comments = [
-    {
-      id: 1,
-      author: {
-        name: "Michael Chen",
-        avatar: "/api/placeholder/40/40",
-        role: "High School Principal",
-        reputation: 2100
-      },
-      content: `Great question, Sarah! I've seen similar challenges. Here's what worked in our school:
-
-**Growth Mindset Approach:**
-- Start each class with "mistakes help us learn" 
-- Celebrate when students show their thinking, even if incorrect
-- Use language like "You can't do this *yet*"
-
-**Gamification Elements:**
-- Math challenges with team competitions
-- Progress badges for different concepts mastered
-- "Math detective" problems that feel like puzzles
-
-The key is making math feel achievable and relevant. What grade level are you working with specifically?`,
-      createdAt: "2024-01-15T11:15:00Z",
-      likes: 18,
-      replies: [
-        {
-          id: 11,
-          author: {
-            name: "Sarah Johnson",
-            avatar: "/api/placeholder/40/40",
-            role: "Mathematics Teacher",
-            reputation: 1250
-          },
-          content: "Thanks Michael! I'm working with 7th graders. The growth mindset language is something I definitely need to be more intentional about. Do you have specific examples of the 'math detective' problems?",
-          createdAt: "2024-01-15T11:45:00Z",
-          likes: 5,
-          isOP: true
-        }
-      ]
-    },
-    {
-      id: 2,
-      author: {
-        name: "Dr. Emily Rodriguez",
-        avatar: "/api/placeholder/40/40",
-        role: "Math Education Researcher",
-        reputation: 3200
-      },
-      content: `Research shows that math anxiety often stems from timed tests and emphasis on speed over understanding. Here are evidence-based strategies:
-
-**Building Number Sense:**
-- Use number talks daily (5-10 minutes)
-- Focus on multiple solution paths
-- Ask "How did you think about that?" instead of "What's the answer?"
-
-**Reducing Anxiety:**
-- Eliminate timed tests for struggling students
-- Allow use of manipulatives/visual aids
-- Create "low-floor, high-ceiling" problems
-
-**Resources I recommend:**
-- Jo Boaler's "Mathematical Mindsets"
-- Which One Doesn't Belong activities
-- Notice & Wonder routines
-
-Would love to hear how these work for you!`,
-      createdAt: "2024-01-15T12:30:00Z",
-      likes: 32,
-      replies: []
+  // Load discussion and join room
+  useEffect(() => {
+    if (id) {
+      loadDiscussion();
+      joinDiscussion(id);
     }
-  ];
 
-  const handleReaction = (emoji: string) => {
-    setUserReaction(userReaction === emoji ? null : emoji);
-  };
+    return () => {
+      if (id) {
+        leaveDiscussion(id);
+      }
+    };
+  }, [id, loadDiscussion, joinDiscussion, leaveDiscussion]);
 
-  const handleCommentLike = (commentId: number) => {
-    const newLiked = new Set(likedComments);
-    if (likedComments.has(commentId)) {
-      newLiked.delete(commentId);
-    } else {
-      newLiked.add(commentId);
+  // Set initial like state
+  useEffect(() => {
+    if (discussion && user) {
+      setIsLiked(discussion?.likes?.includes(user.id || "") || false);
+      setLikeCount(discussion?.likes?.length || 0);
     }
-    setLikedComments(newLiked);
+  }, [discussion, user]);
+
+  // Listen for real-time comments (no need to reload, hook handles it)
+  useEffect(() => {
+    const handleNewComment = (comment: any) => {
+      // The useForumDetail hook already handles new comments via Socket.IO
+      // No need to reload the entire page
+      console.log("New comment received via socket:", comment);
+    };
+
+    socketService.onNewComment(handleNewComment);
+
+    return () => {
+      socketService.off("comment:new", handleNewComment);
+    };
+  }, []);
+
+  // Listen for real-time likes
+  useEffect(() => {
+    const handlePostUpdate = (data: { discussionId: string; likes: number }) => {
+      if (data.discussionId === id) {
+        setLikeCount(data.likes);
+      }
+    };
+
+    socketService.onPostUpdated(handlePostUpdate);
+
+    return () => {
+      socketService.off("post:updated", handlePostUpdate);
+    };
+  }, [id]);
+
+  const handleLike = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to like posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Optimistic update
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+
+    try {
+      await toggleLikeDiscussion(id!);
+    } catch (error) {
+      // Revert on error
+      setIsLiked(isLiked);
+      setLikeCount(likeCount);
+      toast({
+        title: "Error",
+        description: "Failed to like post",
+        variant: "destructive",
+      });
+    }
   };
 
-  const formatDate = (dateString: string) => {
+  const handlePostReply = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to comment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!replyContent.trim()) {
+      setReplyError("Comment cannot be empty");
+      return;
+    }
+
+    if (replyContent.length > 5000) {
+      setReplyError("Comment must be less than 5000 characters");
+      return;
+    }
+
+    const tempContent = replyContent.trim();
+
+    // Clear error and input immediately (optimistic UI)
+    setReplyError("");
+    setReplyContent("");
+
+    try {
+      const replyData: CreateReplyData = {
+        discussionId: id!,
+        content: tempContent,
+      };
+
+      // Post reply - the hook will add it to the replies list
+      await postReply(replyData);
+
+      // No toast for success - LinkedIn doesn't show toast for comments
+    } catch (error) {
+      // Restore content on error
+      setReplyContent(tempContent);
+
+      // Show error inline
+      const errorMsg = error instanceof Error ? error.message : "Failed to post comment";
+      setReplyError(errorMsg);
+    }
+  };
+
+  const handlePostNestedReply = async (parentReplyId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to reply.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!nestedReplyContent.trim()) {
+      setNestedReplyError("Reply cannot be empty");
+      return;
+    }
+
+    if (nestedReplyContent.length > 5000) {
+      setNestedReplyError("Reply must be less than 5000 characters");
+      return;
+    }
+
+    const tempContent = nestedReplyContent.trim();
+
+    // Clear error, input and close form immediately (optimistic UI)
+    setNestedReplyError("");
+    setNestedReplyContent("");
+    setReplyingTo(null);
+
+    // Expand the parent comment to show the new reply
+    setExpandedReplies(prev => {
+      const newSet = new Set(prev);
+      newSet.add(parentReplyId);
+      return newSet;
+    });
+
+    try {
+      const replyData: CreateReplyData = {
+        discussionId: id!,
+        content: tempContent,
+        parentReply: parentReplyId,
+      };
+
+      // Post reply - the hook will add it to the replies list
+      await postReply(replyData);
+
+      // No toast for success - LinkedIn doesn't show toast for replies
+    } catch (error) {
+      // Restore content and reopen form on error
+      setNestedReplyContent(tempContent);
+      setReplyingTo(parentReplyId);
+
+      // Show error inline
+      const errorMsg = error instanceof Error ? error.message : "Failed to post reply";
+      setNestedReplyError(errorMsg);
+    }
+  };
+
+  const handleReplyLike = async (replyId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to like comments.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await toggleLikeReply(replyId);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to like comment",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    const weeks = Math.floor(diffInSeconds / 604800);
+    return `${weeks}w ago`;
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colorMap: Record<string, string> = {
+      "Teaching Tips & Strategies": "bg-[#0A66C2]/10 text-[#0A66C2] border-[#0A66C2]/20",
+      "Curriculum & Resources": "bg-[#057642]/10 text-[#057642] border-[#057642]/20",
+      "Career Advice": "bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED]/20",
+      "Help & Support": "bg-[#F97316]/10 text-[#F97316] border-[#F97316]/20",
+    };
+    return colorMap[category] || "bg-gray-100 text-gray-600";
+  };
+
+  // Organize replies
+  const organizedReplies = replies.filter(r => !r.parentReply);
+  const getRepliesForParent = (parentId: string) => replies.filter(r => r.parentReply === parentId);
+
+  const toggleRepliesExpansion = (replyId: string) => {
+    setExpandedReplies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(replyId)) {
+        newSet.delete(replyId);
+      } else {
+        newSet.add(replyId);
+      }
+      return newSet;
     });
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Navigation */}
-        <div className="mb-6">
-          <Link 
-            to="/forum" 
-            className="inline-flex items-center text-brand-primary hover:text-brand-secondary transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Forum
+  const handleShare = async () => {
+    if (!discussion) return;
+
+    const shareUrl = `${window.location.origin}/forum/${discussion?._id}`;
+    const shareText = `${discussion?.title} - ${getUserDisplayName(discussion?.createdBy)}`;
+
+    // Try native Web Share API first (works on mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: discussion?.title,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        // User cancelled or error occurred
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Link Copied!",
+          description: "Post link copied to clipboard",
+        });
+      } catch (error) {
+        console.error('Failed to copy:', error);
+        // Final fallback: Create temporary input
+        const input = document.createElement('input');
+        input.value = shareUrl;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+
+        toast({
+          title: "Link Copied!",
+          description: "Post link copied to clipboard",
+        });
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F3F2EF]">
+        <Navigation />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-[#0A66C2]" />
+          <span className="ml-3 text-gray-600">Loading post...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show "Not Found" if discussion failed to load (not for validation errors)
+  if (!discussion && !loading) {
+    return (
+      <div className="min-h-screen bg-[#F3F2EF]">
+        <Navigation />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Post Not Found</h2>
+          <p className="text-gray-600 mb-6">
+            {error && error.includes("not found") ? error : "The post you're looking for doesn't exist."}
+          </p>
+          <Link to="/forum">
+            <Button className="bg-[#0A66C2] hover:bg-[#004182]">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Forum
+            </Button>
           </Link>
         </div>
+      </div>
+    );
+  }
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Topic Header */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Badge variant="outline" className="bg-brand-primary/10 text-brand-primary border-brand-primary/20">
-                        {topic.category}
-                      </Badge>
-                      <Pin className="w-4 h-4 text-brand-accent-orange" />
-                    </div>
-                    <h1 className="font-heading font-bold text-2xl sm:text-3xl text-foreground mb-4">
-                      {topic.title}
-                    </h1>
-                  </div>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Bookmark className="w-4 h-4 mr-2" />
-                        Save Topic
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Flag className="w-4 h-4 mr-2" />
-                        Report
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+  return (
+    <div className="min-h-screen bg-[#F3F2EF]">
+      <Navigation />
 
-                {/* Author Info */}
-                <div className="flex items-center space-x-4 mb-4">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={topic.author.avatar} />
-                    <AvatarFallback>{topic.author.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{topic.author.name}</span>
-                      <Badge variant="secondary" className="text-xs">OP</Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">{topic.author.role}</div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Award className="w-3 h-3 text-brand-accent-orange" />
-                      <span className="text-xs text-muted-foreground">{topic.author.reputation} reputation</span>
-                    </div>
+      {/* Back Navigation */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link
+            to="/forum"
+            className="inline-flex items-center text-gray-600 hover:text-[#0A66C2] transition-colors font-medium"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Feed
+          </Link>
+        </div>
+      </div>
+
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-4xl">
+        {/* Post Card */}
+        <Card className="bg-white mb-4">
+          {/* Post Header */}
+          <div className="p-4 sm:p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start space-x-3 flex-1">
+                <Avatar className="w-12 h-12 ring-2 ring-offset-2 ring-transparent">
+                  <AvatarImage src={discussion?.createdBy.avatarUrl} />
+                  <AvatarFallback className="bg-gradient-to-br from-[#0A66C2] to-[#004182] text-white font-semibold">
+                    {getUserInitials(discussion.createdBy)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-semibold text-[15px] text-gray-900">
+                      {getUserDisplayName(discussion.createdBy)}
+                    </span>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {formatDate(topic.createdAt)}
-                    </div>
+                  <div className="text-sm text-gray-600">{discussion?.createdBy.role}</div>
+                  <div className="text-xs text-gray-500 flex items-center space-x-1 mt-1">
+                    <span>{getTimeAgo(discussion.createdAt)}</span>
+                    <span>•</span>
+                    <Eye className="w-3 h-3" />
+                    <span>{discussion?.views}</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Topic Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {topic.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs hover:bg-brand-primary/10 cursor-pointer">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardHeader>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleShare}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share post
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Report post</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-              <CardContent>
-                {/* Topic Content */}
-                <div className="prose prose-slate max-w-none mb-6">
-                  <div className="whitespace-pre-wrap text-foreground">{topic.content}</div>
-                </div>
+            {/* Category Badge */}
+            <Badge variant="outline" className={`${getCategoryColor(discussion?.category)} text-xs mb-3`}>
+              {discussion?.category}
+            </Badge>
 
-                <Separator className="my-6" />
+            {/* Post Title */}
+            <h1 className="font-semibold text-[20px] text-gray-900 mb-3 leading-tight">
+              {discussion?.title}
+            </h1>
 
-                {/* Reactions & Stats */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {/* Reactions */}
-                    <div className="flex items-center space-x-2">
-                      {reactions.map((reaction, index) => (
-                        <Button
-                          key={index}
-                          variant={userReaction === reaction.emoji ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleReaction(reaction.emoji)}
-                          className="h-8 px-3"
-                        >
-                          <span className="mr-1">{reaction.emoji}</span>
-                          <span className="text-xs">{reaction.count}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+            {/* Post Content */}
+            <div className="text-[15px] text-gray-800 leading-relaxed mb-4 whitespace-pre-wrap">
+              {discussion?.content}
+            </div>
 
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                      <Eye className="w-4 h-4 mr-1" />
-                      {topic.views} views
-                    </div>
-                    <div className="flex items-center">
-                      <MessageCircle className="w-4 h-4 mr-1" />
-                      {topic.replies} replies
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Comments Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="font-heading text-lg">
-                    {comments.length} Replies
-                  </CardTitle>
-                  
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest</SelectItem>
-                      <SelectItem value="oldest">Oldest</SelectItem>
-                      <SelectItem value="most-liked">Most Liked</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                {/* Add Reply Form */}
-                <div className="border rounded-lg p-4 bg-muted/30">
-                  <div className="flex items-start space-x-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src="/api/placeholder/40/40" />
-                      <AvatarFallback>YU</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <Textarea
-                        placeholder="Add your reply to help the community..."
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        className="min-h-[100px] mb-3"
+            {/* Post Images */}
+            {discussion?.images && discussion?.images.length > 0 && (
+              <div className="mb-4">
+                {discussion?.images.length === 1 ? (
+                  <img
+                    src={discussion?.images[0].url}
+                    alt="Post image"
+                    className="w-full h-auto max-h-[600px] object-contain rounded-lg border border-gray-200"
+                  />
+                ) : discussion?.images.length === 2 ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {discussion?.images.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img.url}
+                        alt={`Post image ${idx + 1}`}
+                        className="w-full h-64 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
                       />
-                      
-                      {/* Rich Text Toolbar */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Bold className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Italic className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <LinkIcon className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Code className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Quote className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        
-                        <Button 
-                          variant="default"
-                          className="bg-brand-primary hover:bg-brand-primary/90"
-                          disabled={!replyContent.trim()}
-                        >
-                          Post Reply
-                        </Button>
-                      </div>
+                    ))}
+                  </div>
+                ) : discussion?.images.length === 3 ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <img
+                      src={discussion?.images[0].url}
+                      alt="Post image 1"
+                      className="col-span-2 w-full h-96 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                    />
+                    {discussion?.images.slice(1).map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img.url}
+                        alt={`Post image ${idx + 2}`}
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {discussion?.images.slice(0, 4).map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img.url}
+                        alt={`Post image ${idx + 1}`}
+                        className="w-full h-56 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tags */}
+            {discussion?.tags && discussion?.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {discussion?.tags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                  >
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Engagement Bar */}
+          <div className="px-4 sm:px-6 py-3">
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+              <div className="flex items-center space-x-4">
+                <span>{likeCount} {likeCount === 1 ? 'like' : 'likes'}</span>
+                <span>{replies.length} {replies.length === 1 ? 'comment' : 'comments'}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1 border-t border-gray-200 pt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                className={`flex-1 h-9 font-medium ${
+                  isLiked
+                    ? "text-[#0A66C2] bg-[#0A66C2]/5 hover:bg-[#0A66C2]/10"
+                    : "text-gray-600 hover:text-[#0A66C2] hover:bg-gray-100"
+                }`}
+              >
+                <ThumbsUp className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
+                Like
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 h-9 font-medium text-gray-600 hover:text-[#0A66C2] hover:bg-gray-100"
+                onClick={() => document.getElementById("comment-input")?.focus()}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Comment
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShare}
+                className="flex-1 h-9 font-medium text-gray-600 hover:text-[#0A66C2] hover:bg-gray-100"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Comments Section */}
+        <Card className="bg-white">
+          <CardContent className="p-0">
+            {/* Add Comment */}
+            <div className="p-4 sm:p-6 border-b border-gray-200">
+              <div className="flex items-start space-x-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={user?.avatarUrl} />
+                  <AvatarFallback className="bg-gradient-to-br from-[#0A66C2] to-[#004182] text-white">
+                    {user ? `${user.firstName[0]}${user.lastName[0]}` : "U"}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1">
+                  <Textarea
+                    id="comment-input"
+                    placeholder="Add a comment..."
+                    value={replyContent}
+                    onChange={(e) => {
+                      setReplyContent(e.target.value);
+                      if (replyError) setReplyError(""); // Clear error on type
+                    }}
+                    className={`min-h-[80px] mb-2 resize-none ${replyError ? "border-red-500 focus:border-red-500" : ""}`}
+                    disabled={!user}
+                  />
+                  {replyError && (
+                    <div className="flex items-center space-x-1 text-red-600 text-sm mb-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{replyError}</span>
                     </div>
+                  )}
+                  <div className="flex items-center justify-end">
+                    <Button
+                      size="sm"
+                      onClick={handlePostReply}
+                      disabled={!replyContent.trim() || submittingReply || !user}
+                      className="bg-[#0A66C2] hover:bg-[#004182]"
+                    >
+                      {submittingReply ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Posting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Post
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <Separator />
-
-                {/* Comments List */}
-                {comments.map((comment) => (
-                  <div key={comment.id} className="space-y-4">
+            {/* Comments List */}
+            <div className="divide-y divide-gray-200">
+              {organizedReplies.length === 0 ? (
+                <div className="p-12 text-center">
+                  <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-600">No comments yet</p>
+                  <p className="text-sm text-gray-500 mt-1">Be the first to share your thoughts!</p>
+                </div>
+              ) : (
+                organizedReplies.map((reply) => (
+                  <div key={reply._id} className="p-4 sm:p-6">
+                    {/* Main Comment */}
                     <div className="flex items-start space-x-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={comment.author.avatar} />
-                        <AvatarFallback>{comment.author.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        <AvatarImage src={reply.createdBy.avatarUrl} />
+                        <AvatarFallback className="bg-gradient-to-br from-gray-400 to-gray-600 text-white">
+                          {getUserInitials(reply.createdBy)}
+                        </AvatarFallback>
                       </Avatar>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="font-semibold">{comment.author.name}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {comment.author.role}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDate(comment.createdAt)}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-semibold text-sm text-gray-900">
+                            {getUserDisplayName(reply.createdBy)}
                           </span>
+                          <span className="text-xs text-gray-500">{getTimeAgo(reply.createdAt)}</span>
                         </div>
-                        
-                        <div className="prose prose-slate max-w-none mb-3">
-                          <div className="whitespace-pre-wrap text-foreground">{comment.content}</div>
+                        <div className="text-sm text-gray-800 mb-2 whitespace-pre-wrap">
+                          {reply.content}
                         </div>
-                        
-                        <div className="flex items-center space-x-4">
+
+                        <div className="flex items-center space-x-4 text-sm">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleCommentLike(comment.id)}
-                            className={`h-8 ${likedComments.has(comment.id) ? 'text-brand-primary' : ''}`}
+                            onClick={() => handleReplyLike(reply._id)}
+                            className="h-7 px-2 text-gray-600 hover:text-[#0A66C2]"
                           >
-                            <ThumbsUp className="w-4 h-4 mr-1" />
-                            {comment.likes + (likedComments.has(comment.id) ? 1 : 0)}
+                            <ThumbsUp className={`w-3 h-3 mr-1 ${reply.likes?.includes(user?.id || "") ? "fill-current text-[#0A66C2]" : ""}`} />
+                            {reply.likes?.length || 0}
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-8">
-                            <Reply className="w-4 h-4 mr-1" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setReplyingTo(replyingTo === reply._id ? null : reply._id)}
+                            className="h-7 px-2 text-gray-600 hover:text-[#0A66C2]"
+                          >
                             Reply
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-8">
-                            <Share2 className="w-4 h-4 mr-1" />
-                            Share
-                          </Button>
+                          {getRepliesForParent(reply._id).length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleRepliesExpansion(reply._id)}
+                              className="h-7 px-2 text-[#0A66C2] hover:text-[#004182] font-medium"
+                            >
+                              {expandedReplies.has(reply._id) ? (
+                                <>
+                                  <ChevronUp className="w-3 h-3 mr-1" />
+                                  Hide {getRepliesForParent(reply._id).length} {getRepliesForParent(reply._id).length === 1 ? 'reply' : 'replies'}
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-3 h-3 mr-1" />
+                                  View {getRepliesForParent(reply._id).length} {getRepliesForParent(reply._id).length === 1 ? 'reply' : 'replies'}
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
 
+                        {/* Nested Reply Form */}
+                        {replyingTo === reply._id && (
+                          <div className="mt-3 ml-0 sm:ml-8">
+                            <div className="flex items-start space-x-2">
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={user?.avatarUrl} />
+                                <AvatarFallback className="bg-gradient-to-br from-[#0A66C2] to-[#004182] text-white text-xs">
+                                  {user ? `${user.firstName[0]}${user.lastName[0]}` : "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <Textarea
+                                  placeholder={`Reply to ${getUserDisplayName(reply.createdBy)}...`}
+                                  value={nestedReplyContent}
+                                  onChange={(e) => {
+                                    setNestedReplyContent(e.target.value);
+                                    if (nestedReplyError) setNestedReplyError(""); // Clear error on type
+                                  }}
+                                  className={`min-h-[60px] mb-2 resize-none text-sm ${nestedReplyError ? "border-red-500 focus:border-red-500" : ""}`}
+                                />
+                                {nestedReplyError && (
+                                  <div className="flex items-center space-x-1 text-red-600 text-xs mb-2">
+                                    <AlertCircle className="w-3 h-3" />
+                                    <span>{nestedReplyError}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center space-x-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setReplyingTo(null);
+                                      setNestedReplyContent("");
+                                      setNestedReplyError(""); // Clear error
+                                    }}
+                                    className="h-7 text-xs"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handlePostNestedReply(reply._id)}
+                                    disabled={!nestedReplyContent.trim() || submittingReply}
+                                    className="h-7 text-xs bg-[#0A66C2] hover:bg-[#004182]"
+                                  >
+                                    Reply
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Nested Replies */}
-                        {comment.replies && comment.replies.length > 0 && (
-                          <div className="mt-4 ml-6 border-l-2 border-muted pl-4 space-y-4">
-                            {comment.replies.map((reply) => (
-                              <div key={reply.id} className="flex items-start space-x-3">
+                        {getRepliesForParent(reply._id).length > 0 && expandedReplies.has(reply._id) && (
+                          <div className="mt-4 ml-0 sm:ml-8 space-y-4">
+                            {getRepliesForParent(reply._id).map((nestedReply) => (
+                              <div key={nestedReply._id} className="flex items-start space-x-2">
                                 <Avatar className="w-8 h-8">
-                                  <AvatarImage src={reply.author.avatar} />
-                                  <AvatarFallback>{reply.author.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                  <AvatarImage src={nestedReply.createdBy.avatarUrl} />
+                                  <AvatarFallback className="bg-gradient-to-br from-gray-400 to-gray-600 text-white text-xs">
+                                    {getUserInitials(nestedReply.createdBy)}
+                                  </AvatarFallback>
                                 </Avatar>
-                                
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <span className="font-semibold text-sm">{reply.author.name}</span>
-                                    {reply.isOP && <Badge variant="secondary" className="text-xs">OP</Badge>}
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatDate(reply.createdAt)}
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <span className="font-semibold text-sm text-gray-900">
+                                      {getUserDisplayName(nestedReply.createdBy)}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      {getTimeAgo(nestedReply.createdAt)}
                                     </span>
                                   </div>
-                                  
-                                  <div className="text-sm mb-2">{reply.content}</div>
-                                  
-                                  <div className="flex items-center space-x-3">
-                                    <Button variant="ghost" size="sm" className="h-6 text-xs">
-                                      <ThumbsUp className="w-3 h-3 mr-1" />
-                                      {reply.likes}
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="h-6 text-xs">
-                                      <Reply className="w-3 h-3 mr-1" />
-                                      Reply
-                                    </Button>
+                                  <div className="text-sm text-gray-800 mb-2 whitespace-pre-wrap">
+                                    {nestedReply.content}
                                   </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReplyLike(nestedReply._id)}
+                                    className="h-7 px-2 text-gray-600 hover:text-[#0A66C2]"
+                                  >
+                                    <ThumbsUp className={`w-3 h-3 mr-1 ${nestedReply.likes?.includes(user?.id || "") ? "fill-current text-[#0A66C2]" : ""}`} />
+                                    {nestedReply.likes?.length || 0}
+                                  </Button>
                                 </div>
                               </div>
                             ))}
@@ -469,108 +798,14 @@ Would love to hear how these work for you!`,
                         )}
                       </div>
                     </div>
-                    
-                    <Separator />
                   </div>
-                ))}
-
-                {/* Load More Comments */}
-                <div className="text-center">
-                  <Button variant="outline">
-                    Load More Comments
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Author Profile Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">About the Author</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center space-x-3 mb-4">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={topic.author.avatar} />
-                    <AvatarFallback>{topic.author.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-semibold">{topic.author.name}</div>
-                    <div className="text-sm text-muted-foreground">{topic.author.role}</div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Reputation</span>
-                    <span className="font-semibold">{topic.author.reputation}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Posts</span>
-                    <span className="font-semibold">47</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Joined</span>
-                    <span className="font-semibold">Mar 2023</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  {topic.author.badges.map((badge, index) => (
-                    <Badge key={index} variant="secondary" className="mr-2 mb-2">
-                      {badge}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Related Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">Related Topics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  "Building math confidence in elementary students",
-                  "Visual math teaching strategies",
-                  "Overcoming math anxiety in middle school",
-                  "Real-world math applications for engagement"
-                ].map((title, index) => (
-                  <div key={index} className="p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer">
-                    <div className="font-medium text-sm text-brand-primary hover:text-brand-secondary transition-colors">
-                      {title}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      12 replies · 3 hours ago
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Popular Tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">Popular Tags</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {["mathematics", "engagement", "classroom-management", "teaching-tips", "student-motivation", "algebra", "middle-school"].map((tag, index) => (
-                    <Badge key={index} variant="outline" className="cursor-pointer hover:bg-brand-primary/10">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </main>
-      
+
       <Footer />
     </div>
   );

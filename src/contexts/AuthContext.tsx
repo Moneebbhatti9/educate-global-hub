@@ -308,12 +308,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             );
             console.log("  User:", user ? "received" : "missing");
             console.log("  User Status:", user?.status);
-            console.log(
-              "  Requires Status Approval:",
-              response.data.requiresStatusApproval
-            );
-          }
 
+          }
+          console.log("🔐 OTP Verification - Tokens received:", user);
           secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
           secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
           secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);

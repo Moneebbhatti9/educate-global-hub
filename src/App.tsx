@@ -9,6 +9,7 @@ import {
   Outlet,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SocketProvider } from "./contexts/SocketContext";
 import {
   TeacherRoute,
   SchoolRoute,
@@ -29,6 +30,7 @@ const Jobs = lazy(() => import("./pages/Jobs"));
 const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Forum = lazy(() => import("./pages/Forum"));
 const ForumDetail = lazy(() => import("./pages/ForumDetail"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const Resources = lazy(() => import("./pages/Resources"));
 const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 const SchoolProfile = lazy(() => import("./pages/school/SchoolProfile"));
@@ -133,6 +135,7 @@ const AppRoutes = () => {
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumDetail />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/resources/:id" element={<ResourceDetail />} />
         <Route path="/download/:id" element={<DownloadPage />} />
@@ -260,7 +263,9 @@ const App = () => {
           <Toaster />
           <BrowserRouter>
             <AuthProvider>
-              <AppRoutes />
+              <SocketProvider>
+                <AppRoutes />
+              </SocketProvider>
             </AuthProvider>
           </BrowserRouter>
         </SecurityProvider>

@@ -818,15 +818,15 @@ const SchoolProfileForm = ({
           )}
 
           {/* Navigation */}
-          <div className="flex justify-end pt-6">
-            {/* <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 1 && !onBack}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {currentStep === 1 && onBack ? "Back to Verification" : "Back"}
-            </Button> */}
+          <div className="flex justify-between pt-6">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 1}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
 
             <Button
               onClick={handleNext}
