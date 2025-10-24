@@ -36,6 +36,8 @@ import {
   Upload,
   DollarSign,
   FolderOpen,
+  ShoppingCart,
+  Wallet,
 } from "lucide-react";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,6 +94,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           name: "My Resources",
           href: `/dashboard/teacher/resource-management`,
           icon: FolderOpen,
+        },
+        {
+          name: "Earnings",
+          href: `/dashboard/teacher/earnings`,
+          icon: BarChart3,
         },
         {
           name: "Earnings & Withdraw",
@@ -166,6 +173,16 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           name: "Resources",
           href: `/dashboard/admin/resources`,
           icon: FolderOpen,
+        },
+        {
+          name: "Sales Management",
+          href: `/dashboard/admin/sales-management`,
+          icon: ShoppingCart,
+        },
+        {
+          name: "Payout Management",
+          href: `/dashboard/admin/payout-management`,
+          icon: Wallet,
         },
       ],
     },
