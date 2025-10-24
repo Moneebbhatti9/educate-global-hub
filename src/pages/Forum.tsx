@@ -541,8 +541,8 @@ const Forum = () => {
               <TabsList className="w-full bg-white h-12 p-1 rounded-lg shadow-sm">
                 <TabsTrigger value="recent" className="flex-1">Latest</TabsTrigger>
                 <TabsTrigger value="trending" className="flex-1">Trending</TabsTrigger>
-                <TabsTrigger value="unanswered" className="flex-1">Unanswered</TabsTrigger>
-                <TabsTrigger value="following" className="flex-1">Following</TabsTrigger>
+                {/* <TabsTrigger value="unanswered" className="flex-1">Unanswered</TabsTrigger>
+                <TabsTrigger value="following" className="flex-1">Following</TabsTrigger> */}
               </TabsList>
 
               {/* Error */}
