@@ -29,6 +29,7 @@ import {
   passwordResetConfirmSchema,
 } from "@/helpers/validation";
 import { useFormValidation } from "@/hooks/useFormValidation";
+import { z } from "zod";
 
 interface EmailFormData {
   email: string;
@@ -41,15 +42,30 @@ interface PasswordResetFormData {
   confirmPassword: string;
 }
 
+// Simple password validation schema for the reset form
+const passwordOnlySchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(1, "Password is required")
+      .min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
 const ForgotPassword = () => {
   const navigate = useNavigate();
 
   const { handleError, showSuccess } = useErrorHandler();
-  const { passwordReset, passwordResetConfirm, isLoading } = useAuth();
+  const { sendOTP, verifyOTP, passwordResetConfirm, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState<"email" | "otp" | "reset">(
     "email"
   );
   const [emailForOTP, setEmailForOTP] = useState("");
+  const [verifiedOTP, setVerifiedOTP] = useState("");
 
   const emailForm = useFormValidation<{ email?: string }>({
     schema: passwordResetSchema,
@@ -60,16 +76,12 @@ const ForgotPassword = () => {
   });
 
   const passwordForm = useFormValidation<{
-    email?: string;
-    otp?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({
-    schema: passwordResetConfirmSchema,
+    schema: passwordOnlySchema,
     mode: "onTouched",
     defaultValues: {
-      email: "",
-      otp: "",
       newPassword: "",
       confirmPassword: "",
     },
@@ -77,7 +89,8 @@ const ForgotPassword = () => {
 
   const handleEmailSubmit = async (data: EmailFormData) => {
     try {
-      await passwordReset({ email: data.email });
+      // Send OTP with type "reset" for password reset flow
+      await sendOTP(data.email, "reset");
       setEmailForOTP(data.email);
       setCurrentStep("otp");
       showSuccess("OTP Sent", "Check your email for the verification code.");
@@ -88,13 +101,18 @@ const ForgotPassword = () => {
 
   const handleOTPVerify = async (otp: string) => {
     try {
-      await passwordResetConfirm({
+      // Verify OTP with type "reset" for password reset flow
+      await verifyOTP({
         email: emailForOTP,
         otp,
-        newPassword: passwordForm.getValues("newPassword") ?? "",
-        confirmPassword: passwordForm.getValues("confirmPassword") ?? "",
+        type: "reset",
       });
+
+      // Store the verified OTP for password reset
+      setVerifiedOTP(otp);
+
       setCurrentStep("reset");
+      showSuccess("OTP Verified", "Please enter your new password.");
     } catch (error) {
       handleError(error, "OTP verification failed");
       throw error;
@@ -103,12 +121,21 @@ const ForgotPassword = () => {
 
   const handlePasswordReset = async (data: PasswordResetFormData) => {
     try {
+      console.log("🔄 Password Reset - Starting...", {
+        email: emailForOTP,
+        otp: verifiedOTP,
+        hasNewPassword: !!data.newPassword,
+        hasConfirmPassword: !!data.confirmPassword,
+      });
+
+      // Call the API with the stored OTP and new password
       await passwordResetConfirm({
         email: emailForOTP,
-        otp: "", // This should be handled by OTP step
+        otp: verifiedOTP,
         newPassword: data.newPassword,
-        confirmPassword: data.confirmPassword,
       });
+
+      console.log("✅ Password Reset - Success");
 
       showSuccess(
         "Password Updated",
@@ -120,6 +147,7 @@ const ForgotPassword = () => {
         navigate("/login");
       }, 1500);
     } catch (error) {
+      console.error("❌ Password Reset - Error:", error);
       handleError(error, "Password update failed");
     }
   };
@@ -274,8 +302,14 @@ const ForgotPassword = () => {
                 </CardHeader>
                 <CardContent>
                   <form
-                    onSubmit={passwordForm.handleSubmit((data) =>
-                      handlePasswordReset(data as PasswordResetFormData)
+                    onSubmit={passwordForm.handleSubmit(
+                      (data) => {
+                        console.log("✅ Form validation passed, submitting:", data);
+                        handlePasswordReset(data as PasswordResetFormData);
+                      },
+                      (errors) => {
+                        console.error("❌ Form validation failed:", errors);
+                      }
                     )}
                     className="space-y-4"
                   >
@@ -356,6 +390,17 @@ const ForgotPassword = () => {
                       variant="hero"
                       size="lg"
                       className="w-full"
+                      onClick={() => {
+                        console.log("🖱️ Button clicked!", {
+                          isLoading,
+                          hasNewPassword: !!passwordFormData.newPassword,
+                          passwordLength: passwordFormData.newPassword?.length,
+                          passwordsMatch:
+                            passwordFormData.newPassword ===
+                            passwordFormData.confirmPassword,
+                          formData: passwordFormData,
+                        });
+                      }}
                       disabled={
                         isLoading ||
                         !passwordFormData.newPassword ||

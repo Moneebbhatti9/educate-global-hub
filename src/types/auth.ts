@@ -93,6 +93,7 @@ export interface ProfileCompletionData {
 export interface OTPVerificationData {
   email: string;
   otp: string;
+  type?: "verification" | "reset";
 }
 
 export interface PasswordResetData {
@@ -103,7 +104,6 @@ export interface PasswordResetConfirmData {
   email: string;
   otp: string;
   newPassword: string;
-  confirmPassword: string;
 }
 
 export interface ChangePasswordData {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Star,
   Heart,
@@ -11,6 +11,8 @@ import {
   GraduationCap,
   FileText,
   ExternalLink,
+  Lock,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +27,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { resourcesAPI } from "@/apis/resources";
+import { salesAPI } from "@/apis/sales";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useAuth } from "@/contexts/AuthContext";
+import { customToast } from "@/components/ui/sonner";
 import type { Resource } from "@/types/resource";
+import { downloadFile, getFilenameFromUrl } from "@/utils/downloadHelper";
 
 // Mock data - replace with actual API calls
 const mockResource = {
@@ -124,24 +131,84 @@ Students will be able to confidently work with fractions and decimals, understan
 
 const ResourceDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { handleError, showError } = useErrorHandler();
-  
+  const { user, isAuthenticated } = useAuth();
+
   // State management
   const [resource, setResource] = useState<Resource | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isPurchased, setIsPurchased] = useState(false);
+  const [purchaseDownloadUrl, setPurchaseDownloadUrl] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
+
+  const checkPurchaseStatus = useCallback(async () => {
+    // Only check if user is authenticated
+    if (!isAuthenticated || !user || !id) {
+      setIsPurchased(false);
+      setPurchaseDownloadUrl(null);
+      return;
+    }
+
+    try {
+      const response = await salesAPI.getMyPurchases();
+
+      if (response.success && response.data?.purchases) {
+        // Check if current resource is in user's purchases
+        const purchase = response.data.purchases.find(
+          (p: any) => p.resource?._id === id || p.resourceId === id
+        );
+
+        if (purchase) {
+          setIsPurchased(true);
+          setPurchaseDownloadUrl(
+            purchase.resource?.downloadUrl ||
+            purchase.resource?.file ||
+            purchase.downloadUrl ||
+            null
+          );
+        } else {
+          setIsPurchased(false);
+          setPurchaseDownloadUrl(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking purchase status:", error);
+      // Don't show error to user, just assume not purchased
+      setIsPurchased(false);
+      setPurchaseDownloadUrl(null);
+    }
+  }, [isAuthenticated, user, id]);
 
   // Load resource data when component mounts
   useEffect(() => {
     if (id && typeof id === 'string' && id.trim().length > 0) {
       loadResourceData();
+      checkPurchaseStatus();
     } else if (id) {
       console.error("Invalid resource ID:", id);
       showError("Invalid resource", "Resource ID is invalid");
     }
-  }, [id]);
+  }, [id, isAuthenticated, checkPurchaseStatus]);
+
+  // Refetch purchase status when page becomes visible (user returns from payment)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isAuthenticated && id) {
+        checkPurchaseStatus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [id, isAuthenticated, checkPurchaseStatus]);
 
   const loadResourceData = async () => {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
@@ -149,7 +216,7 @@ const ResourceDetail = () => {
       showError("Invalid resource", "Resource ID is required");
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await resourcesAPI.getResourceById(id.trim());
@@ -190,6 +257,7 @@ const ResourceDetail = () => {
           previews?: string[];
           file?: string;
           author?: string;
+          authorId?: string;
           createdAt?: string;
         };
         const mappedResource: Resource = {
@@ -224,11 +292,18 @@ const ResourceDetail = () => {
           downloadCount: 0,
           rating: 4.5,
           reviewCount: 0,
-          authorId: "",
+          authorId: apiData.authorId || "",
           authorName: apiData.author || "Unknown Author",
         };
 
         setResource(mappedResource);
+
+        // Check if current user is the owner
+        if (isAuthenticated && user && apiData.authorId && user.userId === apiData.authorId) {
+          setIsOwner(true);
+        } else {
+          setIsOwner(false);
+        }
       } else {
         const errorMessage = response?.message || "Unable to fetch resource details";
         showError("Failed to load resource", errorMessage);
@@ -244,25 +319,134 @@ const ResourceDetail = () => {
   };
 
   const handlePurchase = () => {
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      customToast.error(
+        "Authentication required",
+        "Please log in to purchase this resource"
+      );
+      navigate("/login", { state: { from: `/resources/${id}` } });
+      return;
+    }
+
     if (!resource || !resource.id) {
       console.error("Cannot purchase: resource or resource ID is missing");
       showError("Purchase error", "Resource information is missing");
       return;
     }
+
+    // For free resources, download directly
+    if (resource.isFree) {
+      handleConfirmPurchase();
+      return;
+    }
+
     setShowPurchaseModal(true);
   };
 
-  const handleConfirmPurchase = () => {
+  const handleConfirmPurchase = async () => {
     if (!resource || !resource.id) {
       console.error("Cannot confirm purchase: resource or resource ID is missing");
       showError("Purchase error", "Resource information is missing");
       return;
     }
-    // TODO: Integrate with Stripe
-    console.log("Processing purchase...");
-    setShowPurchaseModal(false);
-    // Redirect to download page
-    window.location.href = `/download/${resource.id}`;
+
+    setIsPurchasing(true);
+
+    try {
+      // For free resources, create a free purchase record
+      if (resource.isFree) {
+        const response = await salesAPI.purchaseResource({
+          resourceId: resource.id,
+          paymentMethodId: "free", // Special identifier for free resources
+          buyerCountry: "GB", // Default country
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || "Failed to process free download");
+        }
+
+        customToast.success(
+          "Success!",
+          "Your free resource is ready to download"
+        );
+
+        // Redirect to payment success page
+        navigate(
+          `/payment-success?resourceId=${resource.id}&resourceTitle=${encodeURIComponent(
+            resource.title
+          )}&saleId=${response.data?.sale || "free"}&downloadUrl=${
+            response.data?.downloadUrl || resource.resourceFiles[0] || ""
+          }`
+        );
+        return;
+      }
+
+      // For paid resources, create Stripe Checkout Session and redirect
+      const response = await salesAPI.purchaseResource({
+        resourceId: resource.id,
+        paymentMethodId: "stripe_checkout", // Identifier for Stripe Checkout
+        buyerCountry: "GB",
+      });
+
+      if (!response.success || !response.data?.checkoutUrl) {
+        throw new Error(response.message || "Failed to create checkout session");
+      }
+
+      // Show success toast
+      customToast.info(
+        "Redirecting to payment",
+        "You will be redirected to Stripe's secure checkout page..."
+      );
+
+      // Redirect to Stripe Checkout
+      window.location.href = response.data.checkoutUrl;
+    } catch (error) {
+      console.error("Purchase error:", error);
+      customToast.error(
+        "Purchase failed",
+        error instanceof Error ? error.message : "Failed to process purchase"
+      );
+    } finally {
+      setIsPurchasing(false);
+      setShowPurchaseModal(false);
+    }
+  };
+
+  const handleDirectDownload = async () => {
+    if (!purchaseDownloadUrl && !resource?.resourceFiles?.[0]) {
+      customToast.error(
+        "Download unavailable",
+        "Download link is not available for this resource"
+      );
+      return;
+    }
+
+    try {
+      const downloadUrl = purchaseDownloadUrl || resource?.resourceFiles[0] || "";
+      const filename = getFilenameFromUrl(downloadUrl, resource?.title || "resource");
+
+      await downloadFile(downloadUrl, filename, {
+        onSuccess: () => {
+          customToast.success(
+            "Download started",
+            `Downloading "${resource?.title}"`
+          );
+        },
+        onError: (error) => {
+          customToast.error(
+            "Download failed",
+            error.message || "Failed to start download. Please try again."
+          );
+        },
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      customToast.error(
+        "Download failed",
+        "Failed to start download. Please try again."
+      );
+    }
   };
 
   // Show loading state
@@ -500,29 +684,104 @@ const ResourceDetail = () => {
             <Card className="sticky top-4">
               <CardContent className="pt-6">
                 <div className="text-center space-y-4">
-                  <div className="text-3xl font-bold text-primary">
-                    {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
-                  </div>
+                  {isOwner ? (
+                    // Resource Owner - Show Owner Options
+                    <>
+                      <div className="space-y-2">
+                        <Badge variant="default" className="bg-blue-600">
+                          👤 Your Resource
+                        </Badge>
+                        <p className="text-sm text-muted-foreground">
+                          You created this resource
+                        </p>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={handlePurchase}
-                      className="w-full text-lg py-6"
-                      size="lg"
-                    >
-                      {resource.isFree ? "Download Free" : "Buy Now"}
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Add to Wishlist
-                    </Button>
-                  </div>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={handleDirectDownload}
+                          className="w-full text-lg py-6"
+                          size="lg"
+                        >
+                          <Download className="w-5 h-5 mr-2" />
+                          Download Your Resource
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => navigate("/dashboard/teacher/resource-management")}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Manage Resource
+                        </Button>
+                      </div>
 
-                  <div className="text-xs text-muted-foreground">
-                    {resource.isFree
-                      ? "Instant download"
-                      : "Instant download after purchase"}
-                  </div>
+                      <div className="text-xs text-muted-foreground">
+                        ✓ You have full access to your resources
+                      </div>
+                    </>
+                  ) : isPurchased ? (
+                    // Already Purchased - Show Download Option
+                    <>
+                      <div className="space-y-2">
+                        <Badge variant="default" className="bg-green-600">
+                          ✓ Purchased
+                        </Badge>
+                        <p className="text-sm text-muted-foreground">
+                          You own this resource
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Button
+                          onClick={handleDirectDownload}
+                          className="w-full text-lg py-6"
+                          size="lg"
+                        >
+                          <Download className="w-5 h-5 mr-2" />
+                          Download Now
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => navigate("/my-library")}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Go to My Library
+                        </Button>
+                      </div>
+
+                      <div className="text-xs text-muted-foreground">
+                        ✓ Download anytime from My Library
+                      </div>
+                    </>
+                  ) : (
+                    // Not Purchased - Show Purchase Option
+                    <>
+                      <div className="text-3xl font-bold text-primary">
+                        {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Button
+                          onClick={handlePurchase}
+                          className="w-full text-lg py-6"
+                          size="lg"
+                        >
+                          {resource.isFree ? "Download Free" : "Buy Now"}
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          <Heart className="w-4 h-4 mr-2" />
+                          Add to Wishlist
+                        </Button>
+                      </div>
+
+                      <div className="text-xs text-muted-foreground">
+                        {resource.isFree
+                          ? "Instant download"
+                          : "Instant download after purchase"}
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -592,35 +851,64 @@ const ResourceDetail = () => {
       <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Purchase Resource</DialogTitle>
+            <DialogTitle className="flex items-center space-x-2">
+              <CreditCard className="w-5 h-5" />
+              <span>Purchase Resource</span>
+            </DialogTitle>
             <DialogDescription>
-              Complete your purchase to access this resource
+              {resource.isFree
+                ? "Download this free resource instantly"
+                : "Complete your purchase to access this resource"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Resource Preview */}
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
-              <img 
-                src={resource.bannerImage || "/placeholder.svg"} 
+              <img
+                src={resource.bannerImage || "/placeholder.svg"}
                 alt={resource.title || "Resource"}
                 className="w-16 h-12 rounded object-cover"
                 onError={(e) => {
-                  // Fallback for broken images
                   const target = e.target as HTMLImageElement;
                   target.src = "/placeholder.svg";
                 }}
               />
               <div className="flex-1">
-                <h4 className="font-medium text-sm">{resource.title || "Untitled Resource"}</h4>
-                <p className="text-xs text-muted-foreground">by {resource.authorName || "Unknown Author"}</p>
+                <h4 className="font-medium text-sm">
+                  {resource.title || "Untitled Resource"}
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  by {resource.authorName || "Unknown Author"}
+                </p>
               </div>
               <div className="text-lg font-bold text-primary">
-                {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
+                {resource.isFree
+                  ? "FREE"
+                  : `$${
+                      typeof resource.price === "number"
+                        ? resource.price.toFixed(2)
+                        : "0.00"
+                    }`}
               </div>
             </div>
 
+            {/* Info Alert */}
+            {!resource.isFree && (
+              <Alert>
+                <Lock className="h-4 w-4" />
+                <AlertDescription>
+                  You will be redirected to Stripe's secure payment page to
+                  complete your purchase. Your payment information is never
+                  stored on our servers.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="text-sm text-muted-foreground text-center">
-              {resource.isFree ? "You can download this resource for free" : "You will be redirected to our secure payment processor"}
+              {resource.isFree
+                ? "✓ Instant access after download"
+                : "✓ Secure payment via Stripe · ✓ Instant download"}
             </div>
           </div>
 
@@ -628,14 +916,20 @@ const ResourceDetail = () => {
             <Button
               variant="outline"
               onClick={() => setShowPurchaseModal(false)}
+              disabled={isPurchasing}
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmPurchase}
               className="w-full sm:w-auto"
+              disabled={isPurchasing}
             >
-              Continue to Payment
+              {isPurchasing
+                ? "Processing..."
+                : resource.isFree
+                ? "Download Now"
+                : "Continue to Payment"}
             </Button>
           </DialogFooter>
         </DialogContent>
