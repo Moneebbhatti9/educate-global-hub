@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,8 @@ import NotificationBell from "@/components/forum/NotificationBell";
 import socketService from "@/services/socketService";
 
 const Forum = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const {
     discussions,
     trendingTopics,
@@ -152,6 +154,21 @@ const Forum = () => {
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleNewPostClick = () => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create a post",
+        variant: "destructive",
+      });
+      // Redirect to login with return URL
+      navigate("/login", { state: { from: "/forum" } });
+      return;
+    }
+    // User is authenticated, open the dialog
+    setIsDialogOpen(true);
   };
 
   const handleCreateDiscussion = async (e?: React.FormEvent) => {
@@ -279,13 +296,14 @@ const Forum = () => {
             </h1>
             <div className="flex items-center space-x-4">
               <NotificationBell />
+              <Button
+                onClick={handleNewPostClick}
+                className="bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Post
+              </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold">
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Post
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">Create a post</DialogTitle>
