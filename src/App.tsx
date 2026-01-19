@@ -23,6 +23,7 @@ import {
   validateSecurityHeaders,
 } from "./utils/security";
 import SecurityProvider from "./components/SecurityProvider";
+import CookieConsent from "./components/gdpr/CookieConsent";
 
 // Lazy load components
 const Index = lazy(() => import("./pages/Index"));
@@ -73,6 +74,9 @@ const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
 const AdminResourceManagement = lazy(
   () => import("./pages/admin/ResourceManagement")
 );
+const AdminUploadResource = lazy(
+  () => import("./pages/admin/UploadResource")
+);
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -92,6 +96,11 @@ const WithdrawalHistory = lazy(
 const TeacherResourceManagement = lazy(
   () => import("./pages/teacher/ResourceManagement")
 );
+const Earnings = lazy(() => import("./pages/teacher/Earnings"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const MyLibrary = lazy(() => import("./pages/MyLibrary"));
+const SalesManagement = lazy(() => import("./pages/admin/SalesManagement"));
+const PayoutManagement = lazy(() => import("./pages/admin/PayoutManagement"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -136,6 +145,8 @@ const AppRoutes = () => {
         <Route path="/resources" element={<Resources />} />
         <Route path="/resources/:id" element={<ResourceDetail />} />
         <Route path="/download/:id" element={<DownloadPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/my-library" element={<MyLibrary />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -195,6 +206,7 @@ const AppRoutes = () => {
             path="resource-management"
             element={<TeacherResourceManagement />}
           />
+          <Route path="earnings" element={<Earnings />} />
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="withdrawal-history" element={<WithdrawalHistory />} />
         </Route>
@@ -232,7 +244,10 @@ const AppRoutes = () => {
           <Route path="users" element={<UserManagement />} />
           <Route path="jobs" element={<JobManagement />} />
           <Route path="forum" element={<ForumManagement />} />
+          <Route path="upload-resource" element={<AdminUploadResource />} />
           <Route path="resources" element={<AdminResourceManagement />} />
+          <Route path="sales-management" element={<SalesManagement />} />
+          <Route path="payout-management" element={<PayoutManagement />} />
         </Route>
 
         {/* ======================================== */}
@@ -261,6 +276,7 @@ const App = () => {
             <AuthProvider>
               <SocketProvider>
                 <AppRoutes />
+                <CookieConsent />
               </SocketProvider>
             </AuthProvider>
           </BrowserRouter>

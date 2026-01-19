@@ -228,6 +228,15 @@ const AdminDashboard = () => {
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Forum Management
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => navigate("resources")}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Resource Management
+                </Button>
               </CardContent>
             </Card>
 

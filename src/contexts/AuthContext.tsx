@@ -100,7 +100,10 @@ interface AuthContextType extends AuthState {
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: (skipNavigation?: boolean) => Promise<void>;
   verifyOTP: (data: OTPVerificationData) => Promise<void>;
-  sendOTP: (email: string) => Promise<void>;
+  sendOTP: (
+    email: string,
+    type?: "verification" | "reset"
+  ) => Promise<void>;
   passwordReset: (data: PasswordResetData) => Promise<void>;
   passwordResetConfirm: (data: PasswordResetConfirmData) => Promise<void>;
   changePassword: (data: ChangePasswordData) => Promise<void>;
@@ -369,17 +372,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // Send OTP function
-  const sendOTP = useCallback(async (email: string) => {
-    try {
-      const response = await authAPI.sendOTP(email);
-      if (!response.success) {
-        throw new Error(response.message || "Failed to send OTP");
+  const sendOTP = useCallback(
+    async (email: string, type: "verification" | "reset" = "verification") => {
+      try {
+        const response = await authAPI.sendOTP(email, type);
+        if (!response.success) {
+          throw new Error(response.message || "Failed to send OTP");
+        }
+      } catch (error) {
+        errorHandler.logError(error, "Send OTP Error");
+        throw error;
       }
-    } catch (error) {
-      errorHandler.logError(error, "Send OTP Error");
-      throw error;
-    }
-  }, []);
+    },
+    []
+  );
 
   // Password reset function
   const passwordReset = useCallback(async (data: PasswordResetData) => {

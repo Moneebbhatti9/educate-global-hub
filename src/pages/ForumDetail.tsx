@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,8 @@ import { toast } from "@/hooks/use-toast";
 
 const ForumDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const { joinDiscussion, leaveDiscussion } = useSocket();
   const {
     discussion,
@@ -116,12 +117,13 @@ const ForumDetail = () => {
   }, [id]);
 
   const handleLike = async () => {
-    if (!user) {
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to like posts.",
+        description: "Please log in to like posts.",
         variant: "destructive",
       });
+      navigate("/login", { state: { from: `/forum/${id}` } });
       return;
     }
 
@@ -144,12 +146,13 @@ const ForumDetail = () => {
   };
 
   const handlePostReply = async () => {
-    if (!user) {
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to comment.",
+        description: "Please log in to comment.",
         variant: "destructive",
       });
+      navigate("/login", { state: { from: `/forum/${id}` } });
       return;
     }
 
@@ -190,12 +193,13 @@ const ForumDetail = () => {
   };
 
   const handlePostNestedReply = async (parentReplyId: string) => {
-    if (!user) {
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to reply.",
+        description: "Please log in to reply.",
         variant: "destructive",
       });
+      navigate("/login", { state: { from: `/forum/${id}` } });
       return;
     }
 
@@ -246,12 +250,13 @@ const ForumDetail = () => {
   };
 
   const handleReplyLike = async (replyId: string) => {
-    if (!user) {
+    if (!isAuthenticated || !user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to like comments.",
+        description: "Please log in to like comments.",
         variant: "destructive",
       });
+      navigate("/login", { state: { from: `/forum/${id}` } });
       return;
     }
 
@@ -303,6 +308,17 @@ const ForumDetail = () => {
       }
       return newSet;
     });
+  };
+
+  const handleTextareaClick = () => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to comment.",
+        variant: "destructive",
+      });
+      navigate("/login", { state: { from: `/forum/${id}` } });
+    }
   };
 
   const handleShare = async () => {
@@ -595,14 +611,16 @@ const ForumDetail = () => {
                 <div className="flex-1">
                   <Textarea
                     id="comment-input"
-                    placeholder="Add a comment..."
+                    placeholder={!user ? "Log in to comment..." : "Add a comment..."}
                     value={replyContent}
                     onChange={(e) => {
                       setReplyContent(e.target.value);
                       if (replyError) setReplyError(""); // Clear error on type
                     }}
-                    className={`min-h-[80px] mb-2 resize-none ${replyError ? "border-red-500 focus:border-red-500" : ""}`}
+                    onClick={handleTextareaClick}
+                    className={`min-h-[80px] mb-2 resize-none ${replyError ? "border-red-500 focus:border-red-500" : ""} ${!user ? "cursor-pointer" : ""}`}
                     disabled={!user}
+                    readOnly={!user}
                   />
                   {replyError && (
                     <div className="flex items-center space-x-1 text-red-600 text-sm mb-2">

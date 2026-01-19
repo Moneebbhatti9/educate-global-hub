@@ -43,7 +43,7 @@ import { resourcesAPI } from "@/apis/resources";
 import type {
   CreateResourceRequest,
   UpdateResourceRequest,
-  TeacherResource,
+  Resource,
   UploadedFileMetadata,
 } from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
@@ -253,10 +253,10 @@ const UploadResource = () => {
   // Check for edit mode
   const editState = location.state as {
     editMode?: boolean;
-    resourceData?: TeacherResource;
+    resourceData?: Resource;
   } | null;
   const isEditMode = Boolean(id) || Boolean(editState?.editMode);
-  const [resourceData, setResourceData] = useState<TeacherResource | null>(null);
+  const [resourceData, setResourceData] = useState<Resource | null>(null);
   const [isLoadingResource, setIsLoadingResource] = useState(false);
 
   // Form state
@@ -294,27 +294,23 @@ const UploadResource = () => {
       // Populate form fields
       form.reset({
         title: resource.title || "",
-        description: resource.description || "",
-        type: resource.type || "",
-        publishing: resource.publishing || "public",
+        description: resource.fullDescription || resource.shortDescription || "",
+        type: resource.resourceType || "",
+        publishing: resource.visibility || "public",
         isFree: resource.isFree ? "free" : "paid",
         price: resource.isFree ? "" : resource.price,
         currency: resource.currency || "USD",
-        ageRange: resource.ageRange || "",
+        ageRange: resource.ageGroups?.[0] || "",
         curriculum: resource.curriculum || "",
         curriculumType: resource.curriculumType || "",
-        subject: resource.subject || "",
+        subject: resource.subjects?.[0] || "",
       });
 
       // Load existing files as metadata with success status
-      const coverPhotoUrl = typeof resource.coverPhoto === 'string'
-        ? resource.coverPhoto
-        : resource.coverPhoto?.url;
-
-      if (coverPhotoUrl) {
+      if (resource.bannerImage) {
         setBannerMetadata({
           file: new File([], "existing-banner.jpg"),
-          url: coverPhotoUrl,
+          url: resource.bannerImage,
           publicId: null,
           progress: 100,
           status: 'success',
@@ -322,15 +318,9 @@ const UploadResource = () => {
       }
 
       // Load preview images
-      const previewUrls = Array.isArray(resource.previewImages)
-        ? resource.previewImages.map(img =>
-            typeof img === 'string' ? img : img.url
-          )
-        : [];
-
-      if (previewUrls.length > 0) {
+      if (resource.previewImages && resource.previewImages.length > 0) {
         setPreviewMetadata(
-          previewUrls.map((url, index) => ({
+          resource.previewImages.map((url, index) => ({
             file: new File([], `existing-preview-${index}.jpg`),
             url,
             publicId: null,
@@ -341,14 +331,10 @@ const UploadResource = () => {
       }
 
       // Load main file
-      const mainFileUrl = typeof resource.mainFile === 'string'
-        ? resource.mainFile
-        : resource.mainFile?.url;
-
-      if (mainFileUrl) {
+      if (resource.resourceFiles?.[0]) {
         setResourceFileMetadata({
           file: new File([], "existing-file.pdf"),
-          url: mainFileUrl,
+          url: resource.resourceFiles[0],
           publicId: null,
           progress: 100,
           status: 'success',
@@ -449,95 +435,43 @@ const UploadResource = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      showError("Invalid file type", "Banner must be an image (JPG, PNG, etc.)");
-      e.target.value = '';
-      return;
-    }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showError("File too large", "Banner image must be under 5MB");
-      e.target.value = '';
+      showError("File too large", "Banner must be under 5MB");
       return;
     }
 
-    // Validate image dimensions (recommended 1200×400px, min 800×300px)
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
+    if (!file.type.startsWith("image/")) {
+      showError("Invalid file type", "Banner must be an image");
+      return;
+    }
 
-    img.onload = async () => {
-      URL.revokeObjectURL(objectUrl);
-
-      const width = img.width;
-      const height = img.height;
-
-      // Check minimum dimensions
-      if (width < 800 || height < 300) {
-        showError(
-          "Image too small",
-          `Banner must be at least 800×300px. Your image is ${width}×${height}px`
-        );
-        e.target.value = '';
-        return;
-      }
-
-      // Warn if not recommended dimensions but still allow
-      if (width !== 1200 || height !== 400) {
-        customToast.info(
-          "Image dimensions",
-          `Recommended size is 1200×400px. Your image is ${width}×${height}px`
-        );
-      }
-
-      await uploadFile(file, 'banner');
-      e.target.value = '';
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      showError("Invalid image", "Could not load the image file");
-      e.target.value = '';
-    };
-
-    img.src = objectUrl;
+    await uploadFile(file, 'banner');
+    e.target.value = '';
   };
 
   const handlePreviewUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Check maximum limit (1-5 images)
     if (previewMetadata.length + files.length > 5) {
       showError("Too many files", "Maximum 5 preview images allowed");
-      e.target.value = '';
       return;
     }
 
-    // Validate each file
-    const validFiles: File[] = [];
-    for (const file of files) {
-      // Validate file type (images only)
-      if (!file.type.startsWith("image/")) {
-        showError("Invalid file type", `${file.name} must be an image (JPG, PNG, etc.)`);
-        continue;
-      }
-
-      // Validate file size (max 3MB)
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       if (file.size > 3 * 1024 * 1024) {
-        showError("File too large", `${file.name} must be under 3MB`);
+        showError("File too large", `${file.name} is over 3MB`);
         continue;
       }
 
-      validFiles.push(file);
-    }
+      if (!file.type.startsWith("image/")) {
+        showError("Invalid file type", `${file.name} must be an image`);
+        continue;
+      }
 
-    // Upload valid files
-    for (let i = 0; i < validFiles.length; i++) {
-      await uploadFile(validFiles[i], 'preview', previewMetadata.length + i);
+      await uploadFile(file, 'preview', previewMetadata.length + i);
     }
-
     e.target.value = '';
   };
 
@@ -545,33 +479,8 @@ const UploadResource = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type (PDF, DOCX, PPTX, ZIP, images)
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/msword', // .doc
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-      'application/vnd.ms-powerpoint', // .ppt
-      'application/zip',
-      'application/x-zip-compressed',
-    ];
-
-    const isImage = file.type.startsWith('image/');
-    const isAllowedType = allowedTypes.includes(file.type);
-
-    if (!isImage && !isAllowedType) {
-      showError(
-        "Invalid file type",
-        "Resource file must be PDF, DOCX, PPTX, ZIP, or an image"
-      );
-      e.target.value = '';
-      return;
-    }
-
-    // Validate file size (max 500MB)
     if (file.size > 500 * 1024 * 1024) {
       showError("File too large", "Resource file must be under 500MB");
-      e.target.value = '';
       return;
     }
 
@@ -598,7 +507,7 @@ const UploadResource = () => {
     setIsSubmitting(true);
 
     try {
-      if (isEditMode && resourceData?._id) {
+      if (isEditMode && resourceData?.id) {
         // Update existing resource
         const updatePayload: UpdateResourceRequest = {
           title: data.title.trim(),
@@ -617,7 +526,7 @@ const UploadResource = () => {
           mainFileUrl: resourceFileMetadata.url,
         };
 
-        const response = await resourcesAPI.updateResource(resourceData._id, updatePayload);
+        const response = await resourcesAPI.updateResource(resourceData.id, updatePayload);
 
         if (response.success) {
           showSuccess(
@@ -625,7 +534,7 @@ const UploadResource = () => {
             "Your resource has been updated."
           );
 
-          navigate("/dashboard/teacher/resource-management");
+          navigate("/dashboard/admin/resource-management");
         } else {
           showError("Update failed", response.message || "Failed to update resource");
         }
@@ -663,7 +572,7 @@ const UploadResource = () => {
           setPreviewMetadata([]);
           setResourceFileMetadata(null);
 
-          navigate("/dashboard/teacher/resource-management");
+          navigate("/dashboard/admin/resource-management");
         } else {
           showError("Upload failed", response.message || "Failed to upload resource");
         }
@@ -735,7 +644,7 @@ const UploadResource = () => {
   };
 
   return (
-    <DashboardLayout role="teacher">
+    <DashboardLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="mb-8">
@@ -744,15 +653,13 @@ const UploadResource = () => {
           </h1>
           <p className="text-muted-foreground mt-2">
             {isEditMode
-              ? "Update your teaching resource details and files"
-              : "Share your teaching materials with educators worldwide"}
+              ? "Update teaching resource details and files"
+              : "Create teaching materials for educators worldwide"}
           </p>
         </div>
 
-        {/* Upload Status Banner - Only show when files are uploading */}
-        {(bannerMetadata?.status === 'uploading' ||
-          previewMetadata.some(m => m.status === 'uploading') ||
-          resourceFileMetadata?.status === 'uploading') && (
+        {/* Upload Status Banner */}
+        {!allFilesUploaded && (bannerMetadata || previewMetadata.length > 0 || resourceFileMetadata) && (
           <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
             <CardContent className="pt-6">
               <p className="text-sm text-amber-800 dark:text-amber-200">
@@ -805,7 +712,7 @@ const UploadResource = () => {
                         </div>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Required: Min 800×300px (Recommended: 1200×400px), JPEG/PNG, max 5MB
+                        Recommended: 1200×400px, max 5MB
                       </p>
                     </div>
                   </CardContent>
@@ -853,7 +760,7 @@ const UploadResource = () => {
                       )}
 
                       <p className="text-xs text-muted-foreground">
-                        Required: 1-5 images, screenshots or sample pages, JPEG/PNG, max 3MB each
+                        Screenshots or sample pages, max 3MB each
                       </p>
                     </div>
                   </CardContent>
@@ -896,7 +803,7 @@ const UploadResource = () => {
                         </div>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Required: PDF, DOCX, PPTX, ZIP, or images. Max 500MB
+                        PDF, DOCX, PPTX, ZIP, images. Max 500MB
                       </p>
                     </div>
                   </CardContent>
