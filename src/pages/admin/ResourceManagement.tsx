@@ -12,6 +12,14 @@ import {
   CheckSquare,
   RefreshCw,
   Download,
+  Package,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  FileText,
+  TrendingUp,
+  ExternalLink,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -375,38 +383,170 @@ export default function AdminResourceManagement() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Total Resources"
-            value={stats.totalResources}
-            icon={Eye}
-            description="All resources on platform"
-          />
-          <StatsCard
-            title="Pending Approval"
-            value={stats.pendingApprovals}
-            icon={AlertTriangle}
-            description="Resources awaiting review"
-            badge={
-              stats.pendingApprovals > 0
-                ? { text: "Action Required", variant: "destructive" }
-                : undefined
-            }
-          />
-          <StatsCard
-            title="Published Resources"
-            value={stats.publishedResources || 0}
-            icon={CheckSquare}
-            description="Live on platform"
-          />
-          <StatsCard
-            title="Total Downloads"
-            value={stats.totalSales}
-            icon={Download}
-            description="Platform-wide downloads"
-          />
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Resources
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Package className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {stats.totalResources}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                All resources on platform
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className={`bg-gradient-to-br border-2 ${
+            stats.pendingApprovals > 0
+              ? "from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-400 animate-pulse"
+              : "from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50"
+          }`}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                Pending Approval
+                {stats.pendingApprovals > 0 && (
+                  <Badge variant="destructive" className="animate-bounce">
+                    Action Required
+                  </Badge>
+                )}
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-amber-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                {stats.pendingApprovals}
+              </div>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                Resources awaiting review
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Published Resources
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {stats.publishedResources || 0}
+              </div>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Live on platform
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Total Downloads
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <Download className="h-5 w-5 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                {stats.totalSales}
+              </div>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                Platform-wide downloads
+              </p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Pending Review Quick Action Section - Only show if there are pending resources */}
+        {stats.pendingApprovals > 0 && (
+          <Card className="border-2 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-amber-700">
+                <AlertTriangle className="w-5 h-5" />
+                Quick Review: {stats.pendingApprovals} Pending Resource{stats.pendingApprovals > 1 ? 's' : ''}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {filteredResources
+                  .filter((r) => r.status === "pending")
+                  .slice(0, 3)
+                  .map((resource) => (
+                    <div
+                      key={resource.id}
+                      className="flex items-center justify-between p-3 bg-white dark:bg-background rounded-lg border"
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={resource.thumbnail || "/api/placeholder/60/40"}
+                          alt={resource.title}
+                          className="w-12 h-8 object-cover rounded"
+                        />
+                        <div>
+                          <div className="font-medium text-sm">{resource.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            by {resource.author} •{" "}
+                            {new Date(resource.uploadDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          onClick={() => confirmApproveResource(resource)}
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          onClick={() => confirmRejectResource(resource)}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleViewResource(resource.id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                {stats.pendingApprovals > 3 && (
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => setStatusFilter("pending")}
+                  >
+                    View All {stats.pendingApprovals} Pending Resources
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Resource Management */}
         <Card>

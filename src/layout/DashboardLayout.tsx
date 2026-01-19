@@ -85,15 +85,20 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           href: `/dashboard/teacher/applications`,
           icon: FileText,
         },
-        {
-          name: "Upload Resource",
-          href: `/dashboard/teacher/upload-resource`,
-          icon: Upload,
-        },
+        // {
+        //   name: "Upload Resource",
+        //   href: `/dashboard/teacher/upload-resource`,
+        //   icon: Upload,
+        // },
         {
           name: "My Resources",
           href: `/dashboard/teacher/resource-management`,
           icon: FolderOpen,
+        },
+        {
+          name: "My Library",
+          href: `/my-library`,
+          icon: BookOpen,
         },
         {
           name: "Earnings",
@@ -164,11 +169,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           href: `/dashboard/admin/forum`,
           icon: MessagesSquare,
         },
-        {
-          name: "Upload Resource",
-          href: `/dashboard/admin/upload-resource`,
-          icon: Upload,
-        },
+        // {
+        //   name: "Upload Resource",
+        //   href: `/dashboard/admin/upload-resource`,
+        //   icon: Upload,
+        // },
         {
           name: "Resources",
           href: `/dashboard/admin/resources`,
@@ -183,6 +188,12 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           name: "Payout Management",
           href: `/dashboard/admin/payout-management`,
           icon: Wallet,
+        },
+        {
+                
+          name: "Platform Settings",
+          href: `/dashboard/admin/platform-settings`,
+          icon: Settings,
         },
       ],
     },

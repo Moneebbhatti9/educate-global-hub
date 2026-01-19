@@ -39,26 +39,235 @@ import {
   Trophy,
   Heart,
   Eye,
+  Lock,
+  Sparkles,
+  ShoppingCart,
+  Download,
 } from "lucide-react";
 import { resourcesAPI } from "@/apis/resources";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useAuth } from "@/contexts/AuthContext";
 import type { PublicResource, GetAllResourcesQueryParams } from "@/types/resource";
+
+// Resource Card Component for reusability across tabs
+interface ResourceCardProps {
+  resource: PublicResource;
+  onResourceClick: (id: string) => void;
+  onPreviewClick: (id: string) => void;
+  getTypeIcon: (type: string) => any;
+}
+
+const ResourceCard = ({ resource, onResourceClick, onPreviewClick, getTypeIcon }: ResourceCardProps) => {
+  // Safety checks for resource data
+  if (!resource || typeof resource !== 'object') {
+    return null;
+  }
+
+  if (!resource.id || typeof resource.id !== 'string') {
+    return null;
+  }
+
+  const isFree = resource.price === "FREE" || resource.price === "0" || resource.price?.toLowerCase().includes("free");
+
+  return (
+    <Card
+      key={resource.id}
+      className="group hover:shadow-card-hover transition-all duration-300 hover:border-brand-primary/20 overflow-hidden cursor-pointer"
+      onClick={() => onResourceClick(resource.id)}
+    >
+      <div className="relative">
+        <img
+          src={resource.thumbnail || "/api/placeholder/300/200"}
+          alt={resource.title || "Resource"}
+          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/api/placeholder/300/200";
+          }}
+        />
+        {/* Price Badge */}
+        <div className="absolute top-3 left-3">
+          <Badge
+            variant={isFree ? "default" : "secondary"}
+            className={isFree ? "bg-green-600 hover:bg-green-700" : "bg-background/90"}
+          >
+            {isFree ? "FREE" : resource.price || "Price N/A"}
+          </Badge>
+        </div>
+        {/* Preview Badge */}
+        <div className="absolute top-3 right-3 flex space-x-1">
+          <Badge
+            variant="outline"
+            className="bg-background/90 text-xs"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Preview
+          </Badge>
+        </div>
+        {/* Wishlist Button */}
+        <div className="absolute bottom-3 right-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-background/90 hover:bg-background"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Heart className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="font-heading text-lg leading-tight group-hover:text-brand-primary transition-colors line-clamp-2">
+              {resource.title || "Untitled Resource"}
+            </CardTitle>
+            <div className="flex items-center space-x-2 mt-2">
+              <Avatar className="w-6 h-6">
+                <AvatarFallback className="text-xs">
+                  {resource.author
+                    ? resource.author
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                    : "U"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">
+                {resource.author || "Unknown Author"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        <CardDescription className="line-clamp-2 text-sm">
+          {resource.title || "No description available"}
+        </CardDescription>
+
+        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+          <Badge variant="outline" className="text-xs">
+            {resource.status || "Unknown Status"}
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            {new Date(resource.uploadDate).toLocaleDateString()}
+          </Badge>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+            <div className="flex items-center">
+              <Star className="w-4 h-4 text-yellow-400 mr-1" />
+              4.5
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-1" />
+              {new Date(resource.uploadDate).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-center">
+          <Button
+            variant={isFree ? "default" : "outline"}
+            size="sm"
+            className="w-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreviewClick(resource.id);
+            }}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            {isFree ? "View & Download" : "View Details"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Guest user overlay component - shown when user is not logged in
+const GuestOverlay = ({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) => (
+  <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-auto" />
+    <div className="relative z-50 max-w-md mx-4 pointer-events-auto">
+      <Card className="border-2 border-primary/20 shadow-2xl bg-background/98 backdrop-blur-sm">
+        <CardContent className="pt-8 pb-6 px-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-primary" />
+          </div>
+          <h3 className="text-2xl font-bold text-foreground mb-2">
+            Unlock Full Access
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            Join thousands of educators sharing and discovering quality teaching resources.
+            Sign up free to browse our complete catalog of educational materials.
+          </p>
+
+          <div className="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="text-2xl font-bold text-primary">10K+</div>
+              <div className="text-xs text-muted-foreground">Resources</div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="text-2xl font-bold text-primary">2K+</div>
+              <div className="text-xs text-muted-foreground">Teachers</div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="text-2xl font-bold text-primary">50+</div>
+              <div className="text-xs text-muted-foreground">Subjects</div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              onClick={onSignup}
+              className="w-full text-lg py-6"
+              size="lg"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Sign Up Free
+            </Button>
+            <Button
+              onClick={onLogin}
+              variant="outline"
+              className="w-full"
+            >
+              Already have an account? Log In
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            Free forever for teachers. No credit card required.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);
 
 const Resources = () => {
   const navigate = useNavigate();
   const { handleError, showError } = useErrorHandler();
-  
+  const { isAuthenticated } = useAuth();
+
   // State management
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedGrade, setSelectedGrade] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
-  
+  const [activeTab, setActiveTab] = useState("all");
+
   // Data state
   const [resources, setResources] = useState<PublicResource[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResources, setTotalResources] = useState(0);
+
+  // Guest user limit: show only 3 resources for non-authenticated users
+  const GUEST_RESOURCE_LIMIT = 3;
 
   // Load resources when component mounts or filters change
   useEffect(() => {
@@ -175,8 +384,40 @@ const Resources = () => {
     "Video Course",
   ];
 
-  // Use the resources from API directly (filtering is handled by the API)
-  const filteredResources = resources;
+  // Filter resources based on active tab and apply guest restrictions
+  const getFilteredResources = () => {
+    let filtered = resources;
+
+    // Apply tab filtering
+    switch (activeTab) {
+      case "free":
+        filtered = resources.filter((r) => r.price === "FREE" || r.price === "0" || r.price?.toLowerCase().includes("free"));
+        break;
+      case "premium":
+        filtered = resources.filter((r) => r.price !== "FREE" && r.price !== "0" && !r.price?.toLowerCase().includes("free"));
+        break;
+      case "new":
+        // Show resources from last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        filtered = resources.filter((r) => new Date(r.uploadDate) >= thirtyDaysAgo);
+        break;
+      default:
+        filtered = resources;
+    }
+
+    return filtered;
+  };
+
+  const filteredResources = getFilteredResources();
+
+  // Apply guest restriction: only show limited resources for non-authenticated users
+  const displayedResources = isAuthenticated
+    ? filteredResources
+    : filteredResources.slice(0, GUEST_RESOURCE_LIMIT);
+
+  // Check if there are more resources hidden for guests
+  const hasHiddenResources = !isAuthenticated && filteredResources.length > GUEST_RESOURCE_LIMIT;
 
   const getTypeIcon = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -193,8 +434,12 @@ const Resources = () => {
     }
   };
 
+  // Navigation handlers for guest overlay
+  const handleLogin = () => navigate("/login", { state: { from: "/resources" } });
+  const handleSignup = () => navigate("/register", { state: { from: "/resources" } });
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <Navigation />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -208,6 +453,19 @@ const Resources = () => {
             teachers, for teachers. From interactive lessons to comprehensive
             workbooks.
           </p>
+
+          {/* Show CTA for guests */}
+          {!isAuthenticated && (
+            <div className="flex justify-center gap-4 mt-6">
+              <Button onClick={handleSignup} size="lg">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Sign Up to Browse All
+              </Button>
+              <Button variant="outline" onClick={handleLogin} size="lg">
+                Log In
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -386,12 +644,21 @@ const Resources = () => {
                 />
               </div>
 
-              <Tabs defaultValue="all" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="all">All Resources</TabsTrigger>
-                  <TabsTrigger value="free">Free</TabsTrigger>
-                  <TabsTrigger value="premium">Premium</TabsTrigger>
-                  <TabsTrigger value="new">New</TabsTrigger>
+                  <TabsTrigger value="free">
+                    <Download className="w-4 h-4 mr-1" />
+                    Free
+                  </TabsTrigger>
+                  <TabsTrigger value="premium">
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    Premium
+                  </TabsTrigger>
+                  <TabsTrigger value="new">
+                    <Sparkles className="w-4 h-4 mr-1" />
+                    New
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-6 mt-6">
@@ -399,7 +666,9 @@ const Resources = () => {
                       <p className="text-sm text-muted-foreground">
                         {isLoading
                           ? "Loading..."
-                          : `Showing ${resources.length} of ${totalResources} resources`}
+                          : isAuthenticated
+                            ? `Showing ${displayedResources.length} of ${totalResources} resources`
+                            : `Showing ${displayedResources.length} resources (Sign up to see all ${totalResources})`}
                       </p>
                     <Select defaultValue="popular">
                       <SelectTrigger className="w-40">
@@ -439,7 +708,7 @@ const Resources = () => {
                           </CardContent>
                         </Card>
                       ))
-                    ) : filteredResources.length === 0 ? (
+                    ) : displayedResources.length === 0 ? (
                       <div className="col-span-full text-center py-12">
                         <div className="text-muted-foreground">
                           <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -450,7 +719,7 @@ const Resources = () => {
                         </div>
                       </div>
                     ) : (
-                      filteredResources.map((resource) => {
+                      displayedResources.map((resource) => {
                         // Safety checks for resource data
                         if (!resource || typeof resource !== 'object') {
                           console.warn("Invalid resource data:", resource);
@@ -594,8 +863,8 @@ const Resources = () => {
                     )}
                   </div>
 
-                  {/* Pagination */}
-                  {totalResources > 12 && (
+                  {/* Pagination - only show for authenticated users */}
+                  {isAuthenticated && totalResources > 12 && (
                     <div className="flex justify-center items-center space-x-2 mt-8">
                       <Button
                         variant="outline"
@@ -618,42 +887,114 @@ const Resources = () => {
                       </Button>
                     </div>
                   )}
+
+                  {/* Guest Overlay - show when there are more resources hidden */}
+                  {hasHiddenResources && <GuestOverlay onLogin={handleLogin} onSignup={handleSignup} />}
                 </TabsContent>
 
+                {/* Free Resources Tab */}
                 <TabsContent value="free" className="space-y-6 mt-6">
-                  <div className="text-center py-12">
-                    <div className="text-muted-foreground">
-                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">Free Resources</h3>
-                      <p className="text-sm">
-                        Filter functionality coming soon.
-                      </p>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-muted-foreground">
+                      {displayedResources.length} free resources available
+                    </p>
                   </div>
+
+                  {displayedResources.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-muted-foreground">
+                        <Download className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">No Free Resources Found</h3>
+                        <p className="text-sm">
+                          Check back later for new free resources.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {displayedResources.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          resource={resource}
+                          onResourceClick={handleResourceClick}
+                          onPreviewClick={handlePreviewClick}
+                          getTypeIcon={getTypeIcon}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {hasHiddenResources && <GuestOverlay onLogin={handleLogin} onSignup={handleSignup} />}
                 </TabsContent>
 
+                {/* Premium Resources Tab */}
                 <TabsContent value="premium" className="space-y-6 mt-6">
-                  <div className="text-center py-12">
-                    <div className="text-muted-foreground">
-                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">Premium Resources</h3>
-                      <p className="text-sm">
-                        Filter functionality coming soon.
-                      </p>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-muted-foreground">
+                      {displayedResources.length} premium resources available
+                    </p>
                   </div>
+
+                  {displayedResources.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-muted-foreground">
+                        <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">No Premium Resources Found</h3>
+                        <p className="text-sm">
+                          Browse all resources to find premium content.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {displayedResources.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          resource={resource}
+                          onResourceClick={handleResourceClick}
+                          onPreviewClick={handlePreviewClick}
+                          getTypeIcon={getTypeIcon}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {hasHiddenResources && <GuestOverlay onLogin={handleLogin} onSignup={handleSignup} />}
                 </TabsContent>
 
+                {/* New Resources Tab */}
                 <TabsContent value="new" className="space-y-6 mt-6">
-                  <div className="text-center py-12">
-                    <div className="text-muted-foreground">
-                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">New Resources</h3>
-                      <p className="text-sm">
-                        Filter functionality coming soon.
-                      </p>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-muted-foreground">
+                      {displayedResources.length} new resources from the last 30 days
+                    </p>
                   </div>
+
+                  {displayedResources.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-muted-foreground">
+                        <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium mb-2">No New Resources</h3>
+                        <p className="text-sm">
+                          Check back soon for the latest resources.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {displayedResources.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          resource={resource}
+                          onResourceClick={handleResourceClick}
+                          onPreviewClick={handlePreviewClick}
+                          getTypeIcon={getTypeIcon}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {hasHiddenResources && <GuestOverlay onLogin={handleLogin} onSignup={handleSignup} />}
                 </TabsContent>
               </Tabs>
             </div>

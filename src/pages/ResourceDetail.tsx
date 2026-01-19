@@ -13,6 +13,13 @@ import {
   ExternalLink,
   Lock,
   CreditCard,
+  CheckCircle2,
+  ShieldCheck,
+  Users,
+  Building2,
+  UserCheck,
+  Info,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +35,8 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { resourcesAPI } from "@/apis/resources";
@@ -36,7 +45,35 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/components/ui/sonner";
 import type { Resource } from "@/types/resource";
-import { downloadFile, getFilenameFromUrl } from "@/utils/downloadHelper";
+import { downloadViaBackend } from "@/utils/downloadHelper";
+
+// License types with pricing multipliers
+const LICENSE_TYPES = {
+  single: {
+    id: "single",
+    name: "Single Teacher License",
+    description: "For individual classroom use only",
+    icon: UserCheck,
+    multiplier: 1,
+    users: "1 teacher",
+  },
+  department: {
+    id: "department",
+    name: "Department License",
+    description: "Share with your entire department",
+    icon: Users,
+    multiplier: 2.5,
+    users: "Up to 10 teachers",
+  },
+  school: {
+    id: "school",
+    name: "School-wide License",
+    description: "Unlimited use within your school",
+    icon: Building2,
+    multiplier: 5,
+    users: "Unlimited teachers",
+  },
+};
 
 // Mock data - replace with actual API calls
 const mockResource = {
@@ -144,6 +181,16 @@ const ResourceDetail = () => {
   const [isPurchased, setIsPurchased] = useState(false);
   const [purchaseDownloadUrl, setPurchaseDownloadUrl] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [selectedLicense, setSelectedLicense] = useState<string>("single");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
+
+  // Calculate price based on selected license
+  const getCalculatedPrice = useCallback(() => {
+    if (!resource || resource.isFree) return 0;
+    const license = LICENSE_TYPES[selectedLicense as keyof typeof LICENSE_TYPES];
+    return (resource.price || 0) * (license?.multiplier || 1);
+  }, [resource, selectedLicense]);
 
 
   const checkPurchaseStatus = useCallback(async () => {
@@ -387,6 +434,7 @@ const ResourceDetail = () => {
         resourceId: resource.id,
         paymentMethodId: "stripe_checkout", // Identifier for Stripe Checkout
         buyerCountry: "GB",
+        licenseType: selectedLicense, // Include selected license type
       });
 
       if (!response.success || !response.data?.checkoutUrl) {
@@ -414,19 +462,20 @@ const ResourceDetail = () => {
   };
 
   const handleDirectDownload = async () => {
-    if (!purchaseDownloadUrl && !resource?.resourceFiles?.[0]) {
+    if (!id) {
       customToast.error(
         "Download unavailable",
-        "Download link is not available for this resource"
+        "Resource not available for download"
       );
       return;
     }
 
-    try {
-      const downloadUrl = purchaseDownloadUrl || resource?.resourceFiles[0] || "";
-      const filename = getFilenameFromUrl(downloadUrl, resource?.title || "resource");
+    setIsDownloading(true);
 
-      await downloadFile(downloadUrl, filename, {
+    try {
+      const filename = `${resource?.title || "resource"}.pdf`;
+
+      await downloadViaBackend(id, filename, {
         onSuccess: () => {
           customToast.success(
             "Download started",
@@ -446,7 +495,48 @@ const ResourceDetail = () => {
         "Download failed",
         "Failed to start download. Please try again."
       );
+    } finally {
+      setIsDownloading(false);
     }
+  };
+
+  const handleAddToWishlist = async () => {
+    if (!isAuthenticated || !user) {
+      customToast.error(
+        "Authentication required",
+        "Please log in to add items to your wishlist"
+      );
+      navigate("/login", { state: { from: `/resources/${id}` } });
+      return;
+    }
+
+    setIsAddingToWishlist(true);
+    try {
+      // TODO: Implement wishlist API call
+      customToast.success(
+        "Added to Wishlist",
+        "This resource has been added to your wishlist"
+      );
+    } catch (error) {
+      customToast.error(
+        "Failed to add",
+        "Could not add to wishlist. Please try again."
+      );
+    } finally {
+      setIsAddingToWishlist(false);
+    }
+  };
+
+  // Format currency display
+  const formatPrice = (price: number, currency: string = "USD") => {
+    const currencySymbols: Record<string, string> = {
+      USD: "$",
+      GBP: "£",
+      EUR: "€",
+      PKR: "Rs",
+    };
+    const symbol = currencySymbols[currency] || currency;
+    return `${symbol}${price.toFixed(2)}`;
   };
 
   // Show loading state
@@ -681,29 +771,42 @@ const ResourceDetail = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Purchase Card */}
-            <Card className="sticky top-4">
+            <Card className="sticky top-4 border-2 border-primary/10">
               <CardContent className="pt-6">
-                <div className="text-center space-y-4">
+                <div className="space-y-4">
                   {isOwner ? (
                     // Resource Owner - Show Owner Options
                     <>
-                      <div className="space-y-2">
+                      <div className="text-center space-y-2">
                         <Badge variant="default" className="bg-blue-600">
-                          👤 Your Resource
+                          <UserCheck className="w-3 h-3 mr-1" />
+                          Your Resource
                         </Badge>
                         <p className="text-sm text-muted-foreground">
                           You created this resource
                         </p>
                       </div>
 
+                      <Separator />
+
                       <div className="space-y-2">
                         <Button
                           onClick={handleDirectDownload}
                           className="w-full text-lg py-6"
                           size="lg"
+                          disabled={isDownloading}
                         >
-                          <Download className="w-5 h-5 mr-2" />
-                          Download Your Resource
+                          {isDownloading ? (
+                            <>
+                              <div className="w-5 h-5 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-5 h-5 mr-2" />
+                              Download Your Resource
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="outline"
@@ -715,70 +818,178 @@ const ResourceDetail = () => {
                         </Button>
                       </div>
 
-                      <div className="text-xs text-muted-foreground">
-                        ✓ You have full access to your resources
+                      <div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-green-500" />
+                        You have full access to your resources
                       </div>
                     </>
                   ) : isPurchased ? (
                     // Already Purchased - Show Download Option
                     <>
-                      <div className="space-y-2">
+                      <div className="text-center space-y-2">
                         <Badge variant="default" className="bg-green-600">
-                          ✓ Purchased
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Purchased
                         </Badge>
                         <p className="text-sm text-muted-foreground">
                           You own this resource
                         </p>
                       </div>
 
+                      <Separator />
+
                       <div className="space-y-2">
                         <Button
                           onClick={handleDirectDownload}
-                          className="w-full text-lg py-6"
+                          className="w-full text-lg py-6 bg-green-600 hover:bg-green-700"
                           size="lg"
+                          disabled={isDownloading}
                         >
-                          <Download className="w-5 h-5 mr-2" />
-                          Download Now
+                          {isDownloading ? (
+                            <>
+                              <div className="w-5 h-5 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-5 h-5 mr-2" />
+                              Download Now
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="outline"
                           className="w-full"
                           onClick={() => navigate("/my-library")}
                         >
-                          <FileText className="w-4 h-4 mr-2" />
+                          <BookOpen className="w-4 h-4 mr-2" />
                           Go to My Library
                         </Button>
                       </div>
 
-                      <div className="text-xs text-muted-foreground">
-                        ✓ Download anytime from My Library
+                      <div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-green-500" />
+                        Download anytime from My Library
                       </div>
                     </>
                   ) : (
-                    // Not Purchased - Show Purchase Option
+                    // Not Purchased - Show Purchase Options with License Selection
                     <>
-                      <div className="text-3xl font-bold text-primary">
-                        {resource.isFree ? "FREE" : `$${typeof resource.price === 'number' ? resource.price.toFixed(2) : '0.00'}`}
+                      {/* Price Display */}
+                      <div className="text-center">
+                        {resource.isFree ? (
+                          <div className="text-3xl font-bold text-green-600">FREE</div>
+                        ) : (
+                          <>
+                            <div className="text-3xl font-bold text-primary">
+                              {formatPrice(getCalculatedPrice(), resource.currency || "USD")}
+                            </div>
+                            {selectedLicense !== "single" && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Base price: {formatPrice(resource.price || 0, resource.currency || "USD")}
+                              </p>
+                            )}
+                          </>
+                        )}
                       </div>
 
+                      {/* License Selection - Only show for paid resources */}
+                      {!resource.isFree && (
+                        <>
+                          <Separator />
+                          <div className="space-y-3">
+                            <Label className="text-sm font-medium flex items-center gap-1">
+                              <Info className="w-3 h-3" />
+                              Select License Type
+                            </Label>
+                            <RadioGroup
+                              value={selectedLicense}
+                              onValueChange={setSelectedLicense}
+                              className="space-y-2"
+                            >
+                              {Object.values(LICENSE_TYPES).map((license) => {
+                                const LicenseIcon = license.icon;
+                                const licensePrice = (resource.price || 0) * license.multiplier;
+                                return (
+                                  <div
+                                    key={license.id}
+                                    className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                      selectedLicense === license.id
+                                        ? "border-primary bg-primary/5"
+                                        : "border-muted hover:border-primary/50"
+                                    }`}
+                                    onClick={() => setSelectedLicense(license.id)}
+                                  >
+                                    <RadioGroupItem value={license.id} id={license.id} />
+                                    <LicenseIcon className="w-5 h-5 text-muted-foreground" />
+                                    <div className="flex-1">
+                                      <Label
+                                        htmlFor={license.id}
+                                        className="text-sm font-medium cursor-pointer"
+                                      >
+                                        {license.name}
+                                      </Label>
+                                      <p className="text-xs text-muted-foreground">
+                                        {license.users}
+                                      </p>
+                                    </div>
+                                    <div className="text-sm font-bold">
+                                      {formatPrice(licensePrice, resource.currency || "USD")}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </RadioGroup>
+                          </div>
+                        </>
+                      )}
+
+                      <Separator />
+
+                      {/* Action Buttons */}
                       <div className="space-y-2">
                         <Button
                           onClick={handlePurchase}
                           className="w-full text-lg py-6"
                           size="lg"
                         >
-                          {resource.isFree ? "Download Free" : "Buy Now"}
+                          {resource.isFree ? (
+                            <>
+                              <Download className="w-5 h-5 mr-2" />
+                              Download Free
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="w-5 h-5 mr-2" />
+                              Buy Now
+                            </>
+                          )}
                         </Button>
-                        <Button variant="outline" className="w-full">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={handleAddToWishlist}
+                          disabled={isAddingToWishlist}
+                        >
                           <Heart className="w-4 h-4 mr-2" />
                           Add to Wishlist
                         </Button>
                       </div>
 
-                      <div className="text-xs text-muted-foreground">
-                        {resource.isFree
-                          ? "Instant download"
-                          : "Instant download after purchase"}
+                      {/* Trust Indicators */}
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <ShieldCheck className="w-4 h-4 text-green-500" />
+                          <span>Secure payment via Stripe</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Download className="w-4 h-4 text-green-500" />
+                          <span>Instant download after purchase</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          <span>Lifetime access to your purchase</span>
+                        </div>
                       </div>
                     </>
                   )}
@@ -847,68 +1058,124 @@ const ResourceDetail = () => {
         </div>
       </main>
 
-      {/* Purchase Modal */}
+      {/* Purchase Modal - Enhanced with License Selection */}
       <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              <CreditCard className="w-5 h-5" />
-              <span>Purchase Resource</span>
+              <CreditCard className="w-5 h-5 text-primary" />
+              <span>Complete Your Purchase</span>
             </DialogTitle>
             <DialogDescription>
               {resource.isFree
                 ? "Download this free resource instantly"
-                : "Complete your purchase to access this resource"}
+                : "Review your order and proceed to secure checkout"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {/* Resource Preview */}
-            <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg border">
               <img
                 src={resource.bannerImage || "/placeholder.svg"}
                 alt={resource.title || "Resource"}
-                className="w-16 h-12 rounded object-cover"
+                className="w-20 h-14 rounded object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/placeholder.svg";
                 }}
               />
-              <div className="flex-1">
-                <h4 className="font-medium text-sm">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-sm truncate">
                   {resource.title || "Untitled Resource"}
                 </h4>
                 <p className="text-xs text-muted-foreground">
                   by {resource.authorName || "Unknown Author"}
                 </p>
-              </div>
-              <div className="text-lg font-bold text-primary">
-                {resource.isFree
-                  ? "FREE"
-                  : `$${
-                      typeof resource.price === "number"
-                        ? resource.price.toFixed(2)
-                        : "0.00"
-                    }`}
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary" className="text-xs">
+                    {resource.resourceType || "Resource"}
+                  </Badge>
+                  {resource.subjects?.[0] && (
+                    <Badge variant="outline" className="text-xs">
+                      {resource.subjects[0]}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Info Alert */}
+            {/* License Selection Summary */}
             {!resource.isFree && (
-              <Alert>
-                <Lock className="h-4 w-4" />
-                <AlertDescription>
-                  You will be redirected to Stripe's secure payment page to
-                  complete your purchase. Your payment information is never
-                  stored on our servers.
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Selected License:</span>
+                  <Badge variant="default">
+                    {LICENSE_TYPES[selectedLicense as keyof typeof LICENSE_TYPES]?.name}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{LICENSE_TYPES[selectedLicense as keyof typeof LICENSE_TYPES]?.users}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Order Summary */}
+            <div className="space-y-2 p-4 rounded-lg border">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>
+                  {resource.isFree
+                    ? "FREE"
+                    : formatPrice(getCalculatedPrice(), resource.currency || "USD")}
+                </span>
+              </div>
+              {!resource.isFree && selectedLicense !== "single" && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Base price × {LICENSE_TYPES[selectedLicense as keyof typeof LICENSE_TYPES]?.multiplier}</span>
+                  <span>{formatPrice(resource.price || 0, resource.currency || "USD")} × {LICENSE_TYPES[selectedLicense as keyof typeof LICENSE_TYPES]?.multiplier}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span className="text-primary text-lg">
+                  {resource.isFree
+                    ? "FREE"
+                    : formatPrice(getCalculatedPrice(), resource.currency || "USD")}
+                </span>
+              </div>
+            </div>
+
+            {/* Trust Indicators */}
+            {!resource.isFree && (
+              <Alert className="bg-green-50 border-green-200">
+                <ShieldCheck className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700">
+                  You will be redirected to Stripe's secure payment page.
+                  Your payment information is protected with bank-level encryption.
                 </AlertDescription>
               </Alert>
             )}
 
-            <div className="text-sm text-muted-foreground text-center">
-              {resource.isFree
-                ? "✓ Instant access after download"
-                : "✓ Secure payment via Stripe · ✓ Instant download"}
+            {/* Benefits */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Download className="w-3 h-3 text-green-500" />
+                <span>Instant download</span>
+              </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+                <span>Lifetime access</span>
+              </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <ShieldCheck className="w-3 h-3 text-green-500" />
+                <span>Secure checkout</span>
+              </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Sparkles className="w-3 h-3 text-green-500" />
+                <span>Future updates</span>
+              </div>
             </div>
           </div>
 
@@ -917,19 +1184,32 @@ const ResourceDetail = () => {
               variant="outline"
               onClick={() => setShowPurchaseModal(false)}
               disabled={isPurchasing}
+              className="sm:flex-1"
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmPurchase}
-              className="w-full sm:w-auto"
+              className="sm:flex-1"
               disabled={isPurchasing}
+              size="lg"
             >
-              {isPurchasing
-                ? "Processing..."
-                : resource.isFree
-                ? "Download Now"
-                : "Continue to Payment"}
+              {isPurchasing ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Processing...
+                </>
+              ) : resource.isFree ? (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Now
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Proceed to Checkout
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

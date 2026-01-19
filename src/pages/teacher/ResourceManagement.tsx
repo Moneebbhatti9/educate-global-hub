@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Plus,
@@ -16,6 +16,16 @@ import {
   MapPin,
   Calendar,
   Users,
+  Package,
+  DollarSign,
+  TrendingUp,
+  Download,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  FileText,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import ResourceStatsModal from "@/components/Modals/resource-stats-modal";
 import { Button } from "@/components/ui/button";
@@ -321,32 +331,144 @@ export default function ResourceManagement() {
           </Button>
         </div>
 
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Total Resources"
-            value={stats.totalResources}
-            icon={BarChart3}
-            description="Resources uploaded"
-          />
-          <StatsCard
-            title="Total Sales"
-            value={stats.totalSales}
-            icon={BarChart3}
-            description="Units sold"
-          />
-          <StatsCard
-            title="Current Balance"
-            value={`£${stats.currentBalance.toFixed(2)}`}
-            icon={BarChart3}
-            description="Available to withdraw"
-          />
-          <StatsCard
-            title="Approved Resources"
-            value={resources.filter((r) => r.status === "approved").length}
-            icon={BarChart3}
-            description="Live on platform"
-          />
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Resources
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Package className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {stats.totalResources}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                Resources uploaded
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Total Sales
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {stats.totalSales}
+              </div>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Units sold
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate("/dashboard/teacher/earnings")}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                Current Balance
+                <ExternalLink className="w-3 h-3" />
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-amber-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                £{stats.currentBalance.toFixed(2)}
+              </div>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                Available to withdraw
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Live on Platform
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                {resources.filter((r) => r.status === "approved").length}
+              </div>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                Approved resources
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Status Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-gray-600" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">
+                  {resources.filter((r) => r.status === "draft").length}
+                </div>
+                <div className="text-xs text-muted-foreground">Drafts</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-yellow-600" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">
+                  {resources.filter((r) => r.status === "pending").length}
+                </div>
+                <div className="text-xs text-muted-foreground">Pending Review</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">
+                  {resources.filter((r) => r.status === "approved").length}
+                </div>
+                <div className="text-xs text-muted-foreground">Approved</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-red-600" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">
+                  {resources.filter((r) => r.status === "rejected").length}
+                </div>
+                <div className="text-xs text-muted-foreground">Rejected</div>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Filters and Search */}

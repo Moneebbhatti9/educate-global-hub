@@ -77,6 +77,9 @@ const AdminResourceManagement = lazy(
 const AdminUploadResource = lazy(
   () => import("./pages/admin/UploadResource")
 );
+const PlatformSettings = lazy(
+  () => import("./pages/admin/PlatformSettings")
+);
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -97,8 +100,9 @@ const TeacherResourceManagement = lazy(
   () => import("./pages/teacher/ResourceManagement")
 );
 const Earnings = lazy(() => import("./pages/teacher/Earnings"));
+const SalesHistory = lazy(() => import("./pages/teacher/SalesHistory"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
-const MyLibrary = lazy(() => import("./pages/MyLibrary"));
+const MyLibrary = lazy(() => import("./pages/teacher/MyLibrary"));
 const SalesManagement = lazy(() => import("./pages/admin/SalesManagement"));
 const PayoutManagement = lazy(() => import("./pages/admin/PayoutManagement"));
 
@@ -207,6 +211,7 @@ const AppRoutes = () => {
             element={<TeacherResourceManagement />}
           />
           <Route path="earnings" element={<Earnings />} />
+          <Route path="sales-history" element={<SalesHistory />} />
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="withdrawal-history" element={<WithdrawalHistory />} />
         </Route>
@@ -248,6 +253,7 @@ const AppRoutes = () => {
           <Route path="resources" element={<AdminResourceManagement />} />
           <Route path="sales-management" element={<SalesManagement />} />
           <Route path="payout-management" element={<PayoutManagement />} />
+          <Route path="platform-settings" element={<PlatformSettings />} />
         </Route>
 
         {/* ======================================== */}
