@@ -22,7 +22,8 @@ export function getCloudinaryDownloadUrl(url: string): string {
 
   // Pattern to match Cloudinary URL structure
   // https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/{transformations}/{version}/{public_id}
-  const cloudinaryPattern = /(https:\/\/res\.cloudinary\.com\/[^\/]+\/(?:image|video|raw)\/upload\/)(.*)/;
+  // Match any resource type (image, video, raw, auto, etc.)
+  const cloudinaryPattern = /(https:\/\/res\.cloudinary\.com\/[^\/]+\/[^\/]+\/upload\/)(.*)/;
   const match = url.match(cloudinaryPattern);
 
   if (match) {
@@ -84,12 +85,16 @@ export async function downloadFile(
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = filename;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      // Don't use target="_blank" as it opens in new tab instead of downloading
+      link.style.display = 'none';
 
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+
+      // Clean up after a short delay
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
 
       options.onSuccess?.();
       return;
@@ -133,12 +138,15 @@ export async function downloadFile(
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
+        // Don't use target="_blank" to avoid opening in new tab
+        link.style.display = 'none';
 
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
 
         options.onSuccess?.();
       }
