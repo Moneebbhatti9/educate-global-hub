@@ -46,7 +46,10 @@ import {
   AlertTriangle,
   Loader2,
   Edit,
+  Cookie,
 } from "lucide-react";
+import CookiePreferenceManager from "@/components/gdpr/CookiePreferenceManager";
+import DataPrivacyManager from "@/components/gdpr/DataPrivacyManager";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { useUserSettings } from "@/apis/userSettings";
 import { useForm } from "react-hook-form";
@@ -442,7 +445,7 @@ const SchoolSettings = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted rounded-lg">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted rounded-lg">
             <TabsTrigger
               value="profile"
               className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
@@ -463,6 +466,13 @@ const SchoolSettings = () => {
             >
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Notifications</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="privacy"
+              className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
+            >
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Privacy</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1078,6 +1088,12 @@ const SchoolSettings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Privacy Tab */}
+          <TabsContent value="privacy" className="space-y-6">
+            <CookiePreferenceManager />
+            <DataPrivacyManager />
           </TabsContent>
         </Tabs>
       </div>

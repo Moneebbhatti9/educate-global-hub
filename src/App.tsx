@@ -23,6 +23,7 @@ import {
   validateSecurityHeaders,
 } from "./utils/security";
 import SecurityProvider from "./components/SecurityProvider";
+import CookieConsent from "./components/gdpr/CookieConsent";
 
 // Lazy load components
 const Index = lazy(() => import("./pages/Index"));
@@ -275,6 +276,7 @@ const App = () => {
             <AuthProvider>
               <SocketProvider>
                 <AppRoutes />
+                <CookieConsent />
               </SocketProvider>
             </AuthProvider>
           </BrowserRouter>
