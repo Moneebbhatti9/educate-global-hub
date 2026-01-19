@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { withdrawalsAPI } from "@/apis/withdrawals";
+import { salesAPI } from "@/apis/sales";
 import {
   DollarSign,
   CreditCard,
@@ -69,11 +72,13 @@ const withdrawalSchema = z.object({
 
   // PayPal fields
   paypalEmail: z.string().email("Valid email required").optional(),
+  paypalAccountId: z.string().optional(),
   paypalAccountName: z.string().optional(),
 
   // Stripe fields
-  stripeAccount: z.string().optional(),
+  stripeAccountId: z.string().optional(),
   stripeAccountName: z.string().optional(),
+  stripeBankLast4: z.string().optional(),
 
   // Verification fields
   confirmAccountMatch: z.boolean().refine((val) => val === true, {
@@ -87,141 +92,101 @@ const withdrawalSchema = z.object({
 
 type WithdrawalFormData = z.infer<typeof withdrawalSchema>;
 
-// Mock data - replace with actual API calls
-const mockAccountData = {
-  currentBalance: 247.85,
-  pendingBalance: 42.3,
-  currency: "£",
-  royaltyTier: "Silver (70%)",
-  totalEarned: 1580.45,
-  lastWithdrawal: "2024-01-15",
-  canWithdraw: true,
-  minWithdrawal: 10,
-  maxWithdrawal: 247.85,
-  nextWithdrawalDate: "2024-01-29", // 1 week from last withdrawal
+// Currency symbols
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  GBP: "£",
+  USD: "$",
+  EUR: "€",
+  PKR: "Rs",
 };
-
-const mockWithdrawalHistory = [
-  {
-    id: "wd_001",
-    date: "2024-01-15",
-    amount: 125.5,
-    method: "Stripe Connect",
-    status: "Completed",
-    paidTo: "••••1234",
-    eta: "5-7 working days",
-    completedDate: "2024-01-18",
-  },
-  {
-    id: "wd_002",
-    date: "2024-01-08",
-    amount: 89.2,
-    method: "PayPal",
-    status: "Completed",
-    paidTo: "john••••@gmail.com",
-    eta: "5-7 working days",
-    completedDate: "2024-01-11",
-  },
-  {
-    id: "wd_003",
-    date: "2023-12-28",
-    amount: 156.75,
-    method: "Bank Transfer",
-    status: "Completed",
-    paidTo: "••••5678",
-    eta: "10-12 working days",
-    completedDate: "2024-01-05",
-  },
-  {
-    id: "wd_004",
-    date: "2023-12-20",
-    amount: 78.4,
-    method: "Stripe Connect",
-    status: "Processing",
-    paidTo: "••••1234",
-    eta: "5-7 working days",
-    completedDate: null,
-  },
-];
-
-const mockRecentTransactions = [
-  {
-    id: "txn_001",
-    date: "2024-01-22",
-    resource: "Mathematics Worksheet Bundle",
-    salePrice: 4.99,
-    royalty: 2.79,
-    buyer: "Anonymous",
-  },
-  {
-    id: "txn_002",
-    date: "2024-01-21",
-    resource: "Science Experiment Guide",
-    salePrice: 6.5,
-    royalty: 3.64,
-    buyer: "Anonymous",
-  },
-  {
-    id: "txn_003",
-    date: "2024-01-20",
-    resource: "History Timeline Template",
-    salePrice: 2.99,
-    royalty: 1.47,
-    buyer: "Anonymous",
-  },
-  {
-    id: "txn_004",
-    date: "2024-01-19",
-    resource: "Mathematics Worksheet Bundle",
-    salePrice: 4.99,
-    royalty: 2.79,
-    buyer: "Anonymous",
-  },
-  {
-    id: "txn_005",
-    date: "2024-01-18",
-    resource: "Reading Comprehension Pack",
-    salePrice: 3.5,
-    royalty: 1.95,
-    buyer: "Anonymous",
-  },
-];
 
 const PAYOUT_METHODS = [
   {
     id: "stripe",
-    name: "Stripe Connect",
-    fee: "2.9% + £0.30",
-    eta: "5-7 working days (UK)",
+    name: "Stripe",
+    fee: "1.4% + £0.20 (UK) / 2.9% + £0.20 (Int'l)",
+    eta: "5-7 business days",
   },
   {
     id: "paypal",
     name: "PayPal",
-    fee: "3.4% + £0.35",
-    eta: "5-7 working days (UK)",
+    fee: "3.4% + £0.20 (UK) / 4.4% + £0.20 (Int'l)",
+    eta: "5-7 business days",
   },
   {
-    id: "bank",
-    name: "Bank Transfer",
+    id: "bank_transfer",
+    name: "Bank Transfer (UK/SEPA)",
     fee: "£2.50 fixed",
-    eta: "10-12 working days (International)",
+    eta: "3-5 business days (UK) / 5-7 days (Int'l)",
   },
 ];
 
 const Withdraw = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("GBP");
+
+  // Fetch withdrawal info
+  const { data: withdrawalInfo, isLoading: isLoadingInfo } = useQuery({
+    queryKey: ["withdrawalInfo", selectedCurrency],
+    queryFn: async () => {
+      const response = await withdrawalsAPI.getWithdrawalInfo(selectedCurrency);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to fetch withdrawal info");
+      }
+      return response.data;
+    },
+  });
+
+  // Fetch withdrawal history
+  const { data: withdrawalHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["withdrawalHistory", selectedCurrency],
+    queryFn: async () => {
+      const response = await withdrawalsAPI.getWithdrawalHistory({
+        limit: 5,
+        currency: selectedCurrency,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to fetch withdrawal history");
+      }
+      return response.data;
+    },
+  });
+
+  // Fetch recent sales
+  const { data: recentSales, isLoading: isLoadingSales } = useQuery({
+    queryKey: ["recentSales", selectedCurrency],
+    queryFn: async () => {
+      const response = await salesAPI.getMySales({
+        limit: 5,
+        currency: selectedCurrency,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to fetch recent sales");
+      }
+      return response.data;
+    },
+  });
 
   const form = useForm<WithdrawalFormData>({
     resolver: zodResolver(withdrawalSchema),
     defaultValues: {
-      amount: mockAccountData.currentBalance,
+      amount: 0,
       payoutMethod: "stripe",
       confirmAccountMatch: false,
       confirmIdentity: false,
     },
   });
+
+  // Update form amount when withdrawal info loads
+  useEffect(() => {
+    if (withdrawalInfo?.balance?.available) {
+      const availableAmount = withdrawalInfo.balance.available / 100;
+      form.setValue("amount", availableAmount);
+    }
+  }, [withdrawalInfo, form]);
 
   const watchPayoutMethod = form.watch("payoutMethod");
   const watchAmount = form.watch("amount");
@@ -230,8 +195,10 @@ const Withdraw = () => {
     setIsSubmitting(true);
 
     try {
-      // Additional validation based on payout method
-      if (data.payoutMethod === "bank") {
+      // Build payout details based on method
+      const payoutDetails: any = {};
+
+      if (data.payoutMethod === "bank_transfer") {
         if (
           !data.accountHolderName ||
           !data.bankName ||
@@ -247,39 +214,63 @@ const Withdraw = () => {
           setIsSubmitting(false);
           return;
         }
+        payoutDetails.bankAccountHolder = data.accountHolderName;
+        payoutDetails.bankName = data.bankName;
+        payoutDetails.accountNumber = data.bankAccount;
+        payoutDetails.sortCode = data.sortCode;
+        payoutDetails.iban = data.iban;
+        payoutDetails.swiftCode = data.swiftCode;
       } else if (data.payoutMethod === "paypal") {
-        if (!data.paypalEmail || !data.paypalAccountName) {
+        if (!data.paypalAccountId || !data.paypalEmail || !data.paypalAccountName) {
           toast({
             title: "Missing PayPal details",
-            description: "Please fill in your PayPal email and account name.",
+            description: "Please fill in PayPal Account ID, email, and account name.",
             variant: "destructive",
           });
           setIsSubmitting(false);
           return;
         }
+        payoutDetails.paypalAccountId = data.paypalAccountId;
+        payoutDetails.paypalEmail = data.paypalEmail;
+        payoutDetails.paypalAccountName = data.paypalAccountName;
       } else if (data.payoutMethod === "stripe") {
-        if (!data.stripeAccount || !data.stripeAccountName) {
+        if (!data.stripeAccountId || !data.stripeAccountName || !data.stripeBankLast4) {
           toast({
             title: "Missing Stripe details",
-            description:
-              "Please fill in your Stripe account ID and account name.",
+            description: "Please fill in Stripe Account ID, account name, and bank last 4 digits.",
             variant: "destructive",
           });
           setIsSubmitting(false);
           return;
         }
+        payoutDetails.stripeAccountId = data.stripeAccountId;
+        payoutDetails.stripeAccountName = data.stripeAccountName;
+        payoutDetails.stripeBankLast4 = data.stripeBankLast4;
       }
 
-      // TODO: Implement actual withdrawal API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Call withdrawal API
+      const response = await withdrawalsAPI.requestWithdrawal({
+        amount: data.amount,
+        currency: selectedCurrency as any,
+        payoutMethod: data.payoutMethod as any,
+        payoutDetails,
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || "Withdrawal request failed");
+      }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["withdrawalInfo"] });
+      queryClient.invalidateQueries({ queryKey: ["withdrawalHistory"] });
+
+      const currencySymbol = CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
 
       toast({
         title: "Withdrawal request submitted",
-        description: `Your withdrawal of ${mockAccountData.currency}${
-          data.amount
-        } has been processed. Expected arrival: ${
-          PAYOUT_METHODS.find((m) => m.id === data.payoutMethod)?.eta
-        }`,
+        description: `Your withdrawal of ${currencySymbol}${data.amount.toFixed(
+          2
+        )} has been processed. ${response.data?.withdrawal.message || ""}`,
       });
 
       setShowWithdrawalForm(false);
@@ -288,7 +279,7 @@ const Withdraw = () => {
       toast({
         title: "Withdrawal failed",
         description:
-          "There was an error processing your withdrawal. Please try again.",
+          error instanceof Error ? error.message : "There was an error processing your withdrawal. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -297,19 +288,54 @@ const Withdraw = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Completed":
+    const lowerStatus = status.toLowerCase();
+    switch (lowerStatus) {
+      case "completed":
         return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
-      case "Processing":
+      case "processing":
+      case "pending":
         return (
-          <Badge className="bg-yellow-100 text-yellow-800">Processing</Badge>
+          <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>
         );
-      case "Failed":
+      case "failed":
         return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
+  // Get currency symbol
+  const currencySymbol = withdrawalInfo?.balance?.currency
+    ? CURRENCY_SYMBOLS[withdrawalInfo.balance.currency] || withdrawalInfo.balance.currency
+    : "£";
+
+  // Calculate available balance
+  const availableBalance = withdrawalInfo?.balance?.available
+    ? (withdrawalInfo.balance.available / 100).toFixed(2)
+    : "0.00";
+
+  // Check if can withdraw
+  const canWithdraw = withdrawalInfo?.withdrawal?.canWithdraw ?? false;
+  const minWithdrawal = withdrawalInfo?.limits?.minimum?.amount
+    ? withdrawalInfo.limits.minimum.amount / 100
+    : 10;
+
+  if (isLoadingInfo) {
+    return (
+      <DashboardLayout role="teacher">
+        <div className="space-y-6">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground">
+              Earnings & Payments
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Loading your earnings information...
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="teacher">
@@ -338,26 +364,27 @@ const Withdraw = () => {
               <CardContent>
                 <div className="text-center space-y-4">
                   <div className="text-4xl font-bold text-primary">
-                    {mockAccountData.currency}
-                    {mockAccountData.currentBalance.toFixed(2)}
+                    {currencySymbol}
+                    {availableBalance}
                   </div>
 
                   <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground">
                     <div>
                       <span className="font-medium">Pending:</span>{" "}
-                      {mockAccountData.currency}
-                      {mockAccountData.pendingBalance.toFixed(2)}
+                      {currencySymbol}
+                      {withdrawalInfo?.balance?.pending
+                        ? (withdrawalInfo.balance.pending / 100).toFixed(2)
+                        : "0.00"}
                     </div>
                     <div>
                       <span className="font-medium">Tier:</span>{" "}
-                      {mockAccountData.royaltyTier}
+                      {withdrawalInfo?.seller?.tier || "Bronze"}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    {mockAccountData.canWithdraw ? (
-                      mockAccountData.currentBalance >=
-                      mockAccountData.minWithdrawal ? (
+                    {canWithdraw ? (
+                      parseFloat(availableBalance) >= minWithdrawal ? (
                         <Button
                           onClick={() => setShowWithdrawalForm(true)}
                           size="lg"
@@ -375,8 +402,8 @@ const Withdraw = () => {
                             Request Withdrawal
                           </Button>
                           <p className="text-sm text-muted-foreground">
-                            Minimum withdrawal: {mockAccountData.currency}
-                            {mockAccountData.minWithdrawal}
+                            Minimum withdrawal: {currencySymbol}
+                            {minWithdrawal}
                           </p>
                         </div>
                       )
@@ -387,7 +414,7 @@ const Withdraw = () => {
                         </Button>
                         <p className="text-sm text-muted-foreground">
                           Next withdrawal available:{" "}
-                          {mockAccountData.nextWithdrawalDate}
+                          {withdrawalInfo?.withdrawal?.nextWithdrawalDate || "N/A"}
                         </p>
                       </div>
                     )}
@@ -396,8 +423,9 @@ const Withdraw = () => {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Withdrawals are limited to once per week. Typical arrival:
-                      5-7 working days (UK), 10-12 working days (International).
+                      <strong>Important:</strong> Withdrawals require admin approval (once per week limit).
+                      Transaction fees apply: Stripe (1.4-2.9% + £0.20), PayPal (3.4-4.4% + £0.20), Bank (£2.50).
+                      Processing: 3-7 business days depending on method.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -488,13 +516,13 @@ const Withdraw = () => {
                             <FormControl>
                               <div className="relative">
                                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                                  {mockAccountData.currency}
+                                  {currencySymbol}
                                 </span>
                                 <Input
                                   type="number"
                                   step="0.01"
-                                  min={mockAccountData.minWithdrawal}
-                                  max={mockAccountData.maxWithdrawal}
+                                  min={minWithdrawal}
+                                  max={parseFloat(availableBalance)}
                                   className="pl-8"
                                   {...field}
                                   onChange={(e) =>
@@ -506,8 +534,8 @@ const Withdraw = () => {
                               </div>
                             </FormControl>
                             <FormDescription>
-                              Available: {mockAccountData.currency}
-                              {mockAccountData.maxWithdrawal}
+                              Available: {currencySymbol}
+                              {availableBalance}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -550,92 +578,149 @@ const Withdraw = () => {
                       {/* Method-specific fields */}
                       {watchPayoutMethod === "stripe" && (
                         <div className="space-y-4">
+                          <Alert className="border-blue-200 bg-blue-50">
+                            <AlertCircle className="h-4 w-4 text-blue-600" />
+                            <AlertDescription className="text-blue-800">
+                              <strong>Stripe Transfer:</strong> Provide your Stripe account details for direct transfer.
+                              Admin will process payment to your linked bank account.
+                            </AlertDescription>
+                          </Alert>
+
                           <FormField
                             control={form.control}
-                            name="stripeAccount"
+                            name="stripeAccountId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>
-                                  Stripe Connect Account ID *
-                                </FormLabel>
+                                <FormLabel>Stripe Account ID / Recipient ID *</FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="acct_1234567890"
+                                    placeholder="acct_1234567890 or recipient_xyz123"
                                     {...field}
                                   />
                                 </FormControl>
                                 <FormDescription>
-                                  Your Stripe Connect account ID (starts with
-                                  "acct_")
+                                  Your Stripe Connect account ID or recipient ID
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
 
-                          <FormField
-                            control={form.control}
-                            name="stripeAccountName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Account Holder Name *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John Smith" {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  Full name as registered on your Stripe account
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="stripeAccountName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Account Holder Name *</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="John Smith" {...field} />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Name on bank account
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="stripeBankLast4"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Bank Account Last 4 Digits *</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="1234"
+                                      maxLength={4}
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    For verification purposes
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
 
                       {watchPayoutMethod === "paypal" && (
                         <div className="space-y-4">
+                          <Alert className="border-blue-200 bg-blue-50">
+                            <AlertCircle className="h-4 w-4 text-blue-600" />
+                            <AlertDescription className="text-blue-800">
+                              <strong>PayPal Transfer:</strong> Provide both your PayPal Account ID and email.
+                              Admin will process payment directly to your PayPal account.
+                            </AlertDescription>
+                          </Alert>
+
                           <FormField
                             control={form.control}
-                            name="paypalEmail"
+                            name="paypalAccountId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>PayPal Email Address *</FormLabel>
+                                <FormLabel>PayPal Account ID / Merchant ID *</FormLabel>
                                 <FormControl>
                                   <Input
-                                    type="email"
-                                    placeholder="your@email.com"
+                                    placeholder="ABC123XYZ456 or merchant_id_789"
                                     {...field}
                                   />
                                 </FormControl>
                                 <FormDescription>
-                                  Email address associated with your PayPal
-                                  account
+                                  Your PayPal Account ID or Merchant ID (found in Settings)
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
 
-                          <FormField
-                            control={form.control}
-                            name="paypalAccountName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>PayPal Account Name *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John Smith" {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  Full name as registered on your PayPal account
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="paypalEmail"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>PayPal Email Address *</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="email"
+                                      placeholder="your@email.com"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Email linked to PayPal account
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="paypalAccountName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Account Holder Name *</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="John Smith" {...field} />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Name on PayPal account
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
 
-                      {watchPayoutMethod === "bank" && (
+                      {watchPayoutMethod === "bank_transfer" && (
                         <div className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
@@ -752,7 +837,7 @@ const Withdraw = () => {
                             <div className="flex justify-between">
                               <span>Withdrawal Amount:</span>
                               <span>
-                                {mockAccountData.currency}
+                                {currencySymbol}
                                 {watchAmount.toFixed(2)}
                               </span>
                             </div>
@@ -784,11 +869,10 @@ const Withdraw = () => {
                       <Alert className="border-amber-200 bg-amber-50">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
                         <AlertDescription className="text-amber-800">
-                          <strong>Important:</strong> Your account details must
-                          exactly match your registered information. Any
-                          discrepancies may result in withdrawal delays or
-                          rejection. Please double-check all details before
-                          submitting.
+                          <strong>Important:</strong> All withdrawals require admin approval and transaction fees apply.
+                          Your account details must exactly match your registered information.
+                          Any discrepancies may result in withdrawal rejection.
+                          Processing time: 3-7 business days. Fees are deducted from withdrawal amount.
                         </AlertDescription>
                       </Alert>
 
@@ -878,7 +962,11 @@ const Withdraw = () => {
                 <CardTitle>Recent Sales</CardTitle>
               </CardHeader>
               <CardContent>
-                {mockRecentTransactions.length > 0 ? (
+                {isLoadingSales ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Loading sales...
+                  </div>
+                ) : recentSales?.sales && recentSales.sales.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -890,21 +978,27 @@ const Withdraw = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockRecentTransactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>{transaction.date}</TableCell>
+                      {recentSales.sales.map((sale: any) => (
+                        <TableRow key={sale._id}>
+                          <TableCell>
+                            {new Date(sale.saleDate).toLocaleDateString()}
+                          </TableCell>
                           <TableCell className="font-medium">
-                            {transaction.resource}
+                            {typeof sale.resource === 'object'
+                              ? sale.resource.title
+                              : 'Unknown'}
                           </TableCell>
                           <TableCell>
-                            {mockAccountData.currency}
-                            {transaction.salePrice}
+                            {sale.price}
                           </TableCell>
                           <TableCell className="text-green-600 font-medium">
-                            {mockAccountData.currency}
-                            {transaction.royalty}
+                            {sale.earnings}
                           </TableCell>
-                          <TableCell>{transaction.buyer}</TableCell>
+                          <TableCell>
+                            {typeof sale.buyer === 'object'
+                              ? sale.buyer.name
+                              : 'Guest'}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -929,15 +1023,17 @@ const Withdraw = () => {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Earned:</span>
                   <span className="font-medium">
-                    {mockAccountData.currency}
-                    {mockAccountData.totalEarned.toFixed(2)}
+                    {currencySymbol}
+                    {withdrawalInfo?.seller?.lifetimeEarnings
+                      ? (withdrawalInfo.seller.lifetimeEarnings / 100).toFixed(2)
+                      : "0.00"}
                   </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Royalty Tier:</span>
                   <Badge variant="secondary">
-                    {mockAccountData.royaltyTier}
+                    {withdrawalInfo?.seller?.tier || "Bronze"}
                   </Badge>
                 </div>
 
@@ -946,7 +1042,7 @@ const Withdraw = () => {
                     Last Withdrawal:
                   </span>
                   <span className="text-sm">
-                    {mockAccountData.lastWithdrawal}
+                    {withdrawalInfo?.withdrawal?.lastWithdrawalDate || "Never"}
                   </span>
                 </div>
 
@@ -954,11 +1050,11 @@ const Withdraw = () => {
 
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>
-                    • Minimum withdrawal: {mockAccountData.currency}
-                    {mockAccountData.minWithdrawal}
+                    • Minimum withdrawal: {currencySymbol}
+                    {minWithdrawal}
                   </p>
                   <p>
-                    • Maximum per withdrawal: {mockAccountData.currency}10,000
+                    • Maximum per withdrawal: {currencySymbol}10,000
                   </p>
                   <p>• Withdrawal frequency: Once per week</p>
                 </div>
@@ -971,17 +1067,21 @@ const Withdraw = () => {
                 <CardTitle>Withdrawal History</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {mockWithdrawalHistory.length > 0 ? (
+                {isLoadingHistory ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Loading history...
+                  </div>
+                ) : withdrawalHistory?.withdrawals && withdrawalHistory.withdrawals.length > 0 ? (
                   <>
-                    {mockWithdrawalHistory.slice(0, 3).map((withdrawal) => (
+                    {withdrawalHistory.withdrawals.slice(0, 3).map((withdrawal: any) => (
                       <div
-                        key={withdrawal.id}
+                        key={withdrawal._id}
                         className="border border-border rounded-lg p-3 space-y-2"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium">
-                            {mockAccountData.currency}
-                            {withdrawal.amount}
+                            {CURRENCY_SYMBOLS[withdrawal.currency] || withdrawal.currency}
+                            {(withdrawal.amount / 100).toFixed(2)}
                           </span>
                           {getStatusBadge(withdrawal.status)}
                         </div>
@@ -989,20 +1089,26 @@ const Withdraw = () => {
                         <div className="text-sm text-muted-foreground space-y-1">
                           <div className="flex justify-between">
                             <span>Date:</span>
-                            <span>{withdrawal.date}</span>
+                            <span>
+                              {new Date(withdrawal.requestedAt).toLocaleDateString()}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Method:</span>
-                            <span>{withdrawal.method}</span>
+                            <span>
+                              {withdrawal.payoutMethod === 'bank_transfer'
+                                ? 'Bank Transfer'
+                                : withdrawal.payoutMethod === 'paypal'
+                                ? 'PayPal'
+                                : 'Stripe'}
+                            </span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>To:</span>
-                            <span>{withdrawal.paidTo}</span>
-                          </div>
-                          {withdrawal.completedDate && (
+                          {withdrawal.processedAt && (
                             <div className="flex justify-between">
                               <span>Completed:</span>
-                              <span>{withdrawal.completedDate}</span>
+                              <span>
+                                {new Date(withdrawal.processedAt).toLocaleDateString()}
+                              </span>
                             </div>
                           )}
                         </div>

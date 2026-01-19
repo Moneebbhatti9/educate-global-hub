@@ -9,6 +9,7 @@ import {
   Outlet,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SocketProvider } from "./contexts/SocketContext";
 import {
   TeacherRoute,
   SchoolRoute,
@@ -22,6 +23,7 @@ import {
   validateSecurityHeaders,
 } from "./utils/security";
 import SecurityProvider from "./components/SecurityProvider";
+import CookieConsent from "./components/gdpr/CookieConsent";
 
 // Lazy load components
 const Index = lazy(() => import("./pages/Index"));
@@ -29,6 +31,7 @@ const Jobs = lazy(() => import("./pages/Jobs"));
 const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Forum = lazy(() => import("./pages/Forum"));
 const ForumDetail = lazy(() => import("./pages/ForumDetail"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const Resources = lazy(() => import("./pages/Resources"));
 const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile"));
 const SchoolProfile = lazy(() => import("./pages/school/SchoolProfile"));
@@ -93,6 +96,11 @@ const WithdrawalHistory = lazy(
 const TeacherResourceManagement = lazy(
   () => import("./pages/teacher/ResourceManagement")
 );
+const Earnings = lazy(() => import("./pages/teacher/Earnings"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const MyLibrary = lazy(() => import("./pages/MyLibrary"));
+const SalesManagement = lazy(() => import("./pages/admin/SalesManagement"));
+const PayoutManagement = lazy(() => import("./pages/admin/PayoutManagement"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -133,9 +141,12 @@ const AppRoutes = () => {
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumDetail />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/resources/:id" element={<ResourceDetail />} />
         <Route path="/download/:id" element={<DownloadPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/my-library" element={<MyLibrary />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -195,6 +206,7 @@ const AppRoutes = () => {
             path="resource-management"
             element={<TeacherResourceManagement />}
           />
+          <Route path="earnings" element={<Earnings />} />
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="withdrawal-history" element={<WithdrawalHistory />} />
         </Route>
@@ -234,6 +246,8 @@ const AppRoutes = () => {
           <Route path="forum" element={<ForumManagement />} />
           <Route path="upload-resource" element={<AdminUploadResource />} />
           <Route path="resources" element={<AdminResourceManagement />} />
+          <Route path="sales-management" element={<SalesManagement />} />
+          <Route path="payout-management" element={<PayoutManagement />} />
         </Route>
 
         {/* ======================================== */}
@@ -260,7 +274,10 @@ const App = () => {
           <Toaster />
           <BrowserRouter>
             <AuthProvider>
-              <AppRoutes />
+              <SocketProvider>
+                <AppRoutes />
+                <CookieConsent />
+              </SocketProvider>
             </AuthProvider>
           </BrowserRouter>
         </SecurityProvider>
