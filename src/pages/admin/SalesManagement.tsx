@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,9 @@ const SalesManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currencyFilter, setCurrencyFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+
+  // Dynamic dropdown options
+  const { data: currencyOptions, isLoading: loadingCurrencies } = useDropdownOptions("currency");
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [refundReason, setRefundReason] = useState("");
@@ -283,16 +287,17 @@ const SalesManagement = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+              <Select value={currencyFilter} onValueChange={setCurrencyFilter} disabled={loadingCurrencies}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All currencies" />
+                  <SelectValue placeholder={loadingCurrencies ? "Loading..." : "All currencies"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Currencies</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="PKR">PKR (Rs)</SelectItem>
+                  {currencyOptions?.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 

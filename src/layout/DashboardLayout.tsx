@@ -38,9 +38,14 @@ import {
   FolderOpen,
   ShoppingCart,
   Wallet,
+  List,
+  ChevronDown,
+  Sliders,
+  CreditCard,
 } from "lucide-react";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import {
   useNotifications,
   useNotificationStats,
@@ -55,8 +60,10 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { settings: siteSettings } = useSiteSettings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   // Get notifications data
@@ -169,11 +176,6 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           href: `/dashboard/admin/forum`,
           icon: MessagesSquare,
         },
-        // {
-        //   name: "Upload Resource",
-        //   href: `/dashboard/admin/upload-resource`,
-        //   icon: Upload,
-        // },
         {
           name: "Resources",
           href: `/dashboard/admin/resources`,
@@ -190,10 +192,26 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: Wallet,
         },
         {
-                
           name: "Platform Settings",
-          href: `/dashboard/admin/platform-settings`,
+          href: `/dashboard/admin/general-settings`,
           icon: Settings,
+          children: [
+            {
+              name: "General Settings",
+              href: `/dashboard/admin/general-settings`,
+              icon: Sliders,
+            },
+            {
+              name: "Subscription & Financial",
+              href: `/dashboard/admin/platform-settings`,
+              icon: CreditCard,
+            },
+            {
+              name: "Dropdown Options",
+              href: `/dashboard/admin/dropdown-management`,
+              icon: List,
+            },
+          ],
         },
       ],
     },
@@ -212,6 +230,29 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   };
 
   const isActive = (href: string) => location.pathname === href;
+
+  const isChildActive = (children: any[]) => {
+    return children?.some((child: any) => location.pathname === child.href);
+  };
+
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus((prev) =>
+      prev.includes(menuName)
+        ? prev.filter((name) => name !== menuName)
+        : [...prev, menuName]
+    );
+  };
+
+  // Auto-expand menu if a child is active
+  useEffect(() => {
+    config.navigation.forEach((item: any) => {
+      if (item.children && isChildActive(item.children)) {
+        if (!expandedMenus.includes(item.name)) {
+          setExpandedMenus((prev) => [...prev, item.name]);
+        }
+      }
+    });
+  }, [location.pathname]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(!sidebarOpen);
@@ -332,8 +373,8 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
             >
               <div className="h-8 w-24 sm:h-12 sm:w-32 lg:h-16 lg:w-48 flex items-center justify-center flex-shrink-0">
                 <img
-                  src={EducateLink2}
-                  alt="Educate Link"
+                  src={siteSettings.logo || EducateLink2}
+                  alt={siteSettings.siteName || "Educate Link"}
                   className="h-full w-full object-contain"
                 />
               </div>
@@ -358,10 +399,76 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
 
         {/* Navigation */}
         <nav className="p-2 sm:p-4 space-y-1 sm:space-y-2">
-          {config.navigation.map((item) => {
+          {config.navigation.map((item: any) => {
             const Icon = item.icon;
             const active = isActive(item.href);
+            const hasChildren = item.children && item.children.length > 0;
+            const isExpanded = expandedMenus.includes(item.name);
+            const childActive = hasChildren && isChildActive(item.children);
 
+            // If item has children, render expandable menu
+            if (hasChildren) {
+              return (
+                <div key={item.name}>
+                  <button
+                    onClick={() => toggleMenu(item.name)}
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-all duration-300 group relative ${
+                      childActive
+                        ? "bg-brand-primary/10 text-brand-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-md"
+                    } ${sidebarOpen ? "justify-between" : "justify-center"}`}
+                    title={!sidebarOpen ? item.name : undefined}
+                  >
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <Icon
+                        className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 transition-transform duration-300 ${
+                          childActive ? "scale-110" : "group-hover:scale-110"
+                        }`}
+                      />
+                      {sidebarOpen && (
+                        <span className="font-medium transition-all duration-300 text-sm sm:text-base">
+                          {item.name}
+                        </span>
+                      )}
+                    </div>
+                    {sidebarOpen && (
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-300 ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
+                  </button>
+
+                  {/* Sub-menu items */}
+                  {sidebarOpen && isExpanded && (
+                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-muted pl-3">
+                      {item.children.map((child: any) => {
+                        const ChildIcon = child.icon;
+                        const childIsActive = isActive(child.href);
+
+                        return (
+                          <Link
+                            key={child.name}
+                            to={child.href}
+                            className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-300 text-sm ${
+                              childIsActive
+                                ? "bg-brand-primary text-white shadow-md"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            <ChildIcon className="w-4 h-4 flex-shrink-0" />
+                            <span>{child.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Regular menu item without children
             return (
               <Link
                 key={item.name}
@@ -403,8 +510,8 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               size="sm"
               onClick={toggleSidebar}
               data-sidebar-toggle
-              title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-              className="lg:hidden"
+              title={sidebarOpen ? "Collapse Sidebar (Ctrl+B)" : "Expand Sidebar (Ctrl+B)"}
+              className="hover:bg-brand-primary/10 transition-all duration-300"
             >
               <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>

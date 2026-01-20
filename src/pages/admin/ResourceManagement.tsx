@@ -74,10 +74,15 @@ import type {
   AdminResourcesResponse,
   AdminResourcesQueryParams,
 } from "@/types/resource";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 export default function AdminResourceManagement() {
   const navigate = useNavigate();
   const { handleError, showSuccess, showError } = useErrorHandler();
+
+  // Fetch dynamic dropdown options
+  const { data: resourceStatusOptions, isLoading: loadingResourceStatuses } = useDropdownOptions("resourceStatus");
+  const { data: subjectOptions, isLoading: loadingSubjects } = useDropdownOptions("subject");
 
   // State management
   const [resources, setResources] = useState<AdminResource[]>([]);
@@ -567,29 +572,31 @@ export default function AdminResourceManagement() {
               </div>
 
               <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={setStatusFilter} disabled={loadingResourceStatuses}>
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={loadingResourceStatuses ? "Loading..." : "Status"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                    {resourceStatusOptions.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
-                <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+                <Select value={subjectFilter} onValueChange={setSubjectFilter} disabled={loadingSubjects}>
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Subject" />
+                    <SelectValue placeholder={loadingSubjects ? "Loading..." : "Subject"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Subjects</SelectItem>
-                    <SelectItem value="mathematics">Mathematics</SelectItem>
-                    <SelectItem value="science">Science</SelectItem>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="history">History</SelectItem>
+                    {subjectOptions.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

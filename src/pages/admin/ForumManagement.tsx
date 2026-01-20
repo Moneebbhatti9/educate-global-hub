@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +83,9 @@ const ForumManagement = () => {
     useState<Discussion | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // Dynamic dropdown options
+  const { data: forumCategoryOptions, isLoading: loadingForumCategories } = useDropdownOptions("forumCategory");
+
   // API hooks
   const {
     data: statsData,
@@ -120,12 +124,6 @@ const ForumManagement = () => {
     hasPrevPage: (discussionsData?.page || 1) > 1,
   };
 
-  const categories = [
-    { id: "teaching-tips", name: "Teaching Tips & Strategies" },
-    { id: "curriculum", name: "Curriculum & Resources" },
-    { id: "career-advice", name: "Career Advice" },
-    { id: "help-support", name: "Help & Support" },
-  ];
 
   // Handle pin/unpin action
   const handleTogglePin = async (discussionId: string) => {
@@ -401,15 +399,15 @@ const ForumManagement = () => {
                   <SelectItem value="pinned">Pinned</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter} disabled={loadingForumCategories}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={loadingForumCategories ? "Loading..." : "Category"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
+                  {forumCategoryOptions?.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

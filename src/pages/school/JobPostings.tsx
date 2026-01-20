@@ -60,6 +60,7 @@ import type { JobStatus, Job, PaginatedResponse } from "@/types/job";
 import { JobPostingsSkeleton } from "@/components/skeletons/job-postings-skeleton";
 import { DashboardErrorFallback, SectionErrorFallback } from "@/components/ui/error-fallback";
 import { EmptyJobPostings, EmptySearchResults } from "@/components/ui/empty-state";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 // Custom type for your API response structure
 interface SchoolJobsResponse {
@@ -77,6 +78,10 @@ interface SchoolJobsResponse {
 const JobPostings = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Fetch dynamic dropdown options
+  const { data: jobStatusOptions, isLoading: loadingJobStatuses } = useDropdownOptions("jobStatus");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<JobStatus | "all">("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -437,16 +442,18 @@ const JobPostings = () => {
                   onValueChange={(value) =>
                     setStatusFilter(value as JobStatus | "all")
                   }
+                  disabled={loadingJobStatuses}
                 >
                   <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={loadingJobStatuses ? "Loading..." : "Status"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
+                    {jobStatusOptions.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

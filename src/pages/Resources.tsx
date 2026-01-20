@@ -48,6 +48,7 @@ import { resourcesAPI } from "@/apis/resources";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PublicResource, GetAllResourcesQueryParams } from "@/types/resource";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 // Resource Card Component for reusability across tabs
 interface ResourceCardProps {
@@ -253,6 +254,11 @@ const Resources = () => {
   const { handleError, showError } = useErrorHandler();
   const { isAuthenticated } = useAuth();
 
+  // Fetch dynamic dropdown options
+  const { data: resourceTypeOptions, isLoading: loadingResourceTypes } = useDropdownOptions("resourceType");
+  const { data: ageRangeOptions, isLoading: loadingAgeRanges } = useDropdownOptions("ageRange");
+  const { data: subjectOptions, isLoading: loadingSubjects } = useDropdownOptions("subject");
+
   // State management
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
@@ -367,22 +373,6 @@ const Resources = () => {
     },
   ];
 
-  const grades = [
-    "Grade K-2",
-    "Grade 3-5",
-    "Grade 6-8",
-    "Grade 9-10",
-    "Grade 11-12",
-    "Grade 12+",
-  ];
-  const types = [
-    "Workbook",
-    "Interactive",
-    "Activity Pack",
-    "Game Pack",
-    "Problem Set",
-    "Video Course",
-  ];
 
   // Filter resources based on active tab and apply guest restrictions
   const getFilteredResources = () => {
@@ -576,20 +566,21 @@ const Resources = () => {
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Grade Level
+                    Age Range
                   </label>
                   <Select
                     value={selectedGrade}
                     onValueChange={setSelectedGrade}
+                    disabled={loadingAgeRanges}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="All Grades" />
+                      <SelectValue placeholder={loadingAgeRanges ? "Loading..." : "All Ages"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Grades</SelectItem>
-                      {grades.map((grade) => (
-                        <SelectItem key={grade} value={grade}>
-                          {grade}
+                      <SelectItem value="all">All Ages</SelectItem>
+                      {ageRangeOptions.map((option) => (
+                        <SelectItem key={option._id} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -600,15 +591,15 @@ const Resources = () => {
                   <label className="text-sm font-medium mb-2 block">
                     Resource Type
                   </label>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
+                  <Select value={selectedType} onValueChange={setSelectedType} disabled={loadingResourceTypes}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All Types" />
+                      <SelectValue placeholder={loadingResourceTypes ? "Loading..." : "All Types"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      {types.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
+                      {resourceTypeOptions.map((option) => (
+                        <SelectItem key={option._id} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

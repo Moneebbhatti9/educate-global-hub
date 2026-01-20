@@ -77,6 +77,26 @@ export interface UpdateMinimumPayoutRequest {
   };
 }
 
+// General Settings types
+export interface GeneralSettings {
+  siteName: string;
+  siteDescription: string;
+  logo: string;
+  favicon: string;
+  contactEmail: string;
+  supportEmail: string;
+  phoneNumber: string;
+  address: string;
+  socialLinks: {
+    facebook: string;
+    twitter: string;
+    linkedin: string;
+    instagram: string;
+  };
+  copyrightText: string;
+  updatedAt?: string;
+}
+
 // Dashboard stats types
 export interface AdminDashboardStats {
   stats: {
@@ -287,5 +307,28 @@ export const adminApi = {
       "/admin/settings/all",
       data
     );
+  },
+
+  // ==================== General Settings ====================
+
+  // Get general settings (public - for logo, site name, etc.)
+  getGeneralSettings: async (): Promise<ApiResponse<GeneralSettings>> => {
+    return apiHelpers.get<ApiResponse<GeneralSettings>>("/admin/settings/general");
+  },
+
+  // Update general settings (admin only)
+  updateGeneralSettings: async (
+    formData: FormData
+  ): Promise<ApiResponse<GeneralSettings>> => {
+    const response = await apiClient.put<ApiResponse<GeneralSettings>>(
+      "/admin/settings/general",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
   },
 };

@@ -64,9 +64,15 @@ import JobStatusChangeModal from "@/components/Modals/job-status-change-modal";
 import JobDetailsModal from "@/components/Modals/job-details-modal";
 import JobApplicationsModal from "@/components/Modals/job-applications-modal";
 import type { Job } from "@/types/job";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 const JobManagement = () => {
   const { toast } = useToast();
+
+  // Fetch dynamic dropdown options
+  const { data: jobTypeOptions, isLoading: loadingJobTypes } = useDropdownOptions("jobType");
+  const { data: jobStatusOptions, isLoading: loadingJobStatuses } = useDropdownOptions("jobStatus");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -390,28 +396,30 @@ const JobManagement = () => {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={setStatusFilter} disabled={loadingJobStatuses}>
                 <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={loadingJobStatuses ? "Loading..." : "Filter by status"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Active</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
+                  {jobStatusOptions.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <Select value={typeFilter} onValueChange={setTypeFilter} disabled={loadingJobTypes}>
                 <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by type" />
+                  <SelectValue placeholder={loadingJobTypes ? "Loading..." : "Filter by type"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="full_time">Full-time</SelectItem>
-                  <SelectItem value="part_time">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="substitute">Substitute</SelectItem>
+                  {jobTypeOptions.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

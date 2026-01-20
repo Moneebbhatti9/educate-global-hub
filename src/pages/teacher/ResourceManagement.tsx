@@ -69,10 +69,14 @@ import type {
   MyResourcesResponse,
   MyResourcesQueryParams,
 } from "@/types/resource";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 export default function ResourceManagement() {
   const navigate = useNavigate();
   const { handleError, showError, showSuccess } = useErrorHandler();
+
+  // Fetch dynamic dropdown options
+  const { data: resourceStatusOptions, isLoading: loadingResourceStatuses } = useDropdownOptions("resourceStatus");
 
   // State management
   const [searchTerm, setSearchTerm] = useState("");
@@ -499,17 +503,19 @@ export default function ResourceManagement() {
                       | "rejected"
                   )
                 }
+                disabled={loadingResourceStatuses}
               >
                 <SelectTrigger className="w-[180px]">
                   <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={loadingResourceStatuses ? "Loading..." : "Filter by status"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  {resourceStatusOptions.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

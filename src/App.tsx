@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SocketProvider } from "./contexts/SocketContext";
+import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 import {
   TeacherRoute,
   SchoolRoute,
@@ -79,6 +80,12 @@ const AdminUploadResource = lazy(
 );
 const PlatformSettings = lazy(
   () => import("./pages/admin/PlatformSettings")
+);
+const DropdownManagement = lazy(
+  () => import("./pages/admin/DropdownManagement")
+);
+const GeneralSettings = lazy(
+  () => import("./pages/admin/GeneralSettings")
 );
 
 // New Public Pages
@@ -253,7 +260,9 @@ const AppRoutes = () => {
           <Route path="resources" element={<AdminResourceManagement />} />
           <Route path="sales-management" element={<SalesManagement />} />
           <Route path="payout-management" element={<PayoutManagement />} />
+          <Route path="general-settings" element={<GeneralSettings />} />
           <Route path="platform-settings" element={<PlatformSettings />} />
+          <Route path="dropdown-management" element={<DropdownManagement />} />
         </Route>
 
         {/* ======================================== */}
@@ -279,12 +288,14 @@ const App = () => {
         <SecurityProvider>
           <Toaster />
           <BrowserRouter>
-            <AuthProvider>
-              <SocketProvider>
-                <AppRoutes />
-                <CookieConsent />
-              </SocketProvider>
-            </AuthProvider>
+            <SiteSettingsProvider>
+              <AuthProvider>
+                <SocketProvider>
+                  <AppRoutes />
+                  <CookieConsent />
+                </SocketProvider>
+              </AuthProvider>
+            </SiteSettingsProvider>
           </BrowserRouter>
         </SecurityProvider>
       </TooltipProvider>

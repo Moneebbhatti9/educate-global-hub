@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +66,9 @@ const Candidates = () => {
   const [searchParams] = useSearchParams();
   const selectedJob = searchParams.get("job");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Dynamic dropdown options
+  const { data: applicationStatusOptions, isLoading: loadingApplicationStatuses } = useDropdownOptions("applicationStatus");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(
     "all"
   );
@@ -78,10 +82,10 @@ const Candidates = () => {
   const effectiveJobId = jobFromState?.jobId || selectedJob;
 
   // Debug logging
-  console.log("Navigation state:", location.state);
-  console.log("Job from state:", jobFromState);
-  console.log("Effective job ID:", effectiveJobId);
-  console.log("Selected job from URL:", selectedJob);
+  
+  
+  
+  
 
   // API hooks
   const { data: jobsData, isLoading: jobsLoading } = useSchoolJobs(
@@ -103,7 +107,7 @@ const Candidates = () => {
             search: searchTerm || undefined,
           });
           
-          console.log("Applications by job response:", response);
+          
           
           // Store the API response data
           setApplicationsData(response.data);
@@ -125,7 +129,7 @@ const Candidates = () => {
             querySearch: searchTerm || undefined,
           });
           
-          console.log("All school applications response:", response);
+          
           
           // Store the API response data
           setApplicationsData(response.data);
@@ -427,18 +431,18 @@ const Candidates = () => {
                   onValueChange={(value) =>
                     setStatusFilter(value as ApplicationStatus | "all")
                   }
+                  disabled={loadingApplicationStatuses}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={loadingApplicationStatuses ? "Loading..." : "Status"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">New</SelectItem>
-                    <SelectItem value="reviewing">Under Review</SelectItem>
-                    <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                    <SelectItem value="interviewed">Interviewed</SelectItem>
-                    <SelectItem value="accepted">Accepted</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                    {applicationStatusOptions?.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 

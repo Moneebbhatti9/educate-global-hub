@@ -186,7 +186,7 @@ export const EditUserModal = ({
 
         form.reset(formData);
       } catch (profileError) {
-        console.log("No profile data found, using basic user data");
+        
         // Set form with basic user data only
         form.reset({
           firstName: user.firstName || "",

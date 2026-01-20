@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -76,6 +77,9 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [users, setUsers] = useState<AdminUser[]>([]);
+
+  // Dynamic dropdown options
+  const { data: userRoleOptions, isLoading: loadingUserRoles } = useDropdownOptions("userRole");
   const [pagination, setPagination] = useState({
     total: 0,
     totalPages: 0,
@@ -112,8 +116,8 @@ const UserManagement = () => {
           role: roleFilter !== "all" ? roleFilter : undefined,
           status: statusFilter !== "all" ? statusFilter : undefined,
         });
-        console.log("API Response:", response); // Debug log
-        console.log("Users data:", response.data.data); // Debug log
+         // Debug log
+         // Debug log
         setUsers(response.data.data);
         setPagination(response.data.pagination);
         // Show success toast for first load
@@ -358,14 +362,14 @@ const UserManagement = () => {
   };
 
   const openChangeStatus = (user: AdminUser) => {
-    console.log("Opening change status for user:", user); // Debug log
+     // Debug log
     setSelectedUser(user);
     setChangeStatusOpen(true);
   };
 
   const openDeleteUser = (user: AdminUser) => {
-    console.log("openDeleteUser called with user:", user);
-    console.log("User ID fields:", { id: user.id, _id: user._id });
+    
+    
     setSelectedUser(user);
     setDeleteUserOpen(true);
   };
@@ -425,17 +429,18 @@ const UserManagement = () => {
               <Select
                 value={roleFilter}
                 onValueChange={setRoleFilter}
-                disabled={isLoading}
+                disabled={isLoading || loadingUserRoles}
               >
                 <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by role" />
+                  <SelectValue placeholder={loadingUserRoles ? "Loading..." : "Filter by role"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="teacher">Teachers</SelectItem>
-                  <SelectItem value="school">Schools</SelectItem>
-                  <SelectItem value="recruiter">Recruiters</SelectItem>
-                  <SelectItem value="supplier">Suppliers</SelectItem>
+                  {userRoleOptions?.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select

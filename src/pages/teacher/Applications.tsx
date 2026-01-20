@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   Dialog,
   DialogContent,
@@ -95,6 +96,9 @@ const Applications = () => {
     useState<ApplicationResponse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Dynamic dropdown options
+  const { data: applicationStatusOptions, isLoading: loadingApplicationStatuses } = useDropdownOptions("applicationStatus");
 
   // API hooks
   const {
@@ -314,19 +318,18 @@ const Applications = () => {
             <Select
               value={statusFilter}
               onValueChange={handleStatusFilterChange}
+              disabled={loadingApplicationStatuses}
             >
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={loadingApplicationStatuses ? "Loading..." : "Filter by status"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="reviewing">Under Review</SelectItem>
-                <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                <SelectItem value="interviewed">Interviewed</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="withdrawn">Withdrawn</SelectItem>
+                {applicationStatusOptions?.map((option) => (
+                  <SelectItem key={option._id} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={handleSortChange}>

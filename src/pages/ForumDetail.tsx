@@ -91,7 +91,7 @@ const ForumDetail = () => {
     const handleNewComment = (comment: any) => {
       // The useForumDetail hook already handles new comments via Socket.IO
       // No need to reload the entire page
-      console.log("New comment received via socket:", comment);
+      
     };
 
     socketService.onNewComment(handleNewComment);

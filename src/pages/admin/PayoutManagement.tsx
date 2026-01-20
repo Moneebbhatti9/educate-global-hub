@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +67,9 @@ const PayoutManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+
+  // Dynamic dropdown options
+  const { data: payoutMethodOptions, isLoading: loadingPayoutMethods } = useDropdownOptions("payoutMethod");
   const [showProcessDialog, setShowProcessDialog] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null);
   const [processAction, setProcessAction] = useState<"approve" | "reject">("approve");
@@ -313,15 +317,17 @@ const PayoutManagement = () => {
                 />
               </div>
 
-              <Select value={methodFilter} onValueChange={setMethodFilter}>
+              <Select value={methodFilter} onValueChange={setMethodFilter} disabled={loadingPayoutMethods}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All methods" />
+                  <SelectValue placeholder={loadingPayoutMethods ? "Loading..." : "All methods"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Methods</SelectItem>
-                  <SelectItem value="stripe">Stripe</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  {payoutMethodOptions?.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 

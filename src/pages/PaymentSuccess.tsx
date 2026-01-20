@@ -104,7 +104,7 @@ const PaymentSuccess = () => {
             if (attempt < MAX_RETRIES) {
               // Retry with exponential backoff
               const delay = BASE_DELAY * Math.pow(1.5, attempt);
-              console.log(`Purchase not ready, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+              
 
               setTimeout(() => {
                 fetchPurchaseDetails(attempt + 1);

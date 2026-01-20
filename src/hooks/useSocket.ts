@@ -18,11 +18,11 @@ export const useSocket = () => {
 
       // Connection event handlers
       socketRef.current.on("connect", () => {
-        console.log("Socket connected:", socketRef.current?.id);
+        
       });
 
       socketRef.current.on("disconnect", (reason) => {
-        console.log("Socket disconnected:", reason);
+        
       });
 
       socketRef.current.on("connect_error", (error) => {
