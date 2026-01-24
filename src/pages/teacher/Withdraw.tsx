@@ -1005,7 +1005,7 @@ const Withdraw = () => {
                   </Table>
                 ) : (
                   <EmptyTransactions
-                    onUploadResource={() => }
+                    onUploadResource={() => setShowWithdrawalForm(true)}
                   />
                 )}
               </CardContent>

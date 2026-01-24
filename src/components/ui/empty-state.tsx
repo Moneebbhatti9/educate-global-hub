@@ -105,7 +105,7 @@ export const EmptyJobPostings = ({ onCreateJob }: { onCreateJob: () => void }) =
     }}
     secondaryAction={{
       label: "Browse Templates",
-      onClick: () => 
+      onClick: () => console.log("Browse templates"),
     }}
   />
 );
