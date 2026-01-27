@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Signup successful - no tokens generated yet
         // User will be redirected to OTP verification
         if (import.meta.env.DEV) {
-          console.log("✅ Signup successful, user needs to verify email");
+          
         }
       } else {
         throw new Error(response.message || "Signup failed");
@@ -290,7 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Debug: Log the full response
       if (import.meta.env.DEV) {
-        console.log("🔐 OTP Verification - Full response:", response);
+        
       }
 
       if (response.success) {
@@ -300,7 +300,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // Debug: Log the tokens received from OTP verification
           if (import.meta.env.DEV) {
-            console.log("🔐 OTP Verification - Tokens received:");
+            
             console.log(
               "  Access Token:",
               accessToken ? "received" : "missing"
@@ -309,11 +309,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               "  Refresh Token:",
               refreshToken ? "received" : "missing"
             );
-            console.log("  User:", user ? "received" : "missing");
-            console.log("  User Status:", user?.status);
+            
+            
 
           }
-          console.log("🔐 OTP Verification - Tokens received:", user);
+          
           secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
           secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
           secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);
@@ -326,8 +326,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const storedRefreshToken = secureStorage.getItem<string>(
               STORAGE_KEYS.REFRESH_TOKEN
             );
-            console.log("💾 Tokens stored in storage:");
-            console.log("  Access Token stored:", storedToken ? "yes" : "no");
+            
+            
             console.log(
               "  Refresh Token stored:",
               storedRefreshToken ? "yes" : "no"

@@ -51,11 +51,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { STORAGE_KEYS } from "@/types/auth";
 import { secureStorage } from "@/helpers/storage";
 import { JobPostingFormSkeleton } from "@/components/skeletons/form-skeleton";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 const PostJob = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const createJobMutation = useCreateJob();
+
+  // Fetch dynamic dropdown options
+  const { data: educationLevelOptions, isLoading: loadingEducationLevels } = useDropdownOptions("educationLevel");
+  const { data: jobTypeOptions, isLoading: loadingJobTypes } = useDropdownOptions("jobType");
+  const { data: positionCategoryOptions, isLoading: loadingPositionCategories } = useDropdownOptions("positionCategory");
+  const { data: benefitOptions, isLoading: loadingBenefits } = useDropdownOptions("benefits");
+
+  // Check if any dropdown is still loading
+  const isDropdownsLoading = loadingEducationLevels || loadingJobTypes || loadingPositionCategories || loadingBenefits;
 
   const {
     register,
@@ -103,6 +113,17 @@ const PostJob = () => {
   });
 
   const formData = watch();
+  const selectedPositionCategory = watch("position.category");
+
+  // Fetch position subcategories based on selected category
+  const { data: positionSubcategoryOptions, isLoading: loadingPositionSubcategories } = useDropdownOptions(
+    "positionSubcategory",
+    {
+      parentCategory: "positionCategory",
+      parentValue: selectedPositionCategory,
+    }
+  );
+
   const [newSubject, setNewSubject] = useState("");
   const [newBenefit, setNewBenefit] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
@@ -146,79 +167,6 @@ const PostJob = () => {
     );
   }
 
-  const educationLevels: EducationLevel[] = [
-    "early_years",
-    "primary",
-    "secondary",
-    "high_school",
-    "foundation",
-    "higher_education",
-  ];
-
-  const jobTypes: JobType[] = [
-    "full_time",
-    "part_time",
-    "contract",
-    "substitute",
-  ];
-
-  const positionCategories = [
-    "Teaching",
-    "Administration",
-    "Support Staff",
-    "Leadership",
-    "Specialist",
-  ];
-
-  const teachingSubcategories = [
-    "Subject Teacher",
-    "Class Teacher",
-    "Special Education",
-    "ESL/EAL",
-    "Gifted Education",
-    "Remedial Education",
-  ];
-
-  const adminSubcategories = [
-    "Principal",
-    "Vice Principal",
-    "Head of Department",
-    "Coordinator",
-    "Registrar",
-    "Business Manager",
-  ];
-
-  const supportSubcategories = [
-    "Librarian",
-    "IT Support",
-    "Maintenance",
-    "Security",
-    "Transportation",
-    "Cafeteria",
-  ];
-
-  const commonBenefits = [
-    "Health Insurance",
-    "Dental Insurance",
-    "Vision Insurance",
-    "Life Insurance",
-    "Disability Insurance",
-    "Retirement Plan",
-    "Professional Development",
-    "Tuition Reimbursement",
-    "Housing Allowance",
-    "Transportation Allowance",
-    "Annual Flight",
-    "Relocation Assistance",
-    "Visa Sponsorship",
-    "Paid Time Off",
-    "Sick Leave",
-    "Maternity/Paternity Leave",
-    "Wellness Programs",
-    "Gym Membership",
-    "Meal Allowance",
-    "Childcare Support",
-  ];
 
   const onSubmit = async (e: React.FormEvent, action: "draft" | "publish") => {
     e.preventDefault();
@@ -387,41 +335,6 @@ const PostJob = () => {
 
   const handleCountryChange = (country: Country) => {
     setValue("country", country.name);
-  };
-
-  const getSubcategories = () => {
-    switch (formData.position.category) {
-      case "Teaching":
-        return teachingSubcategories;
-      case "Administration":
-        return adminSubcategories;
-      case "Support Staff":
-        return supportSubcategories;
-      default:
-        return [];
-    }
-  };
-
-  const getEducationLevelLabel = (level: string) => {
-    const labels: Record<string, string> = {
-      early_years: "Early Years (Ages 3-5)",
-      primary: "Primary (Grades 1-6)",
-      secondary: "Secondary (Grades 7-9)",
-      high_school: "High School (Grades 10-12)",
-      foundation: "Foundation Program",
-      higher_education: "Higher Education",
-    };
-    return labels[level] || level;
-  };
-
-  const getJobTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      full_time: "Full-time",
-      part_time: "Part-time",
-      contract: "Contract",
-      substitute: "Substitute",
-    };
-    return labels[type] || type;
   };
 
   return (
@@ -612,14 +525,15 @@ const PostJob = () => {
                       onValueChange={(value) =>
                         setValue("educationLevel", value)
                       }
+                      disabled={loadingEducationLevels}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select education level" />
+                        <SelectValue placeholder={loadingEducationLevels ? "Loading..." : "Select education level"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {educationLevels.map((level) => (
-                          <SelectItem key={level} value={level}>
-                            {getEducationLevelLabel(level)}
+                        {educationLevelOptions.map((option) => (
+                          <SelectItem key={option._id} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -636,14 +550,15 @@ const PostJob = () => {
                     <Select
                       value={formData.jobType || "full_time"}
                       onValueChange={(value) => setValue("jobType", value)}
+                      disabled={loadingJobTypes}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select job type" />
+                        <SelectValue placeholder={loadingJobTypes ? "Loading..." : "Select job type"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {jobTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {getJobTypeLabel(type)}
+                        {jobTypeOptions.map((option) => (
+                          <SelectItem key={option._id} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -662,6 +577,7 @@ const PostJob = () => {
                         setValue("position.category", value);
                         setValue("position.subcategory", "");
                       }}
+                      disabled={loadingPositionCategories}
                     >
                       <SelectTrigger
                         className={
@@ -670,12 +586,12 @@ const PostJob = () => {
                             : ""
                         }
                       >
-                        <SelectValue placeholder="Select position category" />
+                        <SelectValue placeholder={loadingPositionCategories ? "Loading..." : "Select position category"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {positionCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
+                        {positionCategoryOptions.map((option) => (
+                          <SelectItem key={option._id} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -696,7 +612,7 @@ const PostJob = () => {
                       onValueChange={(value) =>
                         setValue("position.subcategory", value)
                       }
-                      disabled={!formData.position.category}
+                      disabled={!formData.position.category || loadingPositionSubcategories}
                     >
                       <SelectTrigger
                         className={
@@ -705,12 +621,12 @@ const PostJob = () => {
                             : ""
                         }
                       >
-                        <SelectValue placeholder="Select subcategory" />
+                        <SelectValue placeholder={!formData.position.category ? "Select category first" : loadingPositionSubcategories ? "Loading..." : "Select subcategory"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {getSubcategories().map((subcategory) => (
-                          <SelectItem key={subcategory} value={subcategory}>
-                            {subcategory}
+                        {positionSubcategoryOptions.map((option) => (
+                          <SelectItem key={option._id} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1089,39 +1005,45 @@ const PostJob = () => {
                 <div className="space-y-4">
                   <Label>Benefits & Perks</Label>
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/20">
-                      {commonBenefits.map((benefit) => (
-                        <div
-                          key={benefit}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={benefit}
-                            checked={(formData.benefits || []).includes(
-                              benefit
-                            )}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setValue("benefits", [
-                                  ...(formData.benefits || []),
-                                  benefit,
-                                ]);
-                              } else {
-                                setValue(
-                                  "benefits",
-                                  (formData.benefits || []).filter(
-                                    (b) => b !== benefit
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                          <Label htmlFor={benefit} className="text-sm">
-                            {benefit}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+                    {loadingBenefits ? (
+                      <div className="p-4 border rounded-lg bg-muted/20 text-center">
+                        <span className="text-sm text-muted-foreground">Loading benefits...</span>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/20">
+                        {benefitOptions.map((option) => (
+                          <div
+                            key={option._id}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={option.value}
+                              checked={(formData.benefits || []).includes(
+                                option.value
+                              )}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setValue("benefits", [
+                                    ...(formData.benefits || []),
+                                    option.value,
+                                  ]);
+                                } else {
+                                  setValue(
+                                    "benefits",
+                                    (formData.benefits || []).filter(
+                                      (b) => b !== option.value
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <Label htmlFor={option.value} className="text-sm">
+                              {option.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       ✅ Check the benefits you offer, or add custom ones below
                     </p>

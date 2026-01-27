@@ -63,7 +63,7 @@ const DownloadPage = () => {
 
   const handleDownload = () => {
     // TODO: Implement secure download
-    console.log("Starting download...");
+    
     // In real implementation, this would trigger a secure download
     const link = document.createElement('a');
     link.href = mockPurchase.resource.downloadUrl;

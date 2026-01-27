@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
+  const { settings: siteSettings } = useSiteSettings();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -19,8 +21,8 @@ const Navigation = () => {
           <Link to="/" className="flex items-center">
             <div className="h-16 w-48 flex items-center justify-center">
               <img
-                src={EducateLink2}
-                alt="Educate Link"
+                src={siteSettings.logo || EducateLink2}
+                alt={siteSettings.siteName || "Educate Link"}
                 className="h-full w-full object-contain"
               />
             </div>
@@ -62,7 +64,7 @@ const Navigation = () => {
               to="/contact"
               className="text-foreground hover:text-brand-primary font-medium transition-all duration-300 relative group after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-primary after:transition-all after:duration-300 hover:after:w-full"
             >
-              Contant Us
+              Contact Us
             </Link>
             {/* <Link
               to="/suppliers"

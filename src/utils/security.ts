@@ -205,9 +205,9 @@ export function validateSecurityHeaders(): boolean {
 
   // This would typically be done server-side, but we can check what's available
   if (import.meta.env.DEV) {
-    console.log("🔒 Security headers validation (client-side check)");
-    console.log("Required headers:", requiredHeaders);
-    console.log("Note: Full validation should be done server-side");
+    
+    
+    
   }
 
   return missingHeaders.length === 0;

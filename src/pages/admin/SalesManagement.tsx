@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,9 @@ const SalesManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currencyFilter, setCurrencyFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+
+  // Dynamic dropdown options
+  const { data: currencyOptions, isLoading: loadingCurrencies } = useDropdownOptions("currency");
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [refundReason, setRefundReason] = useState("");
@@ -193,30 +197,38 @@ const SalesManagement = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
+        {/* Summary Cards - Gradient Design */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Sales
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
                 {salesData?.pagination?.total || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
                 Platform-wide sales
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Total Revenue
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-green-900 dark:text-green-100">
                 {Object.keys(salesData?.totalEarnings || {}).length > 0 &&
                   Object.entries(salesData.totalEarnings).map(([currency, amount]) => (
                     <div key={currency} className="text-sm">
@@ -225,33 +237,41 @@ const SalesManagement = () => {
                     </div>
                   ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">All currencies</p>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">All currencies</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Completed
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-amber-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
                 {salesData?.sales?.filter((s) => s.status === "completed").length || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Successful sales</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">Successful sales</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-red-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Refunded</CardTitle>
-              <XCircle className="h-4 w-4 text-red-600" />
+              <CardTitle className="text-sm font-medium text-red-700 dark:text-red-300">
+                Refunded
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <XCircle className="h-5 w-5 text-red-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-3xl font-bold text-red-900 dark:text-red-100">
                 {salesData?.sales?.filter((s) => s.status === "refunded").length || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Refunded sales</p>
+              <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">Refunded sales</p>
             </CardContent>
           </Card>
         </div>
@@ -283,16 +303,17 @@ const SalesManagement = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+              <Select value={currencyFilter} onValueChange={setCurrencyFilter} disabled={loadingCurrencies}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All currencies" />
+                  <SelectValue placeholder={loadingCurrencies ? "Loading..." : "All currencies"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Currencies</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="PKR">PKR (Rs)</SelectItem>
+                  {currencyOptions?.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 

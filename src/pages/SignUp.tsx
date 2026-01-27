@@ -31,6 +31,7 @@ import {
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { signupSchema } from "@/helpers/validation";
 import { useFormValidation } from "@/hooks/useFormValidation";
@@ -53,6 +54,7 @@ const SignUp = () => {
 
   const { handleError, showSuccess } = useErrorHandler();
   const { signup, isLoading } = useAuth();
+  const { settings: siteSettings } = useSiteSettings();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -178,8 +180,8 @@ const SignUp = () => {
             <div className="flex justify-center mb-4">
               <div className="h-24 w-64 flex items-center justify-center">
                 <img
-                  src={EducateLink2}
-                  alt="Educate Link"
+                  src={siteSettings.logo || EducateLink2}
+                  alt={siteSettings.siteName || "Educate Link"}
                   className="h-full w-full object-contain"
                 />
               </div>

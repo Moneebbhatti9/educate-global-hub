@@ -57,7 +57,7 @@ apiClient.interceptors.request.use(
 
         // Debug: Log when Authorization header is added
         if (import.meta.env.DEV) {
-          console.log("🔐 Authorization header added to request:", config.url);
+          
           console.log("🔐 Token validation passed:", {
             url: config.url,
             hasToken: !!token,
@@ -77,7 +77,7 @@ apiClient.interceptors.request.use(
         // Token exists but is invalid - log for debugging but don't clear auth immediately
         console.warn("Invalid token structure detected in request interceptor");
         if (import.meta.env.DEV) {
-          console.log("Token:", token);
+          
           console.log("Token validation failed:", {
             url: config.url,
             hasToken: !!token,

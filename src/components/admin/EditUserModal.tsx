@@ -186,7 +186,7 @@ export const EditUserModal = ({
 
         form.reset(formData);
       } catch (profileError) {
-        console.log("No profile data found, using basic user data");
+        
         // Set form with basic user data only
         form.reset({
           firstName: user.firstName || "",
@@ -253,7 +253,7 @@ export const EditUserModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit User Profile</DialogTitle>
           <DialogDescription>
