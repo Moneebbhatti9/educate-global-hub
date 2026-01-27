@@ -388,7 +388,7 @@ export default function ResourceManagement() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
-                £{stats.currentBalance.toFixed(2)}
+                £{(stats.currentBalance / 100).toFixed(2)}
               </div>
               <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
                 Available to withdraw

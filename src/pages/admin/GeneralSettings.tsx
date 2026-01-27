@@ -124,9 +124,20 @@ const GeneralSettings = () => {
 
       return adminApi.updateGeneralSettings(formDataToSend);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       customToast.success("Settings updated successfully");
+      // Invalidate both queries to update all components
       queryClient.invalidateQueries({ queryKey: ["generalSettings"] });
+      queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
+
+      // Update previews with new URLs from response
+      if (response.data?.logo) {
+        setLogoPreview(response.data.logo);
+      }
+      if (response.data?.favicon) {
+        setFaviconPreview(response.data.favicon);
+      }
+
       setHasChanges(false);
       setLogoFile(null);
       setFaviconFile(null);

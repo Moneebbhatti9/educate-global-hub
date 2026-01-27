@@ -119,57 +119,82 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        {/* Main Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
+        {/* Main Stats Cards - Gradient Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Users
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
                 {isLoading ? "..." : (dashboardData?.stats?.totalUsers || 0).toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground">Registered users</p>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                Registered users
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              <Briefcase className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Active Jobs
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
                 {isLoading ? "..." : (dashboardData?.stats?.activeJobs || 0).toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground">Published listings</p>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Published listings
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-purple-600" />
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Total Sales
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5 text-amber-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
                 {isLoading ? "..." : (dashboardData?.stats?.totalSales || 0).toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground">Completed transactions</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                Completed transactions
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate("sales")}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-800">Platform Revenue</CardTitle>
-              <PoundSterling className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Platform Revenue
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <PoundSterling className="h-5 w-5 text-purple-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-700">
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
                 {isLoading ? "..." : (dashboardData?.stats?.platformRevenueFormatted || "£0.00")}
               </div>
-              <p className="text-xs text-green-600">Total commission earned</p>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                Total commission earned
+              </p>
             </CardContent>
           </Card>
         </div>

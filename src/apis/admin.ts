@@ -34,7 +34,28 @@ export interface PlatformSettings {
     enabled: boolean;
     rate: number;
     ratePercent: number;
+    pricingType: "inclusive" | "exclusive";
+    applicableRegions: string[];
     applicableCountries: string[];
+    euRates: {
+      [key: string]: {
+        rate: number;
+        ratePercent: number;
+      };
+    };
+    b2bReverseCharge: {
+      enabled: boolean;
+      requireVatNumber: boolean;
+      validateVatNumber: boolean;
+    };
+    invoiceSettings: {
+      autoGenerate: boolean;
+      sendToEmail: boolean;
+      companyName: string;
+      companyAddress: string;
+      vatNumber: string;
+      invoicePrefix: string;
+    };
   };
   minimumPayout: {
     GBP: number;
@@ -65,7 +86,22 @@ export interface UpdateVatRequest {
   vat: {
     enabled?: boolean;
     rate?: number;
+    pricingType?: "inclusive" | "exclusive";
+    applicableRegions?: string[];
     applicableCountries?: string[];
+    b2bReverseCharge?: {
+      enabled?: boolean;
+      requireVatNumber?: boolean;
+      validateVatNumber?: boolean;
+    };
+    invoiceSettings?: {
+      autoGenerate?: boolean;
+      sendToEmail?: boolean;
+      companyName?: string;
+      companyAddress?: string;
+      vatNumber?: string;
+      invoicePrefix?: string;
+    };
   };
 }
 

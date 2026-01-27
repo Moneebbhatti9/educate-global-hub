@@ -155,51 +155,63 @@ const Earnings = () => {
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Key Metrics - Gradient Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Available Balance */}
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Available Balance
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
                 {currencyBalance.formatted}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
                 Ready to withdraw
               </p>
             </CardContent>
           </Card>
 
           {/* Total Sales */}
-          <Card>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Sales
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Package className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
                 {stats.totalSales || 0}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
                 Lifetime: {stats.lifetimeEarningsFormatted || "£0.00"}
               </p>
             </CardContent>
           </Card>
 
           {/* This Month */}
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                This Month
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-amber-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
                 {stats.thisMonthSales || 0} sales
               </div>
-              <div className="flex items-center text-xs mt-1">
+              <div className="flex items-center text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
                 {stats.monthOverMonthChange > 0 ? (
                   <>
                     <TrendingUp className="w-3 h-3 mr-1 text-green-600" />
@@ -211,24 +223,28 @@ const Earnings = () => {
                     <span className="text-red-600">{stats.monthOverMonthChange}% vs last month</span>
                   </>
                 ) : (
-                  <span className="text-muted-foreground">Same as last month</span>
+                  <span>Same as last month</span>
                 )}
               </div>
             </CardContent>
           </Card>
 
           {/* Seller Tier */}
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Seller Tier</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Seller Tier
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <Award className="h-5 w-5 text-purple-600" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <Badge className={tierInfo?.color || "bg-amber-600"}>{currentTier}</Badge>
-                <span className="text-sm font-medium">{tier.ratePercentage || tierInfo?.rate}</span>
+                <span className="text-lg font-bold text-purple-900 dark:text-purple-100">{tier.ratePercentage || tierInfo?.rate}</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
                 Royalty rate on sales
               </p>
             </CardContent>

@@ -368,56 +368,80 @@ const JobPostings = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-              <Users className="h-4 w-4 text-brand-primary" />
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Jobs
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">All time postings</p>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {stats.total}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                All time postings
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
                 Published Jobs
               </CardTitle>
-              <Eye className="h-4 w-4 text-brand-accent-green" />
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Eye className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.published}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {stats.published}
+              </div>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
                 Currently accepting applications
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Draft Jobs</CardTitle>
-              <Edit className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Draft Jobs
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Edit className="h-5 w-5 text-amber-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.draft}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                {stats.draft}
+              </div>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
                 Awaiting publication
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
                 Total Applicants
               </CardTitle>
-              <Users className="h-4 w-4 text-brand-secondary" />
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <Users className="h-5 w-5 text-purple-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalApplicants}</div>
-              <p className="text-xs text-muted-foreground">Across all jobs</p>
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                {stats.totalApplicants}
+              </div>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                Across all jobs
+              </p>
             </CardContent>
           </Card>
         </div>

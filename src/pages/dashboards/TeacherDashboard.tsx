@@ -33,6 +33,8 @@ import {
   Building2,
   Upload,
   Download,
+  Package,
+  PoundSterling,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -229,36 +231,10 @@ const TeacherDashboard = () => {
 
   // Dynamic stats based on API data
   const dashboardData = dashboardCardData?.data || null;
-  const stats = [
-    {
-      title: "Applications Sent",
-      value: dashboardData?.cards?.applicationsSent?.toString() || "0",
-      change: "+0",
-      icon: Briefcase,
-      color: "text-brand-accent-green",
-    },
-    {
-      title: "Resources Uploaded",
-      value: dashboardData?.cards?.resourcesUploaded?.toString() || "0",
-      change: "+0",
-      icon: Upload,
-      color: "text-brand-primary",
-    },
-    {
-      title: "Resources Downloaded",
-      value: dashboardData?.cards?.resourcesDownloaded?.toString() || "0",
-      change: "+0",
-      icon: Download,
-      color: "text-brand-secondary",
-    },
-    {
-      title: "Earnings",
-      value: `$${dashboardData?.cards?.earnings?.toFixed(2) || "0.00"}`,
-      change: "+0",
-      icon: DollarSign,
-      color: "text-brand-accent-orange",
-    },
-  ];
+
+  // Earnings are stored in cents, convert to pounds for display
+  const earningsInCents = dashboardData?.cards?.earnings || 0;
+  const earningsInPounds = earningsInCents / 100;
 
   const getStatusBadge = (status: ApplicationStatus) => {
     const statusConfig = {
@@ -389,33 +365,84 @@ const TeacherDashboard = () => {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card
-                key={index}
-                className="hover:shadow-card-hover transition-shadow"
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.title}
-                  </CardTitle>
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    <span className="text-brand-accent-green">
-                      {stat.change}
-                    </span>{" "}
-                    from last month
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
+        {/* Stats Cards - Gradient Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Applications Sent
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {dashboardData?.cards?.applicationsSent || 0}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                Total job applications
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Resources Uploaded
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-green-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {dashboardData?.cards?.resourcesUploaded || 0}
+              </div>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Teaching resources
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Resources Downloaded
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Download className="h-5 w-5 text-amber-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                {dashboardData?.cards?.resourcesDownloaded || 0}
+              </div>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                Total downloads
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate("/dashboard/teacher/earnings")}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Total Earnings
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <PoundSterling className="h-5 w-5 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                £{earningsInPounds.toFixed(2)}
+              </div>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                Click to view details
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tab Navigation */}

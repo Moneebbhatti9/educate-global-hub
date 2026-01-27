@@ -20,7 +20,6 @@ import {
   LogOut,
   Bell,
   Search,
-  Menu,
   User,
   Building2,
   UserCheck,
@@ -42,6 +41,13 @@ import {
   ChevronDown,
   Sliders,
   CreditCard,
+  Check,
+  MailOpen,
+  Mail,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ShieldCheck,
+  GraduationCap,
 } from "lucide-react";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +55,7 @@ import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import {
   useNotifications,
   useNotificationStats,
+  useMarkAsRead,
 } from "@/hooks/useNotifications";
 
 interface DashboardLayoutProps {
@@ -67,18 +74,51 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   // Get notifications data
-  const { data: notifications } = useNotifications({
+  const { data: notifications, refetch: refetchNotifications } = useNotifications({
     page: 1,
     limit: 10,
     sortBy: "date",
     sortOrder: "desc",
   });
-  const { data: notificationStats } = useNotificationStats();
+  const { data: notificationStats, refetch: refetchStats } = useNotificationStats();
+  const markAsReadMutation = useMarkAsRead();
+
+  // Handle mark single notification as read/unread
+  const handleMarkAsRead = (notificationId: string, currentIsRead: boolean) => {
+    markAsReadMutation.mutate(
+      { notificationIds: [notificationId], isRead: !currentIsRead },
+      {
+        onSuccess: () => {
+          refetchNotifications();
+          refetchStats();
+        },
+      }
+    );
+  };
+
+  // Handle mark all as read
+  const handleMarkAllAsRead = () => {
+    const unreadIds = notifications?.data?.notifications
+      ?.filter((n: any) => !n.isRead)
+      ?.map((n: any) => n._id) || [];
+
+    if (unreadIds.length > 0) {
+      markAsReadMutation.mutate(
+        { notificationIds: unreadIds, isRead: true },
+        {
+          onSuccess: () => {
+            refetchNotifications();
+            refetchStats();
+          },
+        }
+      );
+    }
+  };
 
   const roleConfig = {
     teacher: {
       name: "Teacher",
-      icon: User,
+      icon: GraduationCap,
       color: "bg-brand-primary text-white",
       navigation: [
         { name: "Dashboard", href: `/dashboard/teacher`, icon: Home },
@@ -165,7 +205,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
 
     admin: {
       name: "Admin",
-      icon: Settings,
+      icon: ShieldCheck,
       color: "bg-red-600 text-white",
       navigation: [
         { name: "Dashboard", href: `/dashboard/admin`, icon: Home },
@@ -352,147 +392,135 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   // Get user display info
   const displayName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
   const displayEmail = user?.email;
-  const unreadCount = notificationStats?.data?.unreadCount || 0;
+  const unreadCount = notificationStats?.data?.stats?.unreadCount || notificationStats?.data?.unreadCount || 0;
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Collapsible Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full bg-white border-r border-border shadow-sm transition-all duration-300 ease-in-out z-50 ${
-          sidebarOpen ? "w-64 lg:w-64" : "w-16"
+        className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out z-50 ${
+          sidebarOpen ? "w-64" : "w-16"
         } ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Logo & Role */}
-        <div className="p-2 sm:p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <Link
-              to="/"
-              className="flex flex-col items-center space-x-2 sm:space-x-3"
-            >
-              <div className="h-8 w-24 sm:h-12 sm:w-32 lg:h-16 lg:w-48 flex items-center justify-center flex-shrink-0">
+        {/* Logo */}
+        <div className={`h-14 sm:h-16 border-b border-gray-200 flex items-center ${sidebarOpen ? 'px-4' : 'px-2'}`}>
+          {sidebarOpen ? (
+            <div className="flex items-center justify-between w-full">
+              <Link to="/" className="flex-1 flex items-center justify-center">
                 <img
                   src={siteSettings.logo || EducateLink2}
                   alt={siteSettings.siteName || "Educate Link"}
-                  className="h-full w-full object-contain"
+                  className="h-9 max-w-[180px] object-contain"
                 />
-              </div>
-              {sidebarOpen && (
-                <div className="min-w-0">
-                  <Badge className={`${config.color} text-xs`}>
-                    {config.name} Portal
-                  </Badge>
-                </div>
-              )}
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="lg:hidden ml-2 hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Link to="/" className="w-full flex items-center justify-center">
+              <img
+                src={siteSettings.logo || EducateLink2}
+                alt={siteSettings.siteName || "Educate Link"}
+                className="h-8 w-8 object-contain"
+              />
             </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSidebar}
-              className="lg:hidden flex-shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="p-2 sm:p-4 space-y-1 sm:space-y-2">
-          {config.navigation.map((item: any) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            const hasChildren = item.children && item.children.length > 0;
-            const isExpanded = expandedMenus.includes(item.name);
-            const childActive = hasChildren && isChildActive(item.children);
+        <nav className={`flex-1 overflow-y-auto ${sidebarOpen ? 'p-3' : 'p-2'}`}>
+          <div className="space-y-1">
+            {config.navigation.map((item: any) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              const hasChildren = item.children && item.children.length > 0;
+              const isExpanded = expandedMenus.includes(item.name);
+              const childActive = hasChildren && isChildActive(item.children);
 
-            // If item has children, render expandable menu
-            if (hasChildren) {
-              return (
-                <div key={item.name}>
-                  <button
-                    onClick={() => toggleMenu(item.name)}
-                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-all duration-300 group relative ${
-                      childActive
-                        ? "bg-brand-primary/10 text-brand-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-md"
-                    } ${sidebarOpen ? "justify-between" : "justify-center"}`}
-                    title={!sidebarOpen ? item.name : undefined}
-                  >
-                    <div className="flex items-center space-x-2 sm:space-x-3">
-                      <Icon
-                        className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 transition-transform duration-300 ${
-                          childActive ? "scale-110" : "group-hover:scale-110"
-                        }`}
-                      />
+              // If item has children, render expandable menu
+              if (hasChildren) {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                        childActive
+                          ? "bg-brand-primary/10 text-brand-primary font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      } ${sidebarOpen ? "justify-between" : "justify-center"}`}
+                      title={!sidebarOpen ? item.name : undefined}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                        {sidebarOpen && (
+                          <span className="text-sm">{item.name}</span>
+                        )}
+                      </div>
                       {sidebarOpen && (
-                        <span className="font-medium transition-all duration-300 text-sm sm:text-base">
-                          {item.name}
-                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
                       )}
-                    </div>
-                    {sidebarOpen && (
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform duration-300 ${
-                          isExpanded ? "rotate-180" : ""
-                        }`}
-                      />
+                    </button>
+
+                    {/* Sub-menu items */}
+                    {sidebarOpen && isExpanded && (
+                      <div className="mt-1 ml-4 pl-4 border-l-2 border-gray-200 space-y-1">
+                        {item.children.map((child: any) => {
+                          const ChildIcon = child.icon;
+                          const childIsActive = isActive(child.href);
+
+                          return (
+                            <Link
+                              key={child.name}
+                              to={child.href}
+                              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
+                                childIsActive
+                                  ? "bg-brand-primary text-white font-medium"
+                                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                              }`}
+                            >
+                              <ChildIcon className="w-4 h-4 flex-shrink-0" />
+                              <span>{child.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
+                  </div>
+                );
+              }
 
-                  {/* Sub-menu items */}
-                  {sidebarOpen && isExpanded && (
-                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-muted pl-3">
-                      {item.children.map((child: any) => {
-                        const ChildIcon = child.icon;
-                        const childIsActive = isActive(child.href);
-
-                        return (
-                          <Link
-                            key={child.name}
-                            to={child.href}
-                            className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-300 text-sm ${
-                              childIsActive
-                                ? "bg-brand-primary text-white shadow-md"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                            }`}
-                          >
-                            <ChildIcon className="w-4 h-4 flex-shrink-0" />
-                            <span>{child.name}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
+              // Regular menu item without children
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                    active
+                      ? "bg-brand-primary text-white font-medium shadow-sm"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  } ${sidebarOpen ? "justify-start" : "justify-center"}`}
+                  title={!sidebarOpen ? item.name : undefined}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {sidebarOpen && (
+                    <span className="text-sm">{item.name}</span>
                   )}
-                </div>
+                </Link>
               );
-            }
-
-            // Regular menu item without children
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-all duration-300 group relative ${
-                  active
-                    ? "bg-brand-primary text-white shadow-lg"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-md hover:scale-105"
-                } ${sidebarOpen ? "justify-start" : "justify-center"}`}
-                title={!sidebarOpen ? item.name : undefined}
-              >
-                <Icon
-                  className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 transition-transform duration-300 ${
-                    active ? "scale-110" : "group-hover:scale-110"
-                  }`}
-                />
-                {sidebarOpen && (
-                  <span className="font-medium transition-all duration-300 text-sm sm:text-base">
-                    {item.name}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+            })}
+          </div>
         </nav>
       </aside>
 
@@ -503,18 +531,28 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         }`}
       >
         {/* Fixed Top Bar */}
-        <header className="sticky top-0 h-14 sm:h-16 bg-white border-b border-border px-3 sm:px-6 flex items-center justify-between z-40">
-          <div className="flex items-center space-x-2 sm:space-x-4">
+        <header className="sticky top-0 h-14 sm:h-16 bg-white border-b border-gray-200 px-3 sm:px-6 flex items-center justify-between z-40">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleSidebar}
               data-sidebar-toggle
               title={sidebarOpen ? "Collapse Sidebar (Ctrl+B)" : "Expand Sidebar (Ctrl+B)"}
-              className="hover:bg-brand-primary/10 transition-all duration-300"
+              className="hover:bg-gray-100 transition-all duration-200 p-2"
             >
-              <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
+              {sidebarOpen ? (
+                <PanelLeftClose className="w-5 h-5 text-gray-600" />
+              ) : (
+                <PanelLeftOpen className="w-5 h-5 text-gray-600" />
+              )}
             </Button>
+
+            {/* Portal Badge */}
+            <Badge className={`${config.color} text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 flex items-center gap-2 shadow-sm`}>
+              <RoleIcon className="w-4 h-4" />
+              <span className="font-medium">{config.name} Portal</span>
+            </Badge>
 
             {/* Mobile Search Button */}
             <Button
@@ -532,7 +570,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               <input
                 type="text"
                 placeholder="Search..."
-                className="pl-9 pr-4 py-2 w-64 sm:w-80 lg:w-96 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all duration-300 hover:border-brand-primary/50 focus:shadow-lg focus:scale-105"
+                className="pl-9 pr-4 py-2 w-48 md:w-64 lg:w-80 xl:w-96 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all duration-300 hover:border-brand-primary/50"
               />
             </div>
           </div>
@@ -562,23 +600,37 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                       <h3 className="font-semibold text-base sm:text-lg">
                         Notifications
                       </h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleNotifications}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {unreadCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleMarkAllAsRead}
+                            className="text-xs text-brand-primary hover:text-brand-primary/80"
+                            disabled={markAsReadMutation.isPending}
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Mark all read
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleNotifications}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
                   <div className="max-h-64 sm:max-h-96 overflow-y-auto">
-                    {notifications?.data?.data &&
-                    notifications.data.data.length > 0 ? (
-                      notifications.data.data.map((notification) => (
+                    {notifications?.data?.notifications &&
+                    notifications.data.notifications.length > 0 ? (
+                      notifications.data.notifications.map((notification: any) => (
                         <div
                           key={notification._id}
-                          className={`p-3 sm:p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-all duration-300 hover:shadow-md hover:scale-[1.02] cursor-pointer ${
+                          className={`p-3 sm:p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-all duration-300 ${
                             !notification.isRead ? "bg-blue-50" : ""
                           }`}
                         >
@@ -591,26 +643,54 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                               {getNotificationIcon(notification.type)}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs sm:text-sm font-medium text-foreground">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs sm:text-sm font-medium text-foreground line-clamp-1">
                                   {notification.title}
                                 </p>
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(
-                                    notification.createdAt
-                                  ).toLocaleDateString()}
-                                </span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(
+                                      notification.createdAt
+                                    ).toLocaleDateString()}
+                                  </span>
+                                  {!notification.isRead && (
+                                    <span className="w-2 h-2 bg-brand-primary rounded-full" />
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {notification.message}
                               </p>
-                              {notification.actionRequired &&
-                                notification.actionUrl && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMarkAsRead(notification._id, notification.isRead);
+                                  }}
+                                  disabled={markAsReadMutation.isPending}
+                                >
+                                  {notification.isRead ? (
+                                    <>
+                                      <Mail className="w-3 h-3 mr-1" />
+                                      Mark unread
+                                    </>
+                                  ) : (
+                                    <>
+                                      <MailOpen className="w-3 h-3 mr-1" />
+                                      Mark read
+                                    </>
+                                  )}
+                                </Button>
+                                {notification.actionUrl && (
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="mt-2 text-xs"
-                                    onClick={() => {
+                                    className="h-6 px-2 text-xs"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       window.open(
                                         notification.actionUrl,
                                         "_blank"
@@ -618,9 +698,10 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                                       setNotificationsOpen(false);
                                     }}
                                   >
-                                    {notification.actionText || "View Details"}
+                                    {notification.actionText || "View"}
                                   </Button>
                                 )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -638,24 +719,6 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
                     )}
                   </div>
 
-                  {notifications?.data?.data &&
-                    notifications.data.data.length > 0 && (
-                      <div className="p-3 sm:p-4 border-t border-border">
-                        <Link
-                          to={`/dashboard/${
-                            role === "teacher"
-                              ? "teacher"
-                              : role === "school"
-                              ? "school"
-                              : "admin"
-                          }/notifications`}
-                          className="text-xs sm:text-sm text-brand-primary hover:underline"
-                          onClick={() => setNotificationsOpen(false)}
-                        >
-                          View all notifications
-                        </Link>
-                      </div>
-                    )}
                 </div>
               )}
             </div>
@@ -734,7 +797,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         </header>
 
         {/* Scrollable Page Content */}
-        <main className="flex-1 p-3 sm:p-6 bg-background overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-6 bg-gray-50 overflow-y-auto">
           {children}
         </main>
       </div>

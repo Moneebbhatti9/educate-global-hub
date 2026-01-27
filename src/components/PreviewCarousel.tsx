@@ -157,7 +157,7 @@ export const PreviewCarousel = ({
 
       {/* Zoom Modal */}
       <Dialog open={showZoomModal} onOpenChange={setShowZoomModal}>
-        <DialogContent className="max-w-4xl w-full">
+        <DialogContent className="w-[95vw] sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {titles?.[activeIndex] || `Preview ${activeIndex + 1}`}
