@@ -48,6 +48,7 @@ import type {
 } from "@/types/resource";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { FileUploadStatus } from "@/components/resources/FileUploadStatus";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 // Form validation schema
 const resourceSchema = z
@@ -82,173 +83,19 @@ const resourceSchema = z
 
 type ResourceFormData = z.infer<typeof resourceSchema>;
 
-const RESOURCE_TYPES = [
-  "Assembly",
-  "Assessment and revision",
-  "Game/puzzle/quiz",
-  "Audio, music & video",
-  "Lesson (complete)",
-  "Other",
-  "Unit of work",
-  "Visual aid/Display",
-  "Worksheet/Activity",
-];
-
-const SUBJECTS = [
-  "Aboriginal and Islander languages",
-  "Aboriginal studies",
-  "Afrikaans",
-  "Albanian",
-  "Amharic",
-  "Anthropology",
-  "Arabic",
-  "Art and design",
-  "Belarussian",
-  "Bengali",
-  "Biology",
-  "Bosnian",
-  "Bulgarian",
-  "Business and finance",
-  "Cantonese",
-  "Catalan",
-  "Chemistry",
-  "Citizenship",
-  "Classics",
-  "Computing",
-  "Core IB",
-  "Croatian",
-  "Cross-curricular topics",
-  "Czech",
-  "Danish",
-  "Design, engineering and technology",
-  "Drama",
-  "Dutch",
-  "Economics",
-  "English",
-  "English language learning",
-  "Estonian",
-  "Expressive arts and design",
-  "Finnish",
-  "French",
-  "Geography",
-  "German",
-  "Government and politics",
-  "Greek",
-  "Gujarati",
-  "Hebrew",
-  "Hindi",
-  "History",
-  "Hungarian",
-  "Icelandic",
-  "Indonesian",
-  "Irish Gaelic",
-  "Italian",
-  "Japanese",
-  "Korean",
-  "Latvian",
-  "Law and legal studies",
-  "Literacy for early years",
-  "Lithuanian",
-  "Macedonian",
-  "Malay",
-  "Mandarin",
-  "Mathematics",
-  "Maths for early years",
-  "Media studies",
-  "Music",
-  "Nepali",
-  "New teachers",
-  "Norwegian",
-  "Pedagogy and professional development",
-  "Persian",
-  "Personal, social and health education",
-  "Philosophy and ethics",
-  "Physical development",
-  "Physical education",
-  "Physics",
-  "Pilipino",
-  "Polish",
-  "Portuguese",
-  "Primary science",
-  "Psychology",
-  "Punjabi",
-  "Religious education",
-  "Romanian",
-  "Russian",
-  "Scottish Gaelic",
-  "Serbian",
-  "Sesotho",
-  "Sinhalese",
-  "Siswati",
-  "Slovak",
-  "Sociology",
-  "Spanish",
-  "Special educational needs",
-  "Student careers advice",
-  "Swahili",
-  "Swedish",
-  "Tamil",
-  "Thai",
-  "Turkish",
-  "Ukrainian",
-  "Understanding the world",
-  "Urdu",
-  "Vietnamese",
-  "Vocational studies",
-  "Welsh",
-  "Whole school",
-];
-
-const AGE_GROUPS = [
-  "3-5",
-  "5-7",
-  "7-11",
-  "11-14",
-  "14-16",
-  "16+",
-  "Age not applicable",
-];
-
-const CURRICULA = [
-  "No curriculum",
-  "American",
-  "Australian",
-  "Canadian",
-  "English",
-  "International",
-  "Irish",
-  "New Zealand",
-  "Northern Irish",
-  "Scottish",
-  "Welsh",
-  "Zambian",
-];
-
-const CURRICULUM_TYPES = [
-  "No curriculum type",
-  "Cambridge",
-  "Foundation Stage",
-  "IB PYP",
-  "IPC",
-  "IPC/IEYC",
-  "Montessori",
-  "Northern Ireland Curriculum",
-  "School's own",
-  "Waldorf/Steiner",
-];
-
-const CURRENCIES = [
-  { code: "GBP", symbol: "£", name: "British Pound" },
-  { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "EUR", symbol: "€", name: "Euro" },
-  { code: "PKR", symbol: "₨", name: "Pakistani Rupee" },
-];
-
 const UploadResource = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { handleError, showSuccess, showError } = useErrorHandler();
+
+  // Fetch dynamic dropdown options
+  const { data: resourceTypeOptions, isLoading: loadingResourceTypes } = useDropdownOptions("resourceType");
+  const { data: subjectOptions, isLoading: loadingSubjects } = useDropdownOptions("subject");
+  const { data: ageRangeOptions, isLoading: loadingAgeRanges } = useDropdownOptions("ageRange");
+  const { data: curriculumOptions, isLoading: loadingCurricula } = useDropdownOptions("curriculum");
+  const { data: curriculumTypeOptions, isLoading: loadingCurriculumTypes } = useDropdownOptions("curriculumType");
+  const { data: currencyOptions, isLoading: loadingCurrencies } = useDropdownOptions("currency");
 
   // Check for edit mode
   const editState = location.state as {
@@ -956,16 +803,16 @@ const UploadResource = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Resource Type *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={loadingResourceTypes}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select type" />
+                                  <SelectValue placeholder={loadingResourceTypes ? "Loading..." : "Select type"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {RESOURCE_TYPES.map((type) => (
-                                  <SelectItem key={type} value={type}>
-                                    {type}
+                                {resourceTypeOptions.map((option) => (
+                                  <SelectItem key={option._id} value={option.value}>
+                                    {option.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -981,16 +828,16 @@ const UploadResource = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Subject *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={loadingSubjects}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select subject" />
+                                  <SelectValue placeholder={loadingSubjects ? "Loading..." : "Select subject"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {SUBJECTS.map((subject) => (
-                                  <SelectItem key={subject} value={subject}>
-                                    {subject}
+                                {subjectOptions.map((option) => (
+                                  <SelectItem key={option._id} value={option.value}>
+                                    {option.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1008,16 +855,16 @@ const UploadResource = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Age Range *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={loadingAgeRanges}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select age range" />
+                                  <SelectValue placeholder={loadingAgeRanges ? "Loading..." : "Select age range"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {AGE_GROUPS.map((age) => (
-                                  <SelectItem key={age} value={age}>
-                                    {age}
+                                {ageRangeOptions.map((option) => (
+                                  <SelectItem key={option._id} value={option.value}>
+                                    {option.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1033,16 +880,16 @@ const UploadResource = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Curriculum *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={loadingCurricula}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select curriculum" />
+                                  <SelectValue placeholder={loadingCurricula ? "Loading..." : "Select curriculum"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {CURRICULA.map((curr) => (
-                                  <SelectItem key={curr} value={curr}>
-                                    {curr}
+                                {curriculumOptions.map((option) => (
+                                  <SelectItem key={option._id} value={option.value}>
+                                    {option.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1059,16 +906,16 @@ const UploadResource = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Curriculum Type *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={loadingCurriculumTypes}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select curriculum type" />
+                                <SelectValue placeholder={loadingCurriculumTypes ? "Loading..." : "Select curriculum type"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {CURRICULUM_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
+                              {curriculumTypeOptions.map((option) => (
+                                <SelectItem key={option._id} value={option.value}>
+                                  {option.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -1124,16 +971,16 @@ const UploadResource = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Currency *</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={loadingCurrencies}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue placeholder={loadingCurrencies ? "Loading..." : "Select currency"} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {CURRENCIES.map((curr) => (
-                                    <SelectItem key={curr.code} value={curr.code}>
-                                      {curr.symbol} {curr.name}
+                                  {currencyOptions.map((option) => (
+                                    <SelectItem key={option._id} value={option.value}>
+                                      {option.label}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from "../types/auth";
 
 // Debug utility to check storage state
 export const debugStorage = () => {
-  console.log("🔍 Debugging storage state...");
+  
 
   Object.values(STORAGE_KEYS).forEach((key) => {
     try {
@@ -46,7 +46,7 @@ const testSecureStorage = () => {
     const retrievedValue = secureLocalStorage.getItem(testKey);
 
     if (JSON.stringify(retrievedValue) === JSON.stringify(testValue)) {
-      console.log("✅ Secure storage is working correctly");
+      
     } else {
       console.warn(
         "⚠️ Secure storage test failed, falling back to localStorage"

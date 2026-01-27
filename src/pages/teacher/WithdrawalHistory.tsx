@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Clock,
@@ -9,9 +10,12 @@ import {
   Download,
   Filter,
   Search,
-  Calendar,
   DollarSign,
   ExternalLink,
+  RefreshCw,
+  CreditCard,
+  Building,
+  Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,134 +38,77 @@ import {
 } from "@/components/ui/table";
 import EmptyState from "@/components/ui/empty-state";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { withdrawalsAPI } from "@/apis/withdrawals";
 
-// Mock data - replace with actual API calls
-const mockWithdrawalHistory = [
-  {
-    id: "wd_001",
-    date: "2024-01-15",
-    amount: 125.5,
-    method: "Stripe Connect",
-    status: "Completed",
-    paidTo: "••••1234",
-    eta: "5-7 working days",
-    completedDate: "2024-01-18",
-    reference: "TXN-2024-001",
-    fee: 3.94,
-  },
-  {
-    id: "wd_002",
-    date: "2024-01-08",
-    amount: 89.2,
-    method: "PayPal",
-    status: "Completed",
-    paidTo: "john••••@gmail.com",
-    eta: "5-7 working days",
-    completedDate: "2024-01-11",
-    reference: "TXN-2024-002",
-    fee: 3.38,
-  },
-  {
-    id: "wd_003",
-    date: "2023-12-28",
-    amount: 156.75,
-    method: "Bank Transfer",
-    status: "Completed",
-    paidTo: "••••5678",
-    eta: "10-12 working days",
-    completedDate: "2024-01-05",
-    reference: "TXN-2023-156",
-    fee: 2.5,
-  },
-  {
-    id: "wd_004",
-    date: "2023-12-20",
-    amount: 78.4,
-    method: "Stripe Connect",
-    status: "Processing",
-    paidTo: "••••1234",
-    eta: "5-7 working days",
-    completedDate: null,
-    reference: "TXN-2023-155",
-    fee: 2.57,
-  },
-  {
-    id: "wd_005",
-    date: "2023-12-10",
-    amount: 200.0,
-    method: "PayPal",
-    status: "Failed",
-    paidTo: "john••••@gmail.com",
-    eta: "5-7 working days",
-    completedDate: null,
-    reference: "TXN-2023-154",
-    fee: 0,
-    failureReason: "Invalid account details",
-  },
-  {
-    id: "wd_006",
-    date: "2023-11-25",
-    amount: 95.5,
-    method: "Bank Transfer",
-    status: "Completed",
-    paidTo: "••••5678",
-    eta: "10-12 working days",
-    completedDate: "2023-12-02",
-    reference: "TXN-2023-153",
-    fee: 2.5,
-  },
-  {
-    id: "wd_007",
-    date: "2023-11-15",
-    amount: 67.8,
-    method: "Stripe Connect",
-    status: "Completed",
-    paidTo: "••••1234",
-    eta: "5-7 working days",
-    completedDate: "2023-11-20",
-    reference: "TXN-2023-152",
-    fee: 2.26,
-  },
-  {
-    id: "wd_008",
-    date: "2023-11-05",
-    amount: 145.25,
-    method: "PayPal",
-    status: "Completed",
-    paidTo: "john••••@gmail.com",
-    eta: "5-7 working days",
-    completedDate: "2023-11-10",
-    reference: "TXN-2023-151",
-    fee: 5.29,
-  },
-];
+// Currency symbols
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  GBP: "£",
+  USD: "$",
+  EUR: "€",
+  PKR: "Rs",
+};
 
-const STATUS_FILTERS = ["All", "Completed", "Processing", "Failed"];
-const METHOD_FILTERS = ["All", "Stripe Connect", "PayPal", "Bank Transfer"];
+const PAYOUT_METHOD_ICONS: Record<string, any> = {
+  stripe: CreditCard,
+  paypal: DollarSign,
+  bank_transfer: Building,
+};
 
 const WithdrawalHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [methodFilter, setMethodFilter] = useState("All");
-  const [dateFilter, setDateFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currencyFilter, setCurrencyFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+
+  // Fetch withdrawal history
+  const { data: historyData, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ["withdrawalHistory", page, statusFilter, currencyFilter],
+    queryFn: async () => {
+      const params: any = {
+        page,
+        limit: 20,
+      };
+
+      if (statusFilter && statusFilter !== "all") {
+        params.status = statusFilter;
+      }
+      if (currencyFilter && currencyFilter !== "all") {
+        params.currency = currencyFilter;
+      }
+
+      const response = await withdrawalsAPI.getWithdrawalHistory(params);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to fetch withdrawal history");
+      }
+      return response.data;
+    },
+  });
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Completed":
+    const lowerStatus = status?.toLowerCase();
+    switch (lowerStatus) {
+      case "completed":
         return (
           <Badge className="bg-green-100 text-green-800 border-green-200">
             <CheckCircle2 className="w-3 h-3 mr-1" />
             Completed
           </Badge>
         );
-      case "Processing":
+      case "processing":
         return (
-          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            <Clock className="w-3 h-3 mr-1" />
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            <RefreshCw className="w-3 h-3 mr-1" />
             Processing
           </Badge>
         );
-      case "Failed":
+      case "pending":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
+      case "failed":
         return (
           <Badge className="bg-red-100 text-red-800 border-red-200">
             <XCircle className="w-3 h-3 mr-1" />
@@ -173,38 +120,68 @@ const WithdrawalHistory = () => {
     }
   };
 
-  const filteredWithdrawals = mockWithdrawalHistory.filter((withdrawal) => {
-    const matchesSearch =
-      withdrawal.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      withdrawal.paidTo.toLowerCase().includes(searchTerm.toLowerCase());
+  const getPayoutMethodBadge = (method: string) => {
+    const Icon = PAYOUT_METHOD_ICONS[method] || Banknote;
+    const methodNames: Record<string, string> = {
+      stripe: "Stripe",
+      paypal: "PayPal",
+      bank_transfer: "Bank Transfer",
+    };
 
-    const matchesStatus =
-      statusFilter === "All" || withdrawal.status === statusFilter;
-    const matchesMethod =
-      methodFilter === "All" || withdrawal.method === methodFilter;
+    return (
+      <Badge variant="outline" className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {methodNames[method] || method}
+      </Badge>
+    );
+  };
 
-    return matchesSearch && matchesStatus && matchesMethod;
+  // Filter withdrawals based on search
+  const filteredWithdrawals = historyData?.withdrawals?.filter((withdrawal: any) => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return withdrawal._id?.toLowerCase().includes(search);
   });
 
-  const totalWithdrawn = mockWithdrawalHistory
-    .filter((w) => w.status === "Completed")
-    .reduce((sum, w) => sum + w.amount, 0);
+  // Calculate totals from completed withdrawals
+  const completedWithdrawals = historyData?.withdrawals?.filter(
+    (w: any) => w.status?.toLowerCase() === "completed"
+  ) || [];
 
-  const totalFees = mockWithdrawalHistory
-    .filter((w) => w.status === "Completed")
-    .reduce((sum, w) => sum + w.fee, 0);
+  const totalWithdrawn = completedWithdrawals.reduce(
+    (sum: number, w: any) => sum + parseFloat(w.netAmount || 0),
+    0
+  );
+
+  const totalFees = completedWithdrawals.reduce(
+    (sum: number, w: any) => sum + parseFloat(w.fee || 0),
+    0
+  );
+
+  const pendingCount = historyData?.withdrawals?.filter(
+    (w: any) => w.status?.toLowerCase() === "pending" || w.status?.toLowerCase() === "processing"
+  ).length || 0;
 
   return (
     <DashboardLayout role="teacher">
       <div className="space-y-6">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
+          <div className="flex items-center justify-between mb-4">
             <Button variant="outline" size="sm" asChild>
               <Link to="/dashboard/teacher/withdraw">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Withdrawals
               </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isRefetching}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
+              Refresh
             </Button>
           </div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -216,25 +193,20 @@ const WithdrawalHistory = () => {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Withdrawn
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                £{totalWithdrawn.toFixed(2)}
+              <div className="text-2xl font-bold text-green-600">
+                £{(totalWithdrawn / 100).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
-                From{" "}
-                {
-                  mockWithdrawalHistory.filter((w) => w.status === "Completed")
-                    .length
-                }{" "}
-                successful withdrawals
+                From {completedWithdrawals.length} successful withdrawals
               </p>
             </CardContent>
           </Card>
@@ -245,7 +217,9 @@ const WithdrawalHistory = () => {
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">£{totalFees.toFixed(2)}</div>
+              <div className="text-2xl font-bold">
+                £{(totalFees / 100).toFixed(2)}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Processing and transaction fees
               </p>
@@ -257,17 +231,33 @@ const WithdrawalHistory = () => {
               <CardTitle className="text-sm font-medium">
                 Pending Withdrawals
               </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {
-                  mockWithdrawalHistory.filter((w) => w.status === "Processing")
-                    .length
-                }
+              <div className="text-2xl font-bold text-yellow-600">
+                {pendingCount}
               </div>
               <p className="text-xs text-muted-foreground">
                 Currently being processed
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Can Withdraw
+              </CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {historyData?.canWithdraw ? "Yes" : "No"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {historyData?.daysUntilNextWithdrawal > 0
+                  ? `${historyData.daysUntilNextWithdrawal} days until next`
+                  : "Ready to withdraw"}
               </p>
             </CardContent>
           </Card>
@@ -288,7 +278,7 @@ const WithdrawalHistory = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
-                    placeholder="Search by reference or account..."
+                    placeholder="Search by ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -300,47 +290,47 @@ const WithdrawalHistory = () => {
                 <label className="text-sm font-medium">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUS_FILTERS.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Method</label>
-                <Select value={methodFilter} onValueChange={setMethodFilter}>
+                <label className="text-sm font-medium">Currency</label>
+                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="All Currencies" />
                   </SelectTrigger>
                   <SelectContent>
-                    {METHOD_FILTERS.map((method) => (
-                      <SelectItem key={method} value={method}>
-                        {method}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">All Currencies</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="PKR">PKR (Rs)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date Range</label>
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Time</SelectItem>
-                    <SelectItem value="Last 30 days">Last 30 days</SelectItem>
-                    <SelectItem value="Last 3 months">Last 3 months</SelectItem>
-                    <SelectItem value="Last year">Last year</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className="text-sm font-medium">&nbsp;</label>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setCurrencyFilter("all");
+                  }}
+                >
+                  Clear Filters
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -351,98 +341,116 @@ const WithdrawalHistory = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Withdrawal History</CardTitle>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export CSV
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {filteredWithdrawals.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Paid To</TableHead>
-                      <TableHead>Fee</TableHead>
-                      <TableHead>Completed</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredWithdrawals.map((withdrawal) => (
-                      <TableRow key={withdrawal.id}>
-                        <TableCell className="font-medium">
-                          {new Date(withdrawal.date).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {withdrawal.reference}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          £{withdrawal.amount.toFixed(2)}
-                        </TableCell>
-                        <TableCell>{withdrawal.method}</TableCell>
-                        <TableCell>
-                          {getStatusBadge(withdrawal.status)}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {withdrawal.paidTo}
-                        </TableCell>
-                        <TableCell>
-                          {withdrawal.fee > 0
-                            ? `£${withdrawal.fee.toFixed(2)}`
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {withdrawal.completedDate ? (
-                            new Date(
-                              withdrawal.completedDate
-                            ).toLocaleDateString()
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            {withdrawal.status === "Failed" &&
-                              withdrawal.failureReason && (
-                                <Button variant="outline" size="sm">
-                                  <AlertCircle className="w-4 h-4 mr-1" />
-                                  View Error
-                                </Button>
-                              )}
-                            {withdrawal.status === "Completed" && (
-                              <Button variant="outline" size="sm">
-                                <ExternalLink className="w-4 h-4 mr-1" />
-                                Receipt
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading withdrawal history...</p>
+              </div>
+            ) : filteredWithdrawals && filteredWithdrawals.length > 0 ? (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Requested</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Fee</TableHead>
+                        <TableHead className="text-right">Net</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Completed</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredWithdrawals.map((withdrawal: any) => {
+                        const currencySymbol = CURRENCY_SYMBOLS[withdrawal.currency] || "£";
+                        return (
+                          <TableRow key={withdrawal._id}>
+                            <TableCell className="font-medium">
+                              {new Date(withdrawal.requestedAt).toLocaleDateString()}
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(withdrawal.requestedAt).toLocaleTimeString()}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {currencySymbol}
+                              {(parseFloat(withdrawal.amount) / 100).toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground">
+                              {currencySymbol}
+                              {(parseFloat(withdrawal.fee) / 100).toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-green-600">
+                              {currencySymbol}
+                              {(parseFloat(withdrawal.netAmount) / 100).toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              {getPayoutMethodBadge(withdrawal.payoutMethod)}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(withdrawal.status)}
+                            </TableCell>
+                            <TableCell>
+                              {withdrawal.completedAt ? (
+                                <div>
+                                  <div>{new Date(withdrawal.completedAt).toLocaleDateString()}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(withdrawal.completedAt).toLocaleTimeString()}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {historyData?.pagination && historyData.pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {(page - 1) * 20 + 1} to{" "}
+                      {Math.min(page * 20, historyData.pagination.total)} of{" "}
+                      {historyData.pagination.total} results
+                    </p>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page - 1)}
+                        disabled={page === 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page + 1)}
+                        disabled={page >= historyData.pagination.totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <EmptyState
                 icon={Search}
                 title="No Withdrawals Found"
-                description="No withdrawals match your current filters. Try adjusting your search criteria."
+                description="No withdrawals match your current filters, or you haven't made any withdrawal requests yet."
                 action={{
-                  label: "Clear Filters",
-                  onClick: () => {
-                    setSearchTerm("");
-                    setStatusFilter("All");
-                    setMethodFilter("All");
-                    setDateFilter("All");
-                  },
-                  variant: "outline",
+                  label: "Request Withdrawal",
+                  href: "/dashboard/teacher/withdraw",
+                  variant: "default",
                 }}
               />
             )}

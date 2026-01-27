@@ -27,7 +27,7 @@ const RESOURCE_ENDPOINTS = {
   DELETE_RESOURCE: "/resources/delete-resource",
 
   // Admin Resource Management
-  GET_ADMIN_RESOURCES: "adminDashboard/admin-resources",
+  GET_ADMIN_RESOURCES: "/admin-dashboard/admin-resources",
 
   // Resource Search & Viewing (Public)
   GET_ALL_RESOURCES: "/resources/get-all-resources",

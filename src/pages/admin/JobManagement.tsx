@@ -64,9 +64,15 @@ import JobStatusChangeModal from "@/components/Modals/job-status-change-modal";
 import JobDetailsModal from "@/components/Modals/job-details-modal";
 import JobApplicationsModal from "@/components/Modals/job-applications-modal";
 import type { Job } from "@/types/job";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 const JobManagement = () => {
   const { toast } = useToast();
+
+  // Fetch dynamic dropdown options
+  const { data: jobTypeOptions, isLoading: loadingJobTypes } = useDropdownOptions("jobType");
+  const { data: jobStatusOptions, isLoading: loadingJobStatuses } = useDropdownOptions("jobStatus");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -265,109 +271,99 @@ const JobManagement = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-brand-primary/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-brand-primary transition-colors duration-300">Total Jobs</p>
-                  <p className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">{stats?.totalJobs || 0}</p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-primary rounded-full transition-all duration-1000 ease-out" style={{ width: '100%' }}></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <Briefcase className="w-8 h-8 text-brand-primary group-hover:scale-110  transition-all duration-300" />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Jobs
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-blue-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {stats?.totalJobs || 0}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                All job postings
+              </p>
             </CardContent>
           </Card>
-          
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-brand-accent-green/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-brand-accent-green transition-colors duration-300">Active</p>
-                  <p className="text-2xl font-bold text-brand-accent-green group-hover:scale-110 transition-transform duration-300">
-                    {stats?.activeJobs || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-brand-accent-green rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${stats?.totalJobs ? (stats.activeJobs / stats.totalJobs) * 100 : 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <CheckCircle className="w-8 h-8 text-brand-accent-green group-hover:scale-110  transition-all duration-300" />
-                </div>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Active
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {stats?.activeJobs || 0}
+              </div>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Currently live
+              </p>
             </CardContent>
           </Card>
-          
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-brand-accent-orange/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-brand-accent-orange transition-colors duration-300">Draft</p>
-                  <p className="text-2xl font-bold text-brand-accent-orange group-hover:scale-110 transition-transform duration-300">
-                    {stats?.pendingJobs || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-brand-accent-orange rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${stats?.totalJobs ? (stats.pendingJobs / stats.totalJobs) * 100 : 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <Clock className="w-8 h-8 text-brand-accent-orange group-hover:scale-110  transition-all duration-300" />
-                </div>
+
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Draft
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-amber-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                {stats?.pendingJobs || 0}
+              </div>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                Awaiting publication
+              </p>
             </CardContent>
           </Card>
-          
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-gray-500 transition-colors duration-300">Closed</p>
-                  <p className="text-2xl font-bold text-gray-500 group-hover:scale-110 transition-transform duration-300">
-                    {stats?.suspendedJobs || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gray-500 rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${stats?.totalJobs ? (stats.suspendedJobs / stats.totalJobs) * 100 : 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <Archive className="w-8 h-8 text-gray-500 group-hover:scale-110  transition-all duration-300" />
-                </div>
+
+          <Card className="bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-950/20 dark:to-gray-900/10 border-gray-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Closed
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900/30 flex items-center justify-center">
+                <Archive className="h-5 w-5 text-gray-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {stats?.suspendedJobs || 0}
+              </div>
+              <p className="text-xs text-gray-600/70 dark:text-gray-400/70 mt-1">
+                No longer active
+              </p>
             </CardContent>
           </Card>
-          
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-red-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-red-500 transition-colors duration-300">Expired</p>
-                  <p className="text-2xl font-bold text-red-500 group-hover:scale-110 transition-transform duration-300">
-                    {stats?.expiredJobs || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${stats?.totalJobs ? (stats.expiredJobs / stats.totalJobs) * 100 : 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <AlertTriangle className="w-8 h-8 text-red-500 group-hover:scale-110  transition-all duration-300" />
-                </div>
+
+          <Card className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-red-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-red-700 dark:text-red-300">
+                Expired
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-900 dark:text-red-100">
+                {stats?.expiredJobs || 0}
+              </div>
+              <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
+                Past deadline
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -390,28 +386,30 @@ const JobManagement = () => {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={setStatusFilter} disabled={loadingJobStatuses}>
                 <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={loadingJobStatuses ? "Loading..." : "Filter by status"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Active</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
+                  {jobStatusOptions.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <Select value={typeFilter} onValueChange={setTypeFilter} disabled={loadingJobTypes}>
                 <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by type" />
+                  <SelectValue placeholder={loadingJobTypes ? "Loading..." : "Filter by type"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="full_time">Full-time</SelectItem>
-                  <SelectItem value="part_time">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="substitute">Substitute</SelectItem>
+                  {jobTypeOptions.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

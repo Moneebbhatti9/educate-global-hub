@@ -26,7 +26,7 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { salesAPI } from "@/apis/sales";
 import { reviewsAPI } from "@/apis/reviews";
-import { downloadFile, getFilenameFromUrl } from "@/utils/downloadHelper";
+import { downloadViaBackend } from "@/utils/downloadHelper";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ const PaymentSuccess = () => {
             if (attempt < MAX_RETRIES) {
               // Retry with exponential backoff
               const delay = BASE_DELAY * Math.pow(1.5, attempt);
-              console.log(`Purchase not ready, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+              
 
               setTimeout(() => {
                 fetchPurchaseDetails(attempt + 1);
@@ -163,10 +163,10 @@ const PaymentSuccess = () => {
   ]);
 
   const handleDownload = async () => {
-    if (!purchaseDetails?.downloadUrl) {
+    if (!purchaseDetails?.resourceId) {
       customToast.error(
         "Download unavailable",
-        "Download link is not available yet"
+        "Resource not available for download"
       );
       return;
     }
@@ -175,10 +175,9 @@ const PaymentSuccess = () => {
       // Track download
       setHasDownloaded(true);
 
-      const url = purchaseDetails.downloadUrl;
-      const filename = getFilenameFromUrl(url, purchaseDetails.resourceTitle || "resource");
+      const filename = `${purchaseDetails.resourceTitle || "resource"}.pdf`;
 
-      await downloadFile(url, filename, {
+      await downloadViaBackend(purchaseDetails.resourceId, filename, {
         onSuccess: () => {
           customToast.success(
             "Download started",

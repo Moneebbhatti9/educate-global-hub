@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SocketProvider } from "./contexts/SocketContext";
+import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 import {
   TeacherRoute,
   SchoolRoute,
@@ -77,6 +78,15 @@ const AdminResourceManagement = lazy(
 const AdminUploadResource = lazy(
   () => import("./pages/admin/UploadResource")
 );
+const PlatformSettings = lazy(
+  () => import("./pages/admin/PlatformSettings")
+);
+const DropdownManagement = lazy(
+  () => import("./pages/admin/DropdownManagement")
+);
+const GeneralSettings = lazy(
+  () => import("./pages/admin/GeneralSettings")
+);
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -97,8 +107,9 @@ const TeacherResourceManagement = lazy(
   () => import("./pages/teacher/ResourceManagement")
 );
 const Earnings = lazy(() => import("./pages/teacher/Earnings"));
+const SalesHistory = lazy(() => import("./pages/teacher/SalesHistory"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
-const MyLibrary = lazy(() => import("./pages/MyLibrary"));
+const MyLibrary = lazy(() => import("./pages/teacher/MyLibrary"));
 const SalesManagement = lazy(() => import("./pages/admin/SalesManagement"));
 const PayoutManagement = lazy(() => import("./pages/admin/PayoutManagement"));
 
@@ -207,6 +218,7 @@ const AppRoutes = () => {
             element={<TeacherResourceManagement />}
           />
           <Route path="earnings" element={<Earnings />} />
+          <Route path="sales-history" element={<SalesHistory />} />
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="withdrawal-history" element={<WithdrawalHistory />} />
         </Route>
@@ -248,6 +260,9 @@ const AppRoutes = () => {
           <Route path="resources" element={<AdminResourceManagement />} />
           <Route path="sales-management" element={<SalesManagement />} />
           <Route path="payout-management" element={<PayoutManagement />} />
+          <Route path="general-settings" element={<GeneralSettings />} />
+          <Route path="platform-settings" element={<PlatformSettings />} />
+          <Route path="dropdown-management" element={<DropdownManagement />} />
         </Route>
 
         {/* ======================================== */}
@@ -273,12 +288,14 @@ const App = () => {
         <SecurityProvider>
           <Toaster />
           <BrowserRouter>
-            <AuthProvider>
-              <SocketProvider>
-                <AppRoutes />
-                <CookieConsent />
-              </SocketProvider>
-            </AuthProvider>
+            <SiteSettingsProvider>
+              <AuthProvider>
+                <SocketProvider>
+                  <AppRoutes />
+                  <CookieConsent />
+                </SocketProvider>
+              </AuthProvider>
+            </SiteSettingsProvider>
           </BrowserRouter>
         </SecurityProvider>
       </TooltipProvider>

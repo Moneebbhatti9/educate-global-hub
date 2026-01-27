@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +83,9 @@ const ForumManagement = () => {
     useState<Discussion | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // Dynamic dropdown options
+  const { data: forumCategoryOptions, isLoading: loadingForumCategories } = useDropdownOptions("forumCategory");
+
   // API hooks
   const {
     data: statsData,
@@ -120,12 +124,6 @@ const ForumManagement = () => {
     hasPrevPage: (discussionsData?.page || 1) > 1,
   };
 
-  const categories = [
-    { id: "teaching-tips", name: "Teaching Tips & Strategies" },
-    { id: "curriculum", name: "Curriculum & Resources" },
-    { id: "career-advice", name: "Career Advice" },
-    { id: "help-support", name: "Help & Support" },
-  ];
 
   // Handle pin/unpin action
   const handleTogglePin = async (discussionId: string) => {
@@ -268,108 +266,98 @@ const ForumManagement = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-blue-500 transition-colors duration-300">
-                    Total Discussions
-                  </p>
-                  <p className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">
-                    {stats?.totalDiscussions || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out w-full"></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <MessageCircle className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-all duration-300" />
-                </div>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Discussions
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {stats?.totalDiscussions || 0}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                All forum posts
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-green-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-green-500 transition-colors duration-300">
-                    Active
-                  </p>
-                  <p className="text-2xl font-bold text-green-500 group-hover:scale-110 transition-transform duration-300">
-                    {stats?.active || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full transition-all duration-1000 ease-out w-full"></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <CheckCircle className="w-8 h-8 text-green-500 group-hover:scale-110 transition-all duration-300" />
-                </div>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Active
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {stats?.active || 0}
+              </div>
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Currently active
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-red-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-red-500 transition-colors duration-300">
-                    Reported
-                  </p>
-                  <p className="text-2xl font-bold text-red-500 group-hover:scale-110 transition-transform duration-300">
-                    {stats?.reported || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-out w-full"></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <Flag className="w-8 h-8 text-red-500 group-hover:scale-110 transition-all duration-300" />
-                </div>
+          <Card className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-red-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-red-700 dark:text-red-300">
+                Reported
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Flag className="h-5 w-5 text-red-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-900 dark:text-red-100">
+                {stats?.reported || 0}
+              </div>
+              <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
+                Needs review
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-orange-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-orange-500 transition-colors duration-300">
-                    Pinned
-                  </p>
-                  <p className="text-2xl font-bold text-orange-500 group-hover:scale-110 transition-transform duration-300">
-                    {stats?.pinned || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-orange-500 rounded-full transition-all duration-1000 ease-out w-full"></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <Pin className="w-8 h-8 text-orange-500 group-hover:scale-110 transition-all duration-300" />
-                </div>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                Pinned
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Pin className="h-5 w-5 text-amber-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                {stats?.pinned || 0}
+              </div>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                Featured posts
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-purple-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground group-hover:text-purple-500 transition-colors duration-300">
-                    Total Replies
-                  </p>
-                  <p className="text-2xl font-bold text-purple-500 group-hover:scale-110 transition-transform duration-300">
-                    {stats?.totalReplies || 0}
-                  </p>
-                  <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full transition-all duration-1000 ease-out w-full"></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <TrendingUp className="w-8 h-8 text-purple-500 group-hover:scale-110 transition-all duration-300" />
-                </div>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Total Replies
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
               </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                {stats?.totalReplies || 0}
+              </div>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
+                Community engagement
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -401,15 +389,15 @@ const ForumManagement = () => {
                   <SelectItem value="pinned">Pinned</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter} disabled={loadingForumCategories}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={loadingForumCategories ? "Loading..." : "Category"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
+                  {forumCategoryOptions?.map((option) => (
+                    <SelectItem key={option._id} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -135,7 +135,7 @@ const ForgotPassword = () => {
         newPassword: data.newPassword,
       });
 
-      console.log("✅ Password Reset - Success");
+      
 
       showSuccess(
         "Password Updated",
@@ -304,7 +304,7 @@ const ForgotPassword = () => {
                   <form
                     onSubmit={passwordForm.handleSubmit(
                       (data) => {
-                        console.log("✅ Form validation passed, submitting:", data);
+                        
                         handlePasswordReset(data as PasswordResetFormData);
                       },
                       (errors) => {

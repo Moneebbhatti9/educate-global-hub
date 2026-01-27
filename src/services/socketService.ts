@@ -27,12 +27,12 @@ class SocketService {
     });
 
     this.socket.on("connect", () => {
-      console.log("✅ Socket connected:", this.socket?.id);
+      
       this.reconnectAttempts = 0;
     });
 
     this.socket.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
+      
     });
 
     this.socket.on("connect_error", (error) => {

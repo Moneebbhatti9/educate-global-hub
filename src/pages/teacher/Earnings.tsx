@@ -10,6 +10,7 @@ import {
   Download,
   Calendar,
   Target,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,11 +69,10 @@ const TIER_INFO = {
 
 const Earnings = () => {
   const [selectedCurrency, setSelectedCurrency] = useState<string>("GBP");
-  const [timeRange, setTimeRange] = useState<string>("all");
 
   // Fetch earnings dashboard
-  const { data: earnings, isLoading } = useQuery({
-    queryKey: ["earnings Dashboard"],
+  const { data: earnings, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ["earningsDashboard"],
     queryFn: async () => {
       const response = await salesAPI.getEarningsDashboard();
       if (!response.success || !response.data) {
@@ -90,6 +90,9 @@ const Earnings = () => {
             <h1 className="text-3xl font-bold text-foreground">Earnings Dashboard</h1>
             <p className="text-muted-foreground mt-2">Loading your earnings data...</p>
           </div>
+          <div className="flex justify-center py-12">
+            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -97,20 +100,29 @@ const Earnings = () => {
 
   const currencySymbol = CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
 
-  // Get earnings for selected currency
-  const totalEarnings = earnings?.totalEarnings?.[selectedCurrency as keyof typeof earnings.totalEarnings];
-  const thisMonth = earnings?.thisMonth?.[selectedCurrency as keyof typeof earnings.thisMonth];
-  const last30Days = earnings?.last30Days?.[selectedCurrency as keyof typeof earnings.last30Days];
-  const last12Months = earnings?.last12Months?.[selectedCurrency as keyof typeof earnings.last12Months];
+  // Get data from API response - mapping to actual structure
+  const balances = earnings?.balances || {};
+  const tier = earnings?.tier || {};
+  const stats = earnings?.stats || {};
+  const earningsData = earnings?.earnings || {};
+  const recentSales = earnings?.recentSales || [];
+  const salesByMonth = earnings?.salesByMonth || [];
+  const topResources = earnings?.topResources || [];
 
-  // Calculate tier progress
-  const currentTier = earnings?.sellerTier?.current || "Bronze";
+  // Get balance for selected currency
+  const currencyBalance = balances[selectedCurrency as keyof typeof balances] || { available: 0, formatted: `${currencySymbol}0.00` };
+  const currencyEarnings = earningsData[selectedCurrency as keyof typeof earningsData] || { totalEarnings: 0, totalSales: 0 };
+
+  // Current tier info
+  const currentTier = tier.current || "Bronze";
   const tierInfo = TIER_INFO[currentTier as keyof typeof TIER_INFO];
-  const tierProgress = earnings?.sellerTier?.nextTier
-    ? ((earnings.sellerTier.last12MonthsSales || 0) /
-        (earnings.sellerTier.nextTier.requiredSales || 1)) *
-      100
-    : 100;
+  const tierProgress = parseFloat(tier.progressToNextTier || "0");
+
+  // Format month name from salesByMonth
+  const formatMonthName = (year: number, month: number) => {
+    const date = new Date(year, month - 1);
+    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  };
 
   return (
     <DashboardLayout role="teacher">
@@ -137,77 +149,102 @@ const Earnings = () => {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon">
-              <Download className="w-4 h-4" />
+            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isRefetching}>
+              <RefreshCw className={`w-4 h-4 ${isRefetching ? "animate-spin" : ""}`} />
             </Button>
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Earnings */}
-          <Card>
+        {/* Key Metrics - Gradient Design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Available Balance */}
+          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                Available Balance
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {totalEarnings?.formatted || `${currencySymbol}0.00`}
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                {currencyBalance.formatted}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Gross: {currencySymbol}
-                {((totalEarnings?.gross || 0) / 100).toFixed(2)}
+              <p className="text-xs text-green-600/70 dark:text-green-400/70 mt-1">
+                Ready to withdraw
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Total Sales */}
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Sales
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Package className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                {stats.totalSales || 0}
+              </div>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                Lifetime: {stats.lifetimeEarningsFormatted || "£0.00"}
               </p>
             </CardContent>
           </Card>
 
           {/* This Month */}
-          <Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                This Month
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-amber-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {thisMonth?.formatted || `${currencySymbol}0.00`}
+              <div className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+                {stats.thisMonthSales || 0} sales
               </div>
-              <div className="flex items-center text-xs text-green-600 mt-1">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                <span>Active this month</span>
+              <div className="flex items-center text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                {stats.monthOverMonthChange > 0 ? (
+                  <>
+                    <TrendingUp className="w-3 h-3 mr-1 text-green-600" />
+                    <span className="text-green-600">+{stats.monthOverMonthChange}% vs last month</span>
+                  </>
+                ) : stats.monthOverMonthChange < 0 ? (
+                  <>
+                    <TrendingDown className="w-3 h-3 mr-1 text-red-600" />
+                    <span className="text-red-600">{stats.monthOverMonthChange}% vs last month</span>
+                  </>
+                ) : (
+                  <span>Same as last month</span>
+                )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Last 30 Days */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Last 30 Days</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {last30Days?.formatted || `${currencySymbol}0.00`}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Net: {currencySymbol}
-                {((last30Days?.net || 0) / 100).toFixed(2)}
-              </p>
             </CardContent>
           </Card>
 
           {/* Seller Tier */}
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Seller Tier</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Seller Tier
+              </CardTitle>
+              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <Award className="h-5 w-5 text-purple-600" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Badge className={tierInfo.color}>{currentTier}</Badge>
-                <span className="text-sm font-medium">{tierInfo.rate}</span>
+                <Badge className={tierInfo?.color || "bg-amber-600"}>{currentTier}</Badge>
+                <span className="text-lg font-bold text-purple-900 dark:text-purple-100">{tier.ratePercentage || tierInfo?.rate}</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-1">
                 Royalty rate on sales
               </p>
             </CardContent>
@@ -218,12 +255,12 @@ const Earnings = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tier Progress */}
-            {earnings?.sellerTier?.nextTier && (
+            {tier.nextTier && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="w-5 h-5" />
-                    Progress to {earnings.sellerTier.nextTier.tier}
+                    Progress to {tier.nextTier} Tier
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -231,36 +268,55 @@ const Earnings = () => {
                     <div className="flex justify-between text-sm mb-2">
                       <span>12-Month Sales</span>
                       <span className="font-medium">
-                        {currencySymbol}
-                        {((earnings.sellerTier.last12MonthsSales || 0) / 100).toFixed(2)} /{" "}
-                        {currencySymbol}
-                        {((earnings.sellerTier.nextTier.requiredSales || 0) / 100).toFixed(2)}
+                        {tier.last12MonthsSalesFormatted || `£${(tier.last12MonthsSales || 0).toFixed(2)}`} / £{(tier.nextTierThreshold || 0).toFixed(2)}
                       </span>
                     </div>
                     <Progress value={tierProgress} className="h-2" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Current Progress</p>
+                      <p className="font-medium text-primary">
+                        {tierProgress.toFixed(1)}%
+                      </p>
+                    </div>
                     <div>
                       <p className="text-muted-foreground">Remaining</p>
                       <p className="font-medium">
-                        {currencySymbol}
-                        {((earnings.sellerTier.nextTier.remainingSales || 0) / 100).toFixed(2)}
+                        £{Math.max(0, (tier.nextTierThreshold || 0) - (tier.last12MonthsSales || 0)).toFixed(2)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Next Tier Rate</p>
-                      <p className="font-medium">
-                        {TIER_INFO[earnings.sellerTier.nextTier.tier as keyof typeof TIER_INFO]?.rate}
+                      <p className="font-medium text-green-600">
+                        {TIER_INFO[tier.nextTier as keyof typeof TIER_INFO]?.rate || "80%"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm text-blue-800">
-                      You're {tierProgress.toFixed(0)}% of the way to{" "}
-                      {earnings.sellerTier.nextTier.tier} tier! Keep up the great work.
-                    </p>
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-blue-100 rounded-full">
+                        <Award className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">
+                          {tierProgress >= 100
+                            ? `Congratulations! You've reached ${tier.nextTier} tier!`
+                            : `${(100 - tierProgress).toFixed(1)}% more to reach ${tier.nextTier} tier`
+                          }
+                        </p>
+                        <p className="text-xs text-blue-700 mt-1">
+                          {tier.nextTier === "Gold"
+                            ? "Gold tier earns 80% royalty on every sale!"
+                            : tier.nextTier === "Silver"
+                            ? "Silver tier earns 70% royalty on every sale!"
+                            : "Keep selling to unlock higher royalty rates!"
+                          }
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -275,7 +331,7 @@ const Earnings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {earnings?.topResources && earnings.topResources.length > 0 ? (
+                {topResources && topResources.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -285,27 +341,33 @@ const Earnings = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {earnings.topResources.map((resource, index) => (
-                        <TableRow key={resource.resourceId}>
+                      {topResources.map((item: any, index: number) => (
+                        <TableRow key={item.resource?._id || index}>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                               <span className="font-medium text-muted-foreground">
                                 #{index + 1}
                               </span>
+                              {item.resource?.coverPhoto && (
+                                <img
+                                  src={item.resource.coverPhoto}
+                                  alt={item.resource.title}
+                                  className="w-10 h-10 rounded object-cover"
+                                />
+                              )}
                               <Link
-                                to={`/dashboard/teacher/resources/${resource.resourceId}`}
-                                className="hover:underline"
+                                to={`/resources/${item.resource?._id}`}
+                                className="hover:underline font-medium"
                               >
-                                {resource.title}
+                                {item.resource?.title || "Unknown Resource"}
                               </Link>
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            {resource.salesCount}
+                            {item.totalSales}
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-600">
-                            {currencySymbol}
-                            {(resource.totalEarnings / 100).toFixed(2)}
+                            {item.totalEarnings}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -336,52 +398,48 @@ const Earnings = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {earnings?.recentSales && earnings.recentSales.length > 0 ? (
+                {recentSales && recentSales.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Resource</TableHead>
+                        <TableHead>Buyer</TableHead>
                         <TableHead className="text-right">Price</TableHead>
                         <TableHead className="text-right">Earnings</TableHead>
-                        <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {earnings.recentSales.map((sale) => {
-                        const resource = typeof sale.resource === "object" ? sale.resource : null;
-                        return (
-                          <TableRow key={sale._id}>
-                            <TableCell>
-                              {new Date(sale.saleDate).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {resource?.title || "Unknown"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {CURRENCY_SYMBOLS[sale.currency]}
-                              {(sale.price / 100).toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right text-green-600 font-medium">
-                              {CURRENCY_SYMBOLS[sale.currency]}
-                              {(sale.sellerEarnings / 100).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  sale.status === "completed"
-                                    ? "bg-green-100 text-green-800"
-                                    : sale.status === "refunded"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-gray-100 text-gray-800"
-                                }
-                              >
-                                {sale.status}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {recentSales.map((sale: any) => (
+                        <TableRow key={sale._id}>
+                          <TableCell>
+                            {new Date(sale.saleDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {sale.resource?.coverPhoto && (
+                                <img
+                                  src={sale.resource.coverPhoto}
+                                  alt={sale.resource.title}
+                                  className="w-8 h-8 rounded object-cover"
+                                />
+                              )}
+                              <span className="font-medium">
+                                {sale.resource?.title || "Unknown"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {sale.buyer || "Guest"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {sale.price}
+                          </TableCell>
+                          <TableCell className="text-right text-green-600 font-medium">
+                            {sale.earnings}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 ) : (
@@ -396,28 +454,55 @@ const Earnings = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Earnings by Currency */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Earnings by Currency</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(earningsData).map(([currency, data]: [string, any]) => (
+                  <div
+                    key={currency}
+                    className={`flex items-center justify-between p-2 rounded ${
+                      currency === selectedCurrency ? "bg-primary/10" : ""
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{currency}</span>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-green-600">
+                        {data.totalFormatted || `${CURRENCY_SYMBOLS[currency]}0.00`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {data.totalSales || 0} sales
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
             {/* Monthly Breakdown */}
             <Card>
               <CardHeader>
                 <CardTitle>Monthly Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {earnings?.monthlySales && earnings.monthlySales.length > 0 ? (
-                  earnings.monthlySales.slice(0, 6).map((month) => (
+                {salesByMonth && salesByMonth.length > 0 ? (
+                  salesByMonth.slice(0, 6).map((month: any) => (
                     <div
-                      key={month.month}
+                      key={`${month._id?.year}-${month._id?.month}`}
                       className="flex items-center justify-between"
                     >
                       <span className="text-sm text-muted-foreground">
-                        {month.month}
+                        {formatMonthName(month._id?.year, month._id?.month)}
                       </span>
                       <div className="text-right">
                         <p className="text-sm font-medium">
                           {currencySymbol}
-                          {(month.earnings / 100).toFixed(2)}
+                          {((month.earnings || 0) / 100).toFixed(2)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {month.sales} sales
+                          {month.count} sales
                         </p>
                       </div>
                     </div>
@@ -425,40 +510,6 @@ const Earnings = () => {
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No sales data available
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Sales by Country */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sales by Country</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {earnings?.salesByCountry && earnings.salesByCountry.length > 0 ? (
-                  earnings.salesByCountry.slice(0, 5).map((country) => (
-                    <div
-                      key={country.country}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-sm text-muted-foreground">
-                        {country.country}
-                      </span>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {country.count} sales
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {currencySymbol}
-                          {(country.earnings / 100).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No geographic data available
                   </p>
                 )}
               </CardContent>

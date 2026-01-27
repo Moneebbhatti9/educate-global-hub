@@ -81,6 +81,9 @@ export interface PurchaseResourceRequest {
   resourceId: string;
   paymentMethodId: string;
   buyerCountry?: string;
+  licenseType?: "single" | "department" | "school";
+  schoolDomain?: string;
+  institutionName?: string;
 }
 
 export interface PurchaseResourceResponse {

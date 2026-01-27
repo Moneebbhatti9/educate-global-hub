@@ -56,11 +56,22 @@ export const salesAPI = {
         throw new Error("Payment method ID is required");
       }
 
-      const requestBody = {
+      const requestBody: Record<string, any> = {
         resourceId: data.resourceId.trim(),
         paymentMethodId: data.paymentMethodId.trim(),
         buyerCountry: data.buyerCountry || "GB",
       };
+
+      // Add license information if provided
+      if (data.licenseType) {
+        requestBody.licenseType = data.licenseType;
+      }
+      if (data.schoolDomain) {
+        requestBody.schoolDomain = data.schoolDomain.trim();
+      }
+      if (data.institutionName) {
+        requestBody.institutionName = data.institutionName.trim();
+      }
 
       return await apiHelpers.post<ApiResponse<PurchaseResourceResponse>>(
         SALES_ENDPOINTS.PURCHASE,

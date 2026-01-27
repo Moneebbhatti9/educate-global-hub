@@ -61,7 +61,7 @@ const ProfileCompletionPage = () => {
       // Handle different flows based on user role
       setTimeout(() => {
         if (import.meta.env.DEV) {
-          console.log("🎯 Profile completion - User role:", state.role);
+          
         }
 
         if (state.role === "school") {

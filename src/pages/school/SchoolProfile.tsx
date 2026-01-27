@@ -177,14 +177,14 @@ const SchoolProfile = () => {
 
   // Fetch school profile data on component mount
   useEffect(() => {
-    console.log("Fetching school profile data...");
+    
     refetch();
   }, [refetch]);
 
   // Update profile state when API data is received
   useEffect(() => {
     if (schoolProfileData?.success && schoolProfileData.data) {
-      console.log("School profile data received:", schoolProfileData.data);
+      
       const apiData = schoolProfileData.data;
 
       // Create new profile with all API data
@@ -228,10 +228,10 @@ const SchoolProfile = () => {
 
     // Save handlers for each section
   const handleSaveSchoolInfo = async () => {
-    console.log("Saving school info");
+    
     try {
       // const isValid = await schoolInfoForm.trigger();
-      // console.log("Is valid:", isValid);
+      // 
       // if (!isValid) return;
 
       setUpdateError(null);
@@ -251,11 +251,11 @@ const SchoolProfile = () => {
         establishedYear: formData.establishedYear,
         registrationNumber: formData.registrationNumber,
       };
-      console.log("Form data:", updatePayload);
+      
 
       // Call the API to update the profile
       const response = await updateSchoolProfile.mutateAsync(updatePayload);
-      console.log("Response:", response);
+      
       if (response.success) {
         const updatedProfile = {
           ...profile,
@@ -271,7 +271,7 @@ const SchoolProfile = () => {
         setOriginalProfile(updatedProfile);
         setIsEditing(false);
         
-        console.log("School info updated successfully");
+        
       } else {
         throw new Error(response.message || "Failed to update school info");
       }
@@ -284,7 +284,7 @@ const SchoolProfile = () => {
   const handleSaveAcademics = async () => {
     try {
       // API call would go here
-      console.log("Saving academics data:", programs);
+      
       // Success notification would go here
     } catch (error) {
       console.error("Error saving academics data:", error);
@@ -319,7 +319,7 @@ const SchoolProfile = () => {
         
         // Close the modal
         setShowSummaryModal(false);
-        console.log("School summary updated successfully");
+        
       } else {
         throw new Error(response.message || "Failed to update school summary");
       }

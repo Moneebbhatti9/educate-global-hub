@@ -50,6 +50,7 @@ import {
 import { customToast } from "@/components/ui/sonner";
 import type { JobSearchParams, Job } from "@/types/job";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
+import { useDropdownOptions } from "@/components/ui/dynamic-select";
 
 // Interface for the actual API response structure
 interface JobSearchResponse {
@@ -75,6 +76,11 @@ interface JobSearchResponse {
 }
 
 const JobSearch = () => {
+  // Fetch dynamic dropdown options
+  const { data: educationLevelOptions, isLoading: loadingEducationLevels } = useDropdownOptions("educationLevel");
+  const { data: jobTypeOptions, isLoading: loadingJobTypes } = useDropdownOptions("jobType");
+  const { data: subjectOptions, isLoading: loadingSubjects } = useDropdownOptions("subject");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<JobSearchParams>({
     page: 1,
@@ -215,51 +221,6 @@ const JobSearch = () => {
     return "Salary not disclosed";
   };
 
-  // Education level options
-  const educationLevels = [
-    { value: "early_years", label: "Early Years (Ages 3-5)" },
-    { value: "primary", label: "Primary (Grades 1-6)" },
-    { value: "secondary", label: "Secondary (Grades 7-9)" },
-    { value: "high_school", label: "High School (Grades 10-12)" },
-    { value: "foundation", label: "Foundation" },
-    { value: "higher_education", label: "Higher Education" },
-  ];
-
-  // Job type options
-  const jobTypes = [
-    { value: "full_time", label: "Full-time" },
-    { value: "part_time", label: "Part-time" },
-    { value: "contract", label: "Contract" },
-    { value: "substitute", label: "Substitute" },
-  ];
-
-  // Common subjects
-  const subjects = [
-    "Mathematics",
-    "English Language",
-    "Science",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "History",
-    "Geography",
-    "Art & Design",
-    "Physical Education",
-    "Music",
-    "Computer Science",
-  ];
-
-  // Common locations
-  const locations = [
-    "Dubai, UAE",
-    "Abu Dhabi, UAE",
-    "Kuwait City, Kuwait",
-    "Doha, Qatar",
-    "Riyadh, Saudi Arabia",
-    "Manama, Bahrain",
-    "Muscat, Oman",
-  ];
-
   if (error) {
     return (
       <DashboardLayout role="teacher">
@@ -331,15 +292,16 @@ const JobSearch = () => {
                       value === "any" ? undefined : value
                     )
                   }
+                  disabled={loadingEducationLevels}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Any level" />
+                    <SelectValue placeholder={loadingEducationLevels ? "Loading..." : "Any level"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any level</SelectItem>
-                    {educationLevels.map((level) => (
-                      <SelectItem key={level.value} value={level.value}>
-                        {level.label}
+                    {educationLevelOptions.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -354,15 +316,16 @@ const JobSearch = () => {
                   onValueChange={(value) =>
                     handleFilterChange("subject", value === "any" ? "" : value)
                   }
+                  disabled={loadingSubjects}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Any subject" />
+                    <SelectValue placeholder={loadingSubjects ? "Loading..." : "Any subject"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any subject</SelectItem>
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>
-                        {subject}
+                    {subjectOptions.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -380,15 +343,16 @@ const JobSearch = () => {
                       value === "any" ? undefined : value
                     )
                   }
+                  disabled={loadingJobTypes}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Any type" />
+                    <SelectValue placeholder={loadingJobTypes ? "Loading..." : "Any type"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any type</SelectItem>
-                    {jobTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
+                    {jobTypeOptions.map((option) => (
+                      <SelectItem key={option._id} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
