@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import CookiePreferenceManager from "@/components/gdpr/CookiePreferenceManager";
 import DataPrivacyManager from "@/components/gdpr/DataPrivacyManager";
+import SessionManagement from "@/components/security/SessionManagement";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { SubscriptionManagement } from "@/components/subscription";
 import { useUserSettings } from "@/apis/userSettings";
@@ -836,6 +837,9 @@ const SchoolSettings = () => {
                 <Separator />
               </CardContent>
             </Card>
+
+            {/* Session Management */}
+            <SessionManagement />
 
             {/* Account Actions */}
             {/* <Card className="border-destructive/20">

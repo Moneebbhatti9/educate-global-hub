@@ -6,6 +6,8 @@ import {
   LoginCredentials,
   SignupCredentials,
   OTPVerificationData,
+  TwoFAVerificationData,
+  TwoFALoginResponse,
   PasswordResetData,
   PasswordResetConfirmData,
   ChangePasswordData,
@@ -20,8 +22,10 @@ import {
 // API endpoints
 const AUTH_ENDPOINTS = {
   LOGIN: "/auth/login",
+  VERIFY_2FA: "/auth/verify-2fa",
   SIGNUP: "/auth/signup",
   LOGOUT: "/auth/logout",
+  LOGOUT_ALL: "/auth/logout-all",
   REFRESH: "/auth/refresh",
   VERIFY_EMAIL: "/auth/verify-email",
   SEND_OTP: "/auth/send-otp",
@@ -33,17 +37,50 @@ const AUTH_ENDPOINTS = {
   PROFILE: "/users/profile",
   COMPLETE_PROFILE: "/users/complete-profile",
   UPLOAD_AVATAR: "/users/avatar",
+  // Session management
+  SESSIONS: "/auth/sessions",
 } as const;
+
+// Session type
+export interface Session {
+  id: string;
+  deviceInfo: {
+    userAgent: string;
+    browser: string;
+    os: string;
+    device: string;
+    isMobile: boolean;
+  };
+  ipAddress: string;
+  location?: {
+    country?: string;
+    city?: string;
+    region?: string;
+  };
+  loginAt: string;
+  lastActivityAt: string;
+  isCurrent: boolean;
+}
 
 // Authentication API functions
 export const authAPI = {
-  // Login
+  // Login (Step 1: credentials check, returns 2FA requirement)
   login: async (
     credentials: LoginCredentials
-  ): Promise<ApiResponse<AuthResponse>> => {
-    return apiHelpers.post<ApiResponse<AuthResponse>>(
+  ): Promise<ApiResponse<AuthResponse | TwoFALoginResponse>> => {
+    return apiHelpers.post<ApiResponse<AuthResponse | TwoFALoginResponse>>(
       AUTH_ENDPOINTS.LOGIN,
       credentials
+    );
+  },
+
+  // Verify 2FA (Step 2: complete login with OTP)
+  verify2FA: async (
+    data: TwoFAVerificationData
+  ): Promise<ApiResponse<AuthResponse>> => {
+    return apiHelpers.post<ApiResponse<AuthResponse>>(
+      AUTH_ENDPOINTS.VERIFY_2FA,
+      data
     );
   },
 
@@ -174,6 +211,32 @@ export const authAPI = {
     return apiHelpers.get<ApiResponse<UserStatusResponse>>(
       AUTH_ENDPOINTS.CHECK_STATUS
     );
+  },
+
+  // Session Management
+
+  // Logout from all devices
+  logoutAllDevices: async (): Promise<ApiResponse<void>> => {
+    return apiHelpers.post<ApiResponse<void>>(AUTH_ENDPOINTS.LOGOUT_ALL);
+  },
+
+  // Get all active sessions
+  getSessions: async (): Promise<ApiResponse<{ sessions: Session[] }>> => {
+    return apiHelpers.get<ApiResponse<{ sessions: Session[] }>>(
+      AUTH_ENDPOINTS.SESSIONS
+    );
+  },
+
+  // Terminate a specific session
+  terminateSession: async (sessionId: string): Promise<ApiResponse<void>> => {
+    return apiHelpers.delete<ApiResponse<void>>(
+      `${AUTH_ENDPOINTS.SESSIONS}/${sessionId}`
+    );
+  },
+
+  // Terminate all other sessions
+  terminateOtherSessions: async (): Promise<ApiResponse<void>> => {
+    return apiHelpers.delete<ApiResponse<void>>(AUTH_ENDPOINTS.SESSIONS);
   },
 };
 
@@ -328,11 +391,66 @@ export const useAuthQueries = () => {
     });
   };
 
+  // Get active sessions query
+  const useSessions = () => {
+    return useQuery({
+      queryKey: ["sessions"],
+      queryFn: authAPI.getSessions,
+      retry: 1,
+      staleTime: 60 * 1000, // 1 minute
+    });
+  };
+
+  // Logout from all devices mutation
+  const useLogoutAllDevices = () => {
+    return useMutation({
+      mutationFn: authAPI.logoutAllDevices,
+      onSuccess: () => {
+        // Clear all queries and cache
+        queryClient.clear();
+      },
+      onError: (error) => {
+        console.error("Logout all devices error:", error);
+        // Clear cache even if logout fails
+        queryClient.clear();
+      },
+    });
+  };
+
+  // Terminate session mutation
+  const useTerminateSession = () => {
+    return useMutation({
+      mutationFn: authAPI.terminateSession,
+      onSuccess: () => {
+        // Refresh sessions list
+        queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      },
+      onError: (error) => {
+        console.error("Terminate session error:", error);
+      },
+    });
+  };
+
+  // Terminate other sessions mutation
+  const useTerminateOtherSessions = () => {
+    return useMutation({
+      mutationFn: authAPI.terminateOtherSessions,
+      onSuccess: () => {
+        // Refresh sessions list
+        queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      },
+      onError: (error) => {
+        console.error("Terminate other sessions error:", error);
+      },
+    });
+  };
+
   return {
     useProfile,
     useLogin,
     useSignup,
     useLogout,
+    useLogoutAllDevices,
     useSendOTP,
     useVerifyOTP,
     usePasswordReset,
@@ -340,5 +458,8 @@ export const useAuthQueries = () => {
     useChangePassword,
     useCompleteProfile,
     useUploadAvatar,
+    useSessions,
+    useTerminateSession,
+    useTerminateOtherSessions,
   };
 };

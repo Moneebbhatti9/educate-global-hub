@@ -4,8 +4,10 @@ import React, {
   useEffect,
   useReducer,
   useCallback,
+  useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   secureStorage,
   sessionStorage,
@@ -20,11 +22,14 @@ import {
   LoginCredentials,
   SignupCredentials,
   OTPVerificationData,
+  TwoFAVerificationData,
+  TwoFALoginResponse,
   PasswordResetData,
   PasswordResetConfirmData,
   ChangePasswordData,
   ProfileCompletionData,
   UserStatusResponse,
+  AuthResponse,
   STORAGE_KEYS,
 } from "../types/auth";
 
@@ -94,15 +99,20 @@ const initialState: AuthState = {
   isInitialized: false,
 };
 
+// Inactivity timeout (30 minutes in milliseconds)
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+const INACTIVITY_WARNING_MS = 5 * 60 * 1000; // 5 minutes warning before logout
+
 // Auth context interface
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<{ requires2FA: boolean; email?: string }>;
+  verify2FA: (data: TwoFAVerificationData) => Promise<void>;
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: (skipNavigation?: boolean) => Promise<void>;
   verifyOTP: (data: OTPVerificationData) => Promise<void>;
   sendOTP: (
     email: string,
-    type?: "verification" | "reset"
+    type?: "verification" | "reset" | "signin"
   ) => Promise<void>;
   passwordReset: (data: PasswordResetData) => Promise<void>;
   passwordResetConfirm: (data: PasswordResetConfirmData) => Promise<void>;
@@ -126,6 +136,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const navigate = useNavigate();
+
+  // Refs for inactivity tracking
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityRef = useRef<number>(Date.now());
 
   // Initialize auth state on app load
   useEffect(() => {
@@ -182,15 +197,124 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     initializeAuth();
   }, []);
 
-  // Login function
+  // Inactivity detection - auto-logout after 30 minutes of inactivity
+  useEffect(() => {
+    if (!state.isAuthenticated) {
+      // Clear timers when not authenticated
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      if (warningTimerRef.current) {
+        clearTimeout(warningTimerRef.current);
+        warningTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Function to reset the inactivity timer
+    const resetInactivityTimer = () => {
+      lastActivityRef.current = Date.now();
+
+      // Clear existing timers
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      if (warningTimerRef.current) {
+        clearTimeout(warningTimerRef.current);
+      }
+
+      // Set warning timer (5 minutes before logout)
+      warningTimerRef.current = setTimeout(() => {
+        toast.warning("Session Expiring", {
+          description: "Your session will expire in 5 minutes due to inactivity. Click anywhere to stay logged in.",
+          duration: 30000,
+        });
+      }, INACTIVITY_TIMEOUT_MS - INACTIVITY_WARNING_MS);
+
+      // Set logout timer
+      inactivityTimerRef.current = setTimeout(async () => {
+        toast.error("Session Expired", {
+          description: "You have been logged out due to inactivity.",
+          duration: 5000,
+        });
+
+        // Clear auth and navigate to login
+        try {
+          await authAPI.logout();
+        } catch (error) {
+          console.error("Logout API error during inactivity timeout:", error);
+        }
+        secureStorage.clearAuth();
+        dispatch({ type: "LOGOUT" });
+        navigate("/login", { state: { reason: "inactivity" } });
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    // Initialize timer
+    resetInactivityTimer();
+
+    // Activity events to track
+    const activityEvents = [
+      "mousedown",
+      "mousemove",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+
+    // Throttled activity handler to prevent excessive timer resets
+    let throttleTimeout: NodeJS.Timeout | null = null;
+    const handleActivity = () => {
+      if (throttleTimeout) return;
+
+      throttleTimeout = setTimeout(() => {
+        throttleTimeout = null;
+        resetInactivityTimer();
+      }, 1000); // Throttle to once per second
+    };
+
+    // Add event listeners
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, handleActivity, { passive: true });
+    });
+
+    // Cleanup
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      if (warningTimerRef.current) {
+        clearTimeout(warningTimerRef.current);
+      }
+      if (throttleTimeout) {
+        clearTimeout(throttleTimeout);
+      }
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [state.isAuthenticated, navigate]);
+
+  // Login function - Step 1: Validate credentials, may require 2FA
   const login = useCallback(
-    async (credentials: LoginCredentials) => {
+    async (credentials: LoginCredentials): Promise<{ requires2FA: boolean; email?: string }> => {
       try {
         dispatch({ type: "SET_LOADING", payload: true });
 
         const response = await authAPI.login(credentials);
         if (response.success && response.data) {
-          const { user, accessToken, refreshToken } = response.data;
+          // Check if 2FA is required
+          const data = response.data as TwoFALoginResponse | AuthResponse;
+          if ('requires2FA' in data && data.requires2FA) {
+            // 2FA required - return without navigating
+            return { requires2FA: true, email: data.email };
+          }
+
+          // No 2FA required, complete login
+          const authData = data as AuthResponse;
+          const { user, accessToken, refreshToken } = authData;
 
           secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
           secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
@@ -205,28 +329,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             payload: { user, token: accessToken },
           });
 
-          if (!user.isEmailVerified) {
-            navigate("/otp-verification", {
-              state: {
-                email: user.email,
-                role: user.role,
-                firstName: user.firstName,
-                lastName: user.lastName,
-              },
-            });
-          } else if (!user.isProfileComplete) {
-            navigate("/profile-completion", {
-              state: {
-                email: user.email,
-                role: user.role,
-                firstName: user.firstName,
-                lastName: user.lastName,
-              },
-            });
-          } else {
-            // Profile is complete, navigate to dashboard
-            navigate(`/dashboard/${user.role}`);
-          }
+          // Handle navigation based on user state
+          handlePostLoginNavigation(user);
+          return { requires2FA: false };
         } else {
           throw new Error(response.message || "Login failed");
         }
@@ -239,6 +344,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [navigate]
   );
+
+  // Verify 2FA - Step 2: Complete login with OTP
+  const verify2FA = useCallback(
+    async (data: TwoFAVerificationData) => {
+      try {
+        dispatch({ type: "SET_LOADING", payload: true });
+
+        const response = await authAPI.verify2FA(data);
+        if (response.success && response.data) {
+          const { user, accessToken, refreshToken } = response.data;
+
+          secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
+          secureStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+          secureStorage.setItem(STORAGE_KEYS.USER_DATA, user);
+
+          dispatch({
+            type: "LOGIN_SUCCESS",
+            payload: { user, token: accessToken },
+          });
+
+          // Handle navigation based on user state
+          handlePostLoginNavigation(user);
+        } else {
+          throw new Error(response.message || "2FA verification failed");
+        }
+      } catch (error) {
+        errorHandler.logError(error, "2FA Verification Error");
+        throw error;
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
+      }
+    },
+    [navigate]
+  );
+
+  // Helper function to handle post-login navigation
+  const handlePostLoginNavigation = useCallback((user: User) => {
+    if (!user.isEmailVerified) {
+      navigate("/otp-verification", {
+        state: {
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      });
+    } else if (!user.isProfileComplete) {
+      navigate("/profile-completion", {
+        state: {
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      });
+    } else {
+      // All checks passed, navigate to dashboard
+      navigate(`/dashboard/${user.role}`);
+    }
+  }, [navigate]);
 
   // Logout function
   const logout = useCallback(
@@ -373,7 +538,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Send OTP function
   const sendOTP = useCallback(
-    async (email: string, type: "verification" | "reset" = "verification") => {
+    async (email: string, type: "verification" | "reset" | "signin" = "verification") => {
       try {
         const response = await authAPI.sendOTP(email, type);
         if (!response.success) {
@@ -633,6 +798,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const contextValue: AuthContextType = {
     ...state,
     login,
+    verify2FA,
     signup,
     logout,
     verifyOTP,

@@ -62,6 +62,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const SignIn = lazy(() => import("./pages/SignIn"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
+// 2FA Page
+const TwoFAVerificationPage = lazy(() => import("./pages/TwoFAVerificationPage"));
+
 // Legal Pages
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
@@ -200,6 +203,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="/otp-verification" element={<OTPVerificationPage />} />
+        <Route path="/verify-2fa" element={<TwoFAVerificationPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
           path="/profile-completion"

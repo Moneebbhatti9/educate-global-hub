@@ -14,6 +14,7 @@ export interface User {
   isEmailVerified: boolean;
   isProfileComplete: boolean;
   status?: "pending" | "active" | "inactive" | "suspended";
+  is2FAEnabled?: boolean;
   avatarUrl?: string;
   avatar?: string; // Keep for backward compatibility
   phone?: string;
@@ -93,7 +94,18 @@ export interface ProfileCompletionData {
 export interface OTPVerificationData {
   email: string;
   otp: string;
-  type?: "verification" | "reset";
+  type?: "verification" | "reset" | "signin";
+}
+
+export interface TwoFAVerificationData {
+  email: string;
+  otp: string;
+}
+
+export interface TwoFALoginResponse {
+  requires2FA: boolean;
+  email: string;
+  method: "email" | "sms";
 }
 
 export interface PasswordResetData {
