@@ -49,7 +49,10 @@ import {
   Mail,
   Phone,
   ExternalLink,
+  Crown,
+  Lock,
 } from "lucide-react";
+import { useFeatureGate } from "@/components/subscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchoolJobs } from "@/hooks/useJobs";
 import { applicationsAPI } from "@/apis/applications";
@@ -65,6 +68,17 @@ const Candidates = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const selectedJob = searchParams.get("job");
+
+  // Feature gating for candidate search
+  const {
+    hasAccess: canSearchCandidates,
+    checkAccess: checkSearchAccess,
+    UpgradeModal: SearchUpgradeModal,
+  } = useFeatureGate(
+    'candidate_search',
+    'Candidate Search',
+    'Search and browse all teacher profiles and CVs to find the perfect candidates for your positions'
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   // Dynamic dropdown options
@@ -352,6 +366,61 @@ const Candidates = () => {
             </div>
           )}
         </div>
+
+        {/* Browse Teachers - Premium Feature */}
+        {!canSearchCandidates && (
+          <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <Search className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold flex items-center gap-2">
+                      Browse All Teacher Profiles
+                      <Crown className="h-4 w-4 text-amber-500" />
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Search and discover qualified teachers from our extensive database
+                    </p>
+                  </div>
+                </div>
+                <Button onClick={checkSearchAccess} className="gap-2">
+                  <Lock className="h-4 w-4" />
+                  Unlock Feature
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {canSearchCandidates && (
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
+                    <Search className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold flex items-center gap-2">
+                      Browse All Teacher Profiles
+                      <Badge variant="outline" className="text-green-600 border-green-300">Active</Badge>
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Search and discover qualified teachers from our extensive database
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" className="gap-2">
+                  <Search className="h-4 w-4" />
+                  Browse Teachers
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -916,6 +985,7 @@ const Candidates = () => {
           </CardContent>
         </Card>
       </div>
+      <SearchUpgradeModal />
     </DashboardLayout>
   );
 };

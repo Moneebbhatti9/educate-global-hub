@@ -40,7 +40,10 @@ import {
   MapPin,
   Loader2,
   HelpCircle,
+  Crown,
+  Lock,
 } from "lucide-react";
+import { useFeatureGate } from "@/components/subscription";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { postJobFormSchema } from "@/helpers/validation";
 import { Country } from "@/components/ui/country-dropdown";
@@ -57,6 +60,17 @@ const PostJob = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const createJobMutation = useCreateJob();
+
+  // Feature gating for featured listings
+  const {
+    hasAccess: canFeatureJobs,
+    checkAccess: checkFeatureAccess,
+    UpgradeModal: FeaturedUpgradeModal,
+  } = useFeatureGate(
+    'featured_listing',
+    'Featured Job Listings',
+    'Highlight your job postings for increased visibility and attract more qualified candidates'
+  );
 
   // Fetch dynamic dropdown options
   const { data: educationLevelOptions, isLoading: loadingEducationLevels } = useDropdownOptions("educationLevel");
@@ -433,18 +447,39 @@ const PostJob = () => {
                         <Checkbox
                           id="isFeatured"
                           checked={formData.isFeatured}
-                          onCheckedChange={(checked) =>
-                            setValue("isFeatured", !!checked)
-                          }
+                          disabled={!canFeatureJobs}
+                          onCheckedChange={(checked) => {
+                            if (!canFeatureJobs) {
+                              checkFeatureAccess();
+                              return;
+                            }
+                            setValue("isFeatured", !!checked);
+                          }}
                         />
-                        <Label htmlFor="isFeatured" className="text-sm">
+                        <Label
+                          htmlFor="isFeatured"
+                          className={`text-sm flex items-center gap-1 ${!canFeatureJobs ? 'text-muted-foreground' : ''}`}
+                          onClick={() => {
+                            if (!canFeatureJobs) {
+                              checkFeatureAccess();
+                            }
+                          }}
+                        >
                           Feature this Job
+                          {!canFeatureJobs && (
+                            <Crown className="w-3 h-3 text-amber-500" />
+                          )}
                         </Label>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Urgent jobs get priority placement. Featured jobs appear
                       prominently in search results.
+                      {!canFeatureJobs && (
+                        <span className="text-amber-600 ml-1">
+                          (Requires subscription)
+                        </span>
+                      )}
                     </p>
                   </div>
 
@@ -1340,6 +1375,7 @@ const PostJob = () => {
           </form>
         )}
       </div>
+      <FeaturedUpgradeModal />
     </DashboardLayout>
   );
 };

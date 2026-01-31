@@ -14,7 +14,10 @@ import {
   Save,
   Send,
   Edit,
+  Lock,
+  Crown,
 } from "lucide-react";
+import { useFeatureGate } from "@/components/subscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,6 +91,18 @@ const UploadResource = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { handleError, showSuccess, showError } = useErrorHandler();
+
+  // Subscription feature gate - check if user can upload resources
+  const {
+    hasAccess: canUpload,
+    isLoading: subscriptionLoading,
+    checkAccess,
+    UpgradeModal,
+  } = useFeatureGate(
+    'resource_upload',
+    'Resource Upload',
+    'Upload and sell teaching resources on the marketplace'
+  );
 
   // Fetch dynamic dropdown options
   const { data: resourceTypeOptions, isLoading: loadingResourceTypes } = useDropdownOptions("resourceType");
@@ -580,6 +595,66 @@ const UploadResource = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Show subscription gate if user doesn't have access
+  if (!subscriptionLoading && !canUpload) {
+    return (
+      <DashboardLayout role="teacher">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground">
+              {isEditMode ? "Edit Resource" : "Create a Resource"}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Share your teaching materials with educators worldwide
+            </p>
+          </div>
+
+          {/* Subscription Required Card */}
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="max-w-md text-center space-y-6">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                <Crown className="h-10 w-10 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Subscription Required</h2>
+                <p className="text-muted-foreground">
+                  To upload and sell teaching resources on the marketplace, you need an active Creator subscription.
+                </p>
+              </div>
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-left">
+                <h3 className="font-semibold mb-2">Creator Plan Benefits:</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    Upload unlimited teaching resources
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    Sell your materials and earn royalties
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    Access detailed analytics
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    Only £5/year (60% launch discount)
+                  </li>
+                </ul>
+              </div>
+              <Button onClick={() => navigate('/pricing')} size="lg" className="gap-2">
+                View Plans
+                <Lock className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+        <UpgradeModal />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="teacher">

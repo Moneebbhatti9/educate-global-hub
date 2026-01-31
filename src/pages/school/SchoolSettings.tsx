@@ -47,10 +47,12 @@ import {
   Loader2,
   Edit,
   Cookie,
+  Crown,
 } from "lucide-react";
 import CookiePreferenceManager from "@/components/gdpr/CookiePreferenceManager";
 import DataPrivacyManager from "@/components/gdpr/DataPrivacyManager";
 import DashboardLayout from "@/layout/DashboardLayout";
+import { SubscriptionManagement } from "@/components/subscription";
 import { useUserSettings } from "@/apis/userSettings";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -445,7 +447,7 @@ const SchoolSettings = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted rounded-lg">
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted rounded-lg">
             <TabsTrigger
               value="profile"
               className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
@@ -473,6 +475,13 @@ const SchoolSettings = () => {
             >
               <Shield className="w-4 h-4" />
               <span className="hidden sm:inline">Privacy</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="subscription"
+              className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-md"
+            >
+              <Crown className="w-4 h-4" />
+              <span className="hidden sm:inline">Subscription</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1094,6 +1103,11 @@ const SchoolSettings = () => {
           <TabsContent value="privacy" className="space-y-6">
             <CookiePreferenceManager />
             <DataPrivacyManager />
+          </TabsContent>
+
+          {/* Subscription Tab */}
+          <TabsContent value="subscription" className="space-y-6">
+            <SubscriptionManagement />
           </TabsContent>
         </Tabs>
       </div>
