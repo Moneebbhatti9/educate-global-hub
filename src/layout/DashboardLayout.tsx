@@ -234,7 +234,7 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         {
           name: "Platform Settings",
           href: `/dashboard/admin/general-settings`,
-          icon: Settings,
+          icon: Sliders,
           children: [
             {
               name: "General Settings",
@@ -252,6 +252,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
               icon: List,
             },
           ],
+        },
+        {
+          name: "Account Settings",
+          href: `/dashboard/admin/settings`,
+          icon: Settings,
         },
       ],
     },

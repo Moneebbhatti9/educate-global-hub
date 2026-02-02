@@ -94,6 +94,7 @@ const GeneralSettings = lazy(
 const SubscriptionSettings = lazy(
   () => import("./pages/admin/SubscriptionSettings")
 );
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -280,6 +281,7 @@ const AppRoutes = () => {
           <Route path="platform-settings" element={<PlatformSettings />} />
           <Route path="subscription-settings" element={<SubscriptionSettings />} />
           <Route path="dropdown-management" element={<DropdownManagement />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         {/* ======================================== */}
