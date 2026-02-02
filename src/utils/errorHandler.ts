@@ -82,6 +82,29 @@ export const errorHandler = {
       if (error.response?.data) {
         const responseData = error.response.data as Record<string, unknown>;
 
+        // Check errors field first (more specific error message)
+        if (responseData.errors) {
+          // Handle string format: { "errors": "Error message" }
+          if (typeof responseData.errors === "string") {
+            return responseData.errors;
+          }
+          // Handle array format: { "errors": ["error1", "error2"] }
+          if (
+            Array.isArray(responseData.errors) &&
+            responseData.errors.length > 0
+          ) {
+            return responseData.errors[0] as string;
+          }
+          // Handle object format: { "errors": { "field": ["error1"] } }
+          if (typeof responseData.errors === "object") {
+            const firstError = Object.values(responseData.errors)[0];
+            if (Array.isArray(firstError) && firstError.length > 0) {
+              return firstError[0] as string;
+            }
+          }
+        }
+
+        // Fall back to message field
         if (typeof responseData.message === "string") {
           return responseData.message;
         }
@@ -93,23 +116,6 @@ export const errorHandler = {
           return ERROR_MESSAGES[
             responseData.code as keyof typeof ERROR_MESSAGES
           ];
-        }
-
-        if (responseData.errors) {
-          // Handle array format: { "errors": ["error1", "error2"] }
-          if (
-            Array.isArray(responseData.errors) &&
-            responseData.errors.length > 0
-          ) {
-            return responseData.errors[0] as string;
-          }
-          // Handle object format: { "errors": { "field": ["error1"] } }
-          else if (typeof responseData.errors === "object") {
-            const firstError = Object.values(responseData.errors)[0];
-            if (Array.isArray(firstError) && firstError.length > 0) {
-              return firstError[0] as string;
-            }
-          }
         }
       }
 
@@ -151,8 +157,12 @@ export const errorHandler = {
           code = responseData.code;
         }
         if (responseData.errors) {
+          // Handle string format: { "errors": "Error message" }
+          if (typeof responseData.errors === "string") {
+            details = { general: [responseData.errors] };
+          }
           // Handle array format: { "errors": ["error1", "error2"] }
-          if (Array.isArray(responseData.errors)) {
+          else if (Array.isArray(responseData.errors)) {
             // Convert array to object format for consistency
             details = { general: responseData.errors };
           }

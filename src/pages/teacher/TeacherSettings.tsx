@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,16 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   User,
   Lock,
@@ -32,42 +22,30 @@ import {
   Shield,
   Upload,
   Save,
-  Eye,
-  EyeOff,
-  Settings as SettingsIcon,
-  Moon,
-  Sun,
-  Globe,
   Smartphone,
   Mail,
   MessageSquare,
-  Check,
-  X,
-  AlertTriangle,
   Loader2,
   Edit,
-  Cookie,
   Crown,
 } from "lucide-react";
 import CookiePreferenceManager from "@/components/gdpr/CookiePreferenceManager";
 import DataPrivacyManager from "@/components/gdpr/DataPrivacyManager";
 import SessionManagement from "@/components/security/SessionManagement";
+import TwoFactorSettings from "@/components/security/TwoFactorSettings";
+import ChangePasswordForm from "@/components/security/ChangePasswordForm";
 import DashboardLayout from "@/layout/DashboardLayout";
 import { SubscriptionManagement } from "@/components/subscription";
 import { useUserSettings } from "@/apis/userSettings";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  updateProfileSchema,
-  changePasswordSchema,
-} from "@/helpers/validation";
+import { updateProfileSchema } from "@/helpers/validation";
 import { customToast } from "@/components/ui/sonner";
 import { PhoneInput } from "@/components/ui/phone-input";
 
 // Types for form data
 type ProfileFormData = z.infer<typeof updateProfileSchema>;
-type PasswordFormData = z.infer<typeof changePasswordSchema>;
 
 // API response type for profile
 interface ProfileResponse {
@@ -95,11 +73,6 @@ interface ProfileResponse {
 const TeacherSettings = () => {
   const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
     null
   );
@@ -110,8 +83,6 @@ const TeacherSettings = () => {
   const {
     getProfile,
     updateProfile,
-    changePassword,
-    updateAvatar,
     uploadAvatar,
     deleteAccount,
   } = useUserSettings();
@@ -124,16 +95,6 @@ const TeacherSettings = () => {
       lastName: "",
       email: "",
       phone: "",
-    },
-  });
-
-  // Password form
-  const passwordForm = useForm<PasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
     },
   });
 
@@ -338,24 +299,6 @@ const TeacherSettings = () => {
     }
   };
 
-  // Handle password change
-  const handlePasswordChange = async (data: PasswordFormData) => {
-    try {
-      const result = await changePassword.mutateAsync(data);
-      if (result.success) {
-        customToast.success("Password changed successfully!");
-        passwordForm.reset();
-      }
-    } catch (error: any) {
-      // Try to extract error message and errors from different possible response structures
-      const errorTitle = (error?.response as any)?.data?.message;
-      const errorDescription = (error?.response as any)?.data?.errors;
-
-      customToast.error(errorTitle, errorDescription);
-      console.error("Password change error:", error);
-    }
-  };
-
   // Handle account deletion
   // const handleDeleteAccount = async () => {
   //   if (
@@ -425,7 +368,6 @@ const TeacherSettings = () => {
 
   // Loading states
   const isProfileLoading = getProfile.isLoading || updateProfile.isPending;
-  const isPasswordLoading = changePassword.isPending;
   const isAvatarLoading = uploadAvatar.isPending || updateProfile.isPending;
   const isDeleteLoading = deleteAccount.isPending;
 
@@ -708,135 +650,11 @@ const TeacherSettings = () => {
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Lock className="w-5 h-5 mr-2" />
-                  Password & Security
-                </CardTitle>
-                <CardDescription>
-                  Manage your password and security preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Change Password Form */}
-                <form
-                  onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
-                  className="space-y-4"
-                >
-                  <h4 className="font-semibold">Change Password</h4>
+            {/* Change Password Form */}
+            <ChangePasswordForm />
 
-                  <div>
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="currentPassword"
-                        type={showCurrentPassword ? "text" : "password"}
-                        {...passwordForm.register("currentPassword")}
-                        className={
-                          passwordForm.formState.errors.currentPassword
-                            ? "border-destructive"
-                            : ""
-                        }
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() =>
-                          setShowCurrentPassword(!showCurrentPassword)
-                        }
-                      >
-                        {showCurrentPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    {passwordForm.formState.errors.currentPassword && (
-                      <p className="text-sm text-destructive mt-1">
-                        {passwordForm.formState.errors.currentPassword.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        type={showNewPassword ? "text" : "password"}
-                        {...passwordForm.register("newPassword")}
-                        className={
-                          passwordForm.formState.errors.newPassword
-                            ? "border-destructive"
-                            : ""
-                        }
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    {passwordForm.formState.errors.newPassword && (
-                      <p className="text-sm text-destructive mt-1">
-                        {passwordForm.formState.errors.newPassword.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="confirmPassword">
-                      Confirm New Password
-                    </Label>
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      {...passwordForm.register("confirmPassword")}
-                      className={
-                        passwordForm.formState.errors.confirmPassword
-                          ? "border-destructive"
-                          : ""
-                      }
-                    />
-                    {passwordForm.formState.errors.confirmPassword && (
-                      <p className="text-sm text-destructive mt-1">
-                        {passwordForm.formState.errors.confirmPassword.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={
-                      isPasswordLoading || !passwordForm.formState.isDirty
-                    }
-                  >
-                    {isPasswordLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Updating Password...
-                      </>
-                    ) : (
-                      "Update Password"
-                    )}
-                  </Button>
-                </form>
-
-                <Separator />
-              </CardContent>
-            </Card>
+            {/* Two-Factor Authentication Settings */}
+            <TwoFactorSettings />
 
             {/* Session Management */}
             <SessionManagement />

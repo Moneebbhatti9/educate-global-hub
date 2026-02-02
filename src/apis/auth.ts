@@ -111,7 +111,7 @@ export const authAPI = {
   // Send OTP
   sendOTP: async (
     email: string,
-    type: "verification" | "reset" = "verification"
+    type: "verification" | "reset" | "signin" = "verification"
   ): Promise<ApiResponse<OTPResponse>> => {
     return apiHelpers.post<ApiResponse<OTPResponse>>(AUTH_ENDPOINTS.SEND_OTP, {
       email,
