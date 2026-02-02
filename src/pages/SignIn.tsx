@@ -74,11 +74,27 @@ const SignIn = () => {
     rememberMe?: boolean;
   }) => {
     try {
-      await login({
+      const result = await login({
         email: data.email,
         password: data.password,
         rememberMe: data.rememberMe,
       });
+
+      // Check if 2FA is required
+      if (result.requires2FA && result.email) {
+        // Redirect to 2FA verification page
+        navigate("/verify-2fa", {
+          state: {
+            email: result.email,
+            rememberMe: data.rememberMe,
+          },
+        });
+        customToast.info(
+          "Verification Required",
+          "A verification code has been sent to your email."
+        );
+        return;
+      }
 
       if (isFromProfileCompletion) {
         showSuccess(

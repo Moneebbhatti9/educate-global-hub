@@ -10,6 +10,8 @@ const USER_SETTINGS_ENDPOINTS = {
   UPDATE_AVATAR: "/users/avatar",
   DELETE_ACCOUNT: "/users/account",
   UPLOAD_AVATAR: "/upload/avatar",
+  GET_2FA_SETTINGS: "/users/2fa-settings",
+  UPDATE_2FA_SETTINGS: "/users/2fa-settings",
 } as const;
 
 // Types for user settings
@@ -33,6 +35,16 @@ export interface UpdateAvatarData {
 
 export interface AvatarResponse {
   avatarUrl: string;
+}
+
+export interface TwoFactorSettings {
+  is2FAEnabled: boolean;
+  twoFactorMethod: "email" | "sms";
+}
+
+export interface Update2FASettingsData {
+  is2FAEnabled: boolean;
+  twoFactorMethod?: "email" | "sms";
 }
 
 // User Settings API functions
@@ -98,6 +110,23 @@ export const userSettingsAPI = {
       USER_SETTINGS_ENDPOINTS.DELETE_ACCOUNT
     );
   },
+
+  // Get 2FA settings
+  get2FASettings: async (): Promise<ApiResponse<TwoFactorSettings>> => {
+    return apiHelpers.get<ApiResponse<TwoFactorSettings>>(
+      USER_SETTINGS_ENDPOINTS.GET_2FA_SETTINGS
+    );
+  },
+
+  // Update 2FA settings
+  update2FASettings: async (
+    data: Update2FASettingsData
+  ): Promise<ApiResponse<TwoFactorSettings>> => {
+    return apiHelpers.put<ApiResponse<TwoFactorSettings>>(
+      USER_SETTINGS_ENDPOINTS.UPDATE_2FA_SETTINGS,
+      data
+    );
+  },
 };
 
 // React Query hooks for user settings
@@ -156,6 +185,24 @@ export const useUserSettings = () => {
     },
   });
 
+  // Get 2FA settings
+  const get2FASettings = useQuery({
+    queryKey: ["2fa-settings"],
+    queryFn: userSettingsAPI.get2FASettings,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Update 2FA settings
+  const update2FASettings = useMutation({
+    mutationFn: userSettingsAPI.update2FASettings,
+    onSuccess: (data) => {
+      // Update the 2FA settings in the cache
+      queryClient.setQueryData(["2fa-settings"], data);
+      // Also invalidate the user profile cache to reflect changes
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    },
+  });
+
   return {
     getProfile,
     updateProfile,
@@ -163,5 +210,7 @@ export const useUserSettings = () => {
     updateAvatar,
     uploadAvatar,
     deleteAccount,
+    get2FASettings,
+    update2FASettings,
   };
 };

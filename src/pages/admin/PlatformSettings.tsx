@@ -38,6 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
   CheckCircle,
@@ -57,98 +59,165 @@ import {
   Building2,
   FileText,
   Globe,
+  Plus,
+  Trash2,
+  Zap,
+  Users,
+  TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { adminApi, PlatformSettings as PlatformSettingsType } from "@/apis/admin";
+import { adminSubscriptionApi } from "@/apis/subscriptions";
 import { customToast } from "@/components/ui/sonner";
-
-// EU Countries for VAT rates
-const EU_COUNTRIES = [
-  { code: "AT", name: "Austria" },
-  { code: "BE", name: "Belgium" },
-  { code: "BG", name: "Bulgaria" },
-  { code: "HR", name: "Croatia" },
-  { code: "CY", name: "Cyprus" },
-  { code: "CZ", name: "Czech Republic" },
-  { code: "DK", name: "Denmark" },
-  { code: "EE", name: "Estonia" },
-  { code: "FI", name: "Finland" },
-  { code: "FR", name: "France" },
-  { code: "DE", name: "Germany" },
-  { code: "GR", name: "Greece" },
-  { code: "HU", name: "Hungary" },
-  { code: "IE", name: "Ireland" },
-  { code: "IT", name: "Italy" },
-  { code: "LV", name: "Latvia" },
-  { code: "LT", name: "Lithuania" },
-  { code: "LU", name: "Luxembourg" },
-  { code: "MT", name: "Malta" },
-  { code: "NL", name: "Netherlands" },
-  { code: "PL", name: "Poland" },
-  { code: "PT", name: "Portugal" },
-  { code: "RO", name: "Romania" },
-  { code: "SK", name: "Slovakia" },
-  { code: "SI", name: "Slovenia" },
-  { code: "ES", name: "Spain" },
-  { code: "SE", name: "Sweden" },
-];
+import type {
+  SubscriptionPlan,
+  Feature,
+  SubscriptionAnalytics,
+  CreatePlanRequest,
+  BillingPeriod,
+  SubscribableRole,
+} from "@/types/subscription";
 
 // ============================================
-// SUBSCRIPTION TAB COMPONENT
+// SUBSCRIPTION TAB - GLOBAL TOGGLE SECTION
 // ============================================
 
-const SubscriptionTab = () => {
-  // Placeholder subscription plans data
-  const subscriptionPlans = [
-    {
-      id: "free",
-      name: "Free",
-      price: 0,
-      period: "forever",
-      features: [
-        { name: "Basic job listings", included: true },
-        { name: "Limited resource uploads", included: true },
-        { name: "Community forum access", included: true },
-        { name: "Priority support", included: false },
-        { name: "Analytics dashboard", included: false },
-        { name: "Featured listings", included: false },
-      ],
-      isActive: true,
+const GlobalToggleSection = () => {
+  const queryClient = useQueryClient();
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["adminSubscriptionSettings"],
+    queryFn: () => adminSubscriptionApi.getSettings(),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (enabled: boolean) => adminSubscriptionApi.toggleSubscriptions(enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubscriptionSettings"] });
+      customToast.success("Settings updated", "Subscription enforcement toggled");
     },
-    {
-      id: "basic",
-      name: "Basic",
-      price: 9.99,
-      period: "month",
-      features: [
-        { name: "Enhanced job listings", included: true },
-        { name: "50 resource uploads/month", included: true },
-        { name: "Community forum access", included: true },
-        { name: "Email support", included: true },
-        { name: "Basic analytics", included: true },
-        { name: "Featured listings", included: false },
-      ],
-      isActive: true,
+    onError: (error: any) => {
+      customToast.error("Error", error.message || "Failed to update settings");
     },
-    {
-      id: "pro",
-      name: "Professional",
-      price: 29.99,
-      period: "month",
-      features: [
-        { name: "Unlimited job listings", included: true },
-        { name: "Unlimited resource uploads", included: true },
-        { name: "Community forum access", included: true },
-        { name: "Priority support", included: true },
-        { name: "Advanced analytics", included: true },
-        { name: "Featured listings", included: true },
-      ],
-      isActive: true,
-      popular: true,
-    },
-  ];
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-32 w-full" />;
+  }
+
+  const isEnabled = settings?.subscriptionsEnabled ?? true;
 
   return (
-    <div className="space-y-6">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Settings className="w-5 h-5 text-primary" />
+          <div>
+            <CardTitle>Subscription Enforcement</CardTitle>
+            <CardDescription>
+              Control whether subscription requirements are enforced platform-wide
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-1">
+            <p className="font-medium">
+              {isEnabled ? "Subscriptions Enabled" : "Subscriptions Disabled"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {isEnabled
+                ? "Users need active subscriptions to access gated features"
+                : "All features are free for all users (marketing mode)"}
+            </p>
+          </div>
+          <Switch
+            checked={isEnabled}
+            onCheckedChange={(checked) => toggleMutation.mutate(checked)}
+            disabled={toggleMutation.isPending}
+          />
+        </div>
+        {!isEnabled && (
+          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Subscriptions are currently disabled. All premium features are accessible to all users.
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============================================
+// SUBSCRIPTION TAB - PLANS SECTION
+// ============================================
+
+const PlansSection = () => {
+  const queryClient = useQueryClient();
+  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [deleteConfirmPlan, setDeleteConfirmPlan] = useState<SubscriptionPlan | null>(null);
+
+  const { data: plans, isLoading } = useQuery({
+    queryKey: ["adminSubscriptionPlans"],
+    queryFn: () => adminSubscriptionApi.getAllPlans(),
+  });
+
+  const { data: features } = useQuery({
+    queryKey: ["adminSubscriptionFeatures"],
+    queryFn: () => adminSubscriptionApi.getAllFeatures(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (planId: string) => adminSubscriptionApi.deletePlan(planId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubscriptionPlans"] });
+      customToast.success("Plan deleted", "The subscription plan has been removed");
+      setDeleteConfirmPlan(null);
+    },
+    onError: (error: any) => {
+      customToast.error("Error", error.message || "Failed to delete plan");
+    },
+  });
+
+  const syncStripeMutation = useMutation({
+    mutationFn: (planId: string) => adminSubscriptionApi.syncPlanWithStripe(planId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubscriptionPlans"] });
+      customToast.success("Synced with Stripe", "Plan is now available for purchase");
+    },
+    onError: (error: any) => {
+      customToast.error("Stripe sync failed", error.message || "Failed to sync with Stripe");
+    },
+  });
+
+  const formatPrice = (price: number, currency: string = "GBP") => {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency,
+    }).format(price / 100);
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-64 w-full" />;
+  }
+
+  // Group plans by role
+  const plansByRole = (plans || []).reduce((acc, plan) => {
+    if (!acc[plan.targetRole]) {
+      acc[plan.targetRole] = [];
+    }
+    acc[plan.targetRole].push(plan);
+    return acc;
+  }, {} as Record<string, SubscriptionPlan[]>);
+
+  return (
+    <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -157,91 +226,708 @@ const SubscriptionTab = () => {
               <div>
                 <CardTitle>Subscription Plans</CardTitle>
                 <CardDescription>
-                  Manage subscription tiers and pricing for your platform
+                  Manage subscription plans and pricing
                 </CardDescription>
               </div>
             </div>
-            <Button>
-              <Sparkles className="w-4 h-4 mr-2" />
+            <Button onClick={() => { setIsCreateMode(true); setEditingPlan(null); }}>
+              <Plus className="w-4 h-4 mr-2" />
               Add Plan
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {subscriptionPlans.map((plan) => (
-              <Card
-                key={plan.id}
-                className={`relative ${plan.popular ? "border-primary border-2" : ""}`}
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                    Most Popular
-                  </Badge>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold">
-                      {plan.price === 0 ? "Free" : `$${plan.price}`}
-                    </span>
-                    {plan.price > 0 && (
-                      <span className="text-muted-foreground">/{plan.period}</span>
+          {Object.entries(plansByRole).map(([role, rolePlans]) => (
+            <div key={role} className="mb-6 last:mb-0">
+              <h3 className="text-lg font-semibold mb-3 capitalize flex items-center gap-2">
+                <Badge variant="outline">{role}</Badge>
+                Plans
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {rolePlans.map((plan) => (
+                  <Card
+                    key={plan._id}
+                    className={`relative ${plan.isDefault ? "border-primary border-2" : ""} ${!plan.isActive ? "opacity-60" : ""}`}
+                  >
+                    {plan.isDefault && (
+                      <Badge className="absolute -top-2 right-2 bg-primary">Default</Badge>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${
-                          !feature.included ? "text-muted-foreground" : ""
-                        }`}
-                      >
-                        {feature.included ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <X className="w-4 h-4 text-gray-300" />
+                    {plan.highlight && (
+                      <Badge className="absolute -top-2 left-2 bg-amber-500">{plan.highlight}</Badge>
+                    )}
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{plan.name}</CardTitle>
+                        <Badge variant={plan.isActive ? "default" : "secondary"}>
+                          {plan.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-2xl font-bold">
+                          {formatPrice(plan.price, plan.currency)}
+                        </span>
+                        <span className="text-muted-foreground">/{plan.billingPeriod}</span>
+                        {plan.hasActiveDiscount && (
+                          <Badge variant="destructive" className="ml-2">
+                            {plan.discountPercent}% OFF
+                          </Badge>
                         )}
-                        {feature.name}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Edit
-                    </Button>
-                    <Button
-                      variant={plan.isActive ? "destructive" : "default"}
-                      size="sm"
-                      className="flex-1"
-                    >
-                      {plan.isActive ? "Disable" : "Enable"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>
+                      <div className="text-xs space-y-1 mb-3">
+                        <p><strong>Features:</strong> {plan.features.length} included</p>
+                        <p><strong>Trial:</strong> {plan.trialDays > 0 ? `${plan.trialDays} days` : "None"}</p>
+                        {!plan.stripePriceId && (
+                          <p className="text-amber-600">
+                            <AlertCircle className="w-3 h-3 inline mr-1" />
+                            Not synced with Stripe
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => { setEditingPlan(plan); setIsCreateMode(false); }}
+                        >
+                          <Pencil className="w-3 h-3 mr-1" />
+                          Edit
+                        </Button>
+                        {!plan.stripePriceId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => syncStripeMutation.mutate(plan._id)}
+                            disabled={syncStripeMutation.isPending}
+                          >
+                            <Zap className="w-3 h-3 mr-1" />
+                            Sync
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteConfirmPlan(plan)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {(!plans || plans.length === 0) && (
+            <div className="text-center py-8 text-muted-foreground">
+              <Crown className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No subscription plans yet</p>
+              <Button
+                variant="outline"
+                className="mt-3"
+                onClick={() => { setIsCreateMode(true); setEditingPlan(null); }}
+              >
+                Create your first plan
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Plan Edit/Create Modal */}
+      <PlanModal
+        isOpen={isCreateMode || !!editingPlan}
+        onClose={() => { setEditingPlan(null); setIsCreateMode(false); }}
+        plan={editingPlan}
+        features={features || []}
+        isCreateMode={isCreateMode}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmPlan} onOpenChange={() => setDeleteConfirmPlan(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Plan</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteConfirmPlan?.name}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmPlan(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmPlan && deleteMutation.mutate(deleteConfirmPlan._id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+// ============================================
+// PLAN MODAL
+// ============================================
+
+interface PlanModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  plan: SubscriptionPlan | null;
+  features: Feature[];
+  isCreateMode: boolean;
+}
+
+const PlanModal = ({ isOpen, onClose, plan, features, isCreateMode }: PlanModalProps) => {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState<Partial<CreatePlanRequest>>({
+    name: "",
+    slug: "",
+    description: "",
+    targetRole: "teacher",
+    price: 0,
+    currency: "GBP",
+    billingPeriod: "monthly",
+    features: [],
+    limits: {},
+    trialDays: 0,
+    isActive: true,
+    isDefault: false,
+    sortOrder: 0,
+    highlight: "",
+    discountPercent: 0,
+  });
+
+  // Update form data when plan changes
+  useState(() => {
+    if (plan && !isCreateMode) {
+      setFormData({
+        name: plan.name,
+        slug: plan.slug,
+        description: plan.description,
+        targetRole: plan.targetRole,
+        price: plan.price,
+        currency: plan.currency,
+        billingPeriod: plan.billingPeriod,
+        features: plan.features,
+        limits: plan.limits,
+        trialDays: plan.trialDays,
+        isActive: plan.isActive,
+        isDefault: plan.isDefault,
+        sortOrder: plan.sortOrder,
+        highlight: plan.highlight || "",
+        discountPercent: plan.discountPercent,
+      });
+    }
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreatePlanRequest) => adminSubscriptionApi.createPlan(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubscriptionPlans"] });
+      customToast.success("Plan created", "The new subscription plan has been added");
+      onClose();
+    },
+    onError: (error: any) => {
+      customToast.error("Error", error.message || "Failed to create plan");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { planId: string; updates: Partial<CreatePlanRequest> }) =>
+      adminSubscriptionApi.updatePlan(data.planId, data.updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubscriptionPlans"] });
+      customToast.success("Plan updated", "The subscription plan has been updated");
+      onClose();
+    },
+    onError: (error: any) => {
+      customToast.error("Error", error.message || "Failed to update plan");
+    },
+  });
+
+  const handleSubmit = () => {
+    if (isCreateMode) {
+      createMutation.mutate(formData as CreatePlanRequest);
+    } else if (plan) {
+      updateMutation.mutate({ planId: plan._id, updates: formData });
+    }
+  };
+
+  const toggleFeature = (featureKey: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      features: prev.features?.includes(featureKey)
+        ? prev.features.filter((f) => f !== featureKey)
+        : [...(prev.features || []), featureKey],
+    }));
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isCreateMode ? "Create Plan" : "Edit Plan"}</DialogTitle>
+          <DialogDescription>
+            {isCreateMode
+              ? "Create a new subscription plan"
+              : "Update the subscription plan details"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Plan Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., Creator"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="slug">Slug *</Label>
+              <Input
+                id="slug"
+                value={formData.slug}
+                onChange={(e) =>
+                  setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, "-") })
+                }
+                placeholder="e.g., teacher-creator"
+              />
+            </div>
           </div>
 
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">
-                  Subscription Feature Coming Soon
-                </p>
-                <p>
-                  Full subscription management including Stripe integration, automated
-                  billing, and plan upgrades/downgrades will be available in the next
-                  release.
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe what this plan offers"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Target Role *</Label>
+              <Select
+                value={formData.targetRole}
+                onValueChange={(value: SubscribableRole) =>
+                  setFormData({ ...formData, targetRole: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="school">School</SelectItem>
+                  <SelectItem value="recruiter">Recruiter</SelectItem>
+                  <SelectItem value="supplier">Supplier</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="price">Price (pence) *</Label>
+              <Input
+                id="price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+              />
+              <p className="text-xs text-muted-foreground">
+                £{((formData.price || 0) / 100).toFixed(2)}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Billing Period *</Label>
+              <Select
+                value={formData.billingPeriod}
+                onValueChange={(value: BillingPeriod) =>
+                  setFormData({ ...formData, billingPeriod: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="annual">Annual</SelectItem>
+                  <SelectItem value="lifetime">Lifetime</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="trialDays">Trial Days</Label>
+              <Input
+                id="trialDays"
+                type="number"
+                value={formData.trialDays}
+                onChange={(e) => setFormData({ ...formData, trialDays: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="discountPercent">Discount %</Label>
+              <Input
+                id="discountPercent"
+                type="number"
+                max={100}
+                value={formData.discountPercent}
+                onChange={(e) =>
+                  setFormData({ ...formData, discountPercent: parseInt(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sortOrder">Sort Order</Label>
+              <Input
+                id="sortOrder"
+                type="number"
+                value={formData.sortOrder}
+                onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="highlight">Highlight Badge</Label>
+            <Input
+              id="highlight"
+              value={formData.highlight}
+              onChange={(e) => setFormData({ ...formData, highlight: e.target.value })}
+              placeholder="e.g., Most Popular, Best Value"
+            />
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+              />
+              <Label>Active</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={formData.isDefault}
+                onCheckedChange={(checked) => setFormData({ ...formData, isDefault: checked })}
+              />
+              <Label>Default for role</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Features Included</Label>
+            <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg max-h-40 overflow-y-auto">
+              {features.map((feature) => (
+                <div key={feature._id} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={formData.features?.includes(feature.key)}
+                    onCheckedChange={() => toggleFeature(feature.key)}
+                  />
+                  <span className="text-sm">{feature.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={createMutation.isPending || updateMutation.isPending}
+          >
+            {createMutation.isPending || updateMutation.isPending
+              ? "Saving..."
+              : isCreateMode
+              ? "Create Plan"
+              : "Update Plan"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ============================================
+// SUBSCRIPTION TAB - FEATURES SECTION
+// ============================================
+
+const FeaturesSection = () => {
+  const { data: features, isLoading } = useQuery({
+    queryKey: ["adminSubscriptionFeatures"],
+    queryFn: () => adminSubscriptionApi.getAllFeatures(),
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-64 w-full" />;
+  }
+
+  // Group features by category
+  const featuresByCategory = (features || []).reduce((acc, feature) => {
+    if (!acc[feature.category]) {
+      acc[feature.category] = [];
+    }
+    acc[feature.category].push(feature);
+    return acc;
+  }, {} as Record<string, Feature[]>);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <div>
+            <CardTitle>Feature Definitions</CardTitle>
+            <CardDescription>
+              Features that can be included in subscription plans
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {Object.entries(featuresByCategory).map(([category, categoryFeatures]) => (
+            <div key={category}>
+              <h3 className="text-sm font-semibold mb-2 capitalize text-muted-foreground">
+                {category}
+              </h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Key</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Roles</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categoryFeatures.map((feature) => (
+                    <TableRow key={feature._id}>
+                      <TableCell className="font-mono text-sm">{feature.key}</TableCell>
+                      <TableCell>{feature.name}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {feature.applicableRoles.map((role) => (
+                            <Badge key={role} variant="outline" className="text-xs">
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={feature.isActive ? "default" : "secondary"}>
+                          {feature.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============================================
+// SUBSCRIPTION TAB - ANALYTICS SECTION
+// ============================================
+
+const AnalyticsSection = () => {
+  const { data: analytics, isLoading } = useQuery({
+    queryKey: ["adminSubscriptionAnalytics"],
+    queryFn: () => adminSubscriptionApi.getAnalytics(),
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-64 w-full" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                <Users className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+                <p className="text-2xl font-bold">{analytics?.totalActiveSubscriptions || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <Zap className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Trial Users</p>
+                <p className="text-2xl font-bold">{analytics?.totalTrialSubscriptions || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <CreditCard className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-2xl font-bold">
+                  £{(analytics?.totalRevenue || 0).toFixed(2)}
                 </p>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-100 dark:bg-amber-900 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">MRR</p>
+                <p className="text-2xl font-bold">
+                  £{(analytics?.monthlyRecurringRevenue || 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Subscriptions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            Recent Subscriptions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analytics?.recentSubscriptions?.map((sub) => (
+                <TableRow key={sub.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{sub.userName}</p>
+                      <p className="text-sm text-muted-foreground">{sub.userEmail}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>{sub.planName}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        sub.status === "active"
+                          ? "default"
+                          : sub.status === "trial"
+                          ? "outline"
+                          : "secondary"
+                      }
+                    >
+                      {sub.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(sub.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              )) || (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    No subscriptions yet
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+// ============================================
+// SUBSCRIPTION TAB - MAIN COMPONENT
+// ============================================
+
+const SubscriptionTab = () => {
+  return (
+    <div className="space-y-6">
+      <Tabs defaultValue="settings" className="space-y-4">
+        <TabsList className="grid w-full max-w-xl grid-cols-4">
+          <TabsTrigger value="settings" className="text-xs sm:text-sm">
+            <Settings className="w-4 h-4 mr-1 hidden sm:inline" />
+            Settings
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="text-xs sm:text-sm">
+            <Crown className="w-4 h-4 mr-1 hidden sm:inline" />
+            Plans
+          </TabsTrigger>
+          <TabsTrigger value="features" className="text-xs sm:text-sm">
+            <Sparkles className="w-4 h-4 mr-1 hidden sm:inline" />
+            Features
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm">
+            <BarChart3 className="w-4 h-4 mr-1 hidden sm:inline" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="settings" className="space-y-4">
+          <GlobalToggleSection />
+        </TabsContent>
+
+        <TabsContent value="plans" className="space-y-4">
+          <PlansSection />
+        </TabsContent>
+
+        <TabsContent value="features" className="space-y-4">
+          <FeaturesSection />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <AnalyticsSection />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
@@ -683,20 +1369,6 @@ const FinancialSettingsTab = () => {
                   {region}
                 </Badge>
               ))}
-            </div>
-          </div>
-
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">VAT Logic</p>
-                <ul className="list-disc list-inside space-y-1 text-blue-700 dark:text-blue-300">
-                  <li><strong>B2C (Teachers):</strong> VAT charged based on buyer country</li>
-                  <li><strong>B2B (Schools):</strong> Reverse charge applies with valid VAT number</li>
-                  <li><strong>Outside UK/EU:</strong> No VAT applied</li>
-                </ul>
-              </div>
             </div>
           </div>
         </CardContent>
@@ -1341,7 +2013,7 @@ const PlatformSettings = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="financial" className="w-full">
+        <Tabs defaultValue="subscription" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="subscription">
               <Crown className="w-4 h-4 mr-2" />

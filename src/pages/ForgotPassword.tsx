@@ -16,18 +16,17 @@ import {
   ArrowLeft,
   ArrowRight,
   Mail,
-  Shield,
   KeyRound,
   CheckCircle,
+  Eye,
+  EyeOff,
+  Loader2,
 } from "lucide-react";
 import OTPVerification from "@/components/custom/OTPVerification";
 import { customToast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
-import {
-  passwordResetSchema,
-  passwordResetConfirmSchema,
-} from "@/helpers/validation";
+import { passwordResetSchema } from "@/helpers/validation";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { z } from "zod";
 
@@ -60,12 +59,20 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
 
   const { handleError, showSuccess } = useErrorHandler();
-  const { sendOTP, verifyOTP, passwordResetConfirm, isLoading } = useAuth();
+  const { sendOTP, passwordResetConfirm } = useAuth();
   const [currentStep, setCurrentStep] = useState<"email" | "otp" | "reset">(
     "email"
   );
   const [emailForOTP, setEmailForOTP] = useState("");
   const [verifiedOTP, setVerifiedOTP] = useState("");
+
+  // Loading states
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
+  // Password visibility states
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const emailForm = useFormValidation<{ email?: string }>({
     schema: passwordResetSchema,
@@ -88,6 +95,7 @@ const ForgotPassword = () => {
   });
 
   const handleEmailSubmit = async (data: EmailFormData) => {
+    setIsSendingOTP(true);
     try {
       // Send OTP with type "reset" for password reset flow
       await sendOTP(data.email, "reset");
@@ -96,46 +104,38 @@ const ForgotPassword = () => {
       showSuccess("OTP Sent", "Check your email for the verification code.");
     } catch (error) {
       handleError(error, "Failed to send OTP");
+    } finally {
+      setIsSendingOTP(false);
     }
   };
 
   const handleOTPVerify = async (otp: string) => {
-    try {
-      // Verify OTP with type "reset" for password reset flow
-      await verifyOTP({
-        email: emailForOTP,
-        otp,
-        type: "reset",
-      });
+    // For password reset flow, we don't call verifyOTP here
+    // because passwordResetConfirm will verify the OTP
+    // Calling verifyOTP here would mark the OTP as used,
+    // causing passwordResetConfirm to fail
 
-      // Store the verified OTP for password reset
-      setVerifiedOTP(otp);
-
-      setCurrentStep("reset");
-      showSuccess("OTP Verified", "Please enter your new password.");
-    } catch (error) {
-      handleError(error, "OTP verification failed");
-      throw error;
+    // Just validate the OTP format (6 digits)
+    if (!/^\d{6}$/.test(otp)) {
+      customToast.error("Invalid OTP", "Please enter a valid 6-digit code.");
+      throw new Error("Invalid OTP format");
     }
+
+    // Store the OTP for password reset
+    setVerifiedOTP(otp);
+    setCurrentStep("reset");
+    showSuccess("OTP Received", "Please enter your new password.");
   };
 
   const handlePasswordReset = async (data: PasswordResetFormData) => {
+    setIsResettingPassword(true);
     try {
-      console.log("🔄 Password Reset - Starting...", {
-        email: emailForOTP,
-        otp: verifiedOTP,
-        hasNewPassword: !!data.newPassword,
-        hasConfirmPassword: !!data.confirmPassword,
-      });
-
       // Call the API with the stored OTP and new password
       await passwordResetConfirm({
         email: emailForOTP,
         otp: verifiedOTP,
         newPassword: data.newPassword,
       });
-
-      
 
       showSuccess(
         "Password Updated",
@@ -147,8 +147,9 @@ const ForgotPassword = () => {
         navigate("/login");
       }, 1500);
     } catch (error) {
-      console.error("❌ Password Reset - Error:", error);
       handleError(error, "Password update failed");
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -212,6 +213,7 @@ const ForgotPassword = () => {
                               : ""
                           }`}
                           {...emailForm.register("email")}
+                          disabled={isSendingOTP}
                         />
                       </div>
                       {emailForm.getFieldError("email") && (
@@ -226,11 +228,11 @@ const ForgotPassword = () => {
                       variant="hero"
                       size="lg"
                       className="w-full"
-                      disabled={isLoading}
+                      disabled={isSendingOTP}
                     >
-                      {isLoading ? (
+                      {isSendingOTP ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Sending Code...
                         </>
                       ) : (
@@ -259,7 +261,21 @@ const ForgotPassword = () => {
           {/* Step 2: OTP Verification */}
           {currentStep === "otp" && (
             <div>
-              <OTPVerification onVerify={handleOTPVerify} />
+              <OTPVerification
+                onVerify={handleOTPVerify}
+                onResend={async () => {
+                  try {
+                    await sendOTP(emailForOTP, "reset");
+                    showSuccess(
+                      "OTP Sent",
+                      "A new verification code has been sent to your email."
+                    );
+                  } catch (error) {
+                    handleError(error, "Failed to resend OTP");
+                  }
+                }}
+                email={emailForOTP}
+              />
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setCurrentStep("email")}
@@ -302,31 +318,39 @@ const ForgotPassword = () => {
                 </CardHeader>
                 <CardContent>
                   <form
-                    onSubmit={passwordForm.handleSubmit(
-                      (data) => {
-                        
-                        handlePasswordReset(data as PasswordResetFormData);
-                      },
-                      (errors) => {
-                        console.error("❌ Form validation failed:", errors);
-                      }
+                    onSubmit={passwordForm.handleSubmit((data) =>
+                      handlePasswordReset(data as PasswordResetFormData)
                     )}
                     className="space-y-4"
                   >
                     <div className="space-y-2">
                       <Label htmlFor="newPassword">New Password</Label>
-                      <Input
-                        id="newPassword"
-                        type="password"
-                        placeholder="Enter new password"
-                        className={`${
-                          passwordForm.formState.errors.newPassword
-                            ? "border-destructive"
-                            : ""
-                        }`}
-                        {...passwordForm.register("newPassword")}
-                        minLength={8}
-                      />
+                      <div className="relative flex items-center">
+                        <Input
+                          id="newPassword"
+                          type={showNewPassword ? "text" : "password"}
+                          placeholder="Enter new password"
+                          className={`pr-10 ${
+                            passwordForm.formState.errors.newPassword
+                              ? "border-destructive"
+                              : ""
+                          }`}
+                          {...passwordForm.register("newPassword")}
+                          disabled={isResettingPassword}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          tabIndex={-1}
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {passwordForm.getFieldError("newPassword") && (
                         <p className="text-sm text-destructive">
                           {passwordForm.getFieldError("newPassword")}
@@ -336,18 +360,34 @@ const ForgotPassword = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        placeholder="Confirm new password"
-                        className={`${
-                          passwordForm.formState.errors.confirmPassword
-                            ? "border-destructive"
-                            : ""
-                        }`}
-                        {...passwordForm.register("confirmPassword")}
-                        minLength={8}
-                      />
+                      <div className="relative flex items-center">
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm new password"
+                          className={`pr-10 ${
+                            passwordForm.formState.errors.confirmPassword
+                              ? "border-destructive"
+                              : ""
+                          }`}
+                          {...passwordForm.register("confirmPassword")}
+                          disabled={isResettingPassword}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {passwordForm.getFieldError("confirmPassword") && (
                         <p className="text-sm text-destructive">
                           {passwordForm.getFieldError("confirmPassword")}
@@ -390,28 +430,17 @@ const ForgotPassword = () => {
                       variant="hero"
                       size="lg"
                       className="w-full"
-                      onClick={() => {
-                        console.log("🖱️ Button clicked!", {
-                          isLoading,
-                          hasNewPassword: !!passwordFormData.newPassword,
-                          passwordLength: passwordFormData.newPassword?.length,
-                          passwordsMatch:
-                            passwordFormData.newPassword ===
-                            passwordFormData.confirmPassword,
-                          formData: passwordFormData,
-                        });
-                      }}
                       disabled={
-                        isLoading ||
+                        isResettingPassword ||
                         !passwordFormData.newPassword ||
                         passwordFormData.newPassword.length < 8 ||
                         passwordFormData.newPassword !==
                           passwordFormData.confirmPassword
                       }
                     >
-                      {isLoading ? (
+                      {isResettingPassword ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Updating Password...
                         </>
                       ) : (

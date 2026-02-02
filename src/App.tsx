@@ -11,6 +11,7 @@ import {
 import { AuthProvider } from "./contexts/AuthContext";
 import { SocketProvider } from "./contexts/SocketContext";
 import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import {
   TeacherRoute,
   SchoolRoute,
@@ -61,6 +62,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const SignIn = lazy(() => import("./pages/SignIn"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
+// 2FA Page
+const TwoFAVerificationPage = lazy(() => import("./pages/TwoFAVerificationPage"));
+
 // Legal Pages
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
@@ -87,6 +91,9 @@ const DropdownManagement = lazy(
 const GeneralSettings = lazy(
   () => import("./pages/admin/GeneralSettings")
 );
+const SubscriptionSettings = lazy(
+  () => import("./pages/admin/SubscriptionSettings")
+);
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -112,6 +119,10 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const MyLibrary = lazy(() => import("./pages/teacher/MyLibrary"));
 const SalesManagement = lazy(() => import("./pages/admin/SalesManagement"));
 const PayoutManagement = lazy(() => import("./pages/admin/PayoutManagement"));
+
+// Subscription Pages
+const SubscriptionSuccess = lazy(() => import("./pages/subscription/SubscriptionSuccess"));
+const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -162,6 +173,10 @@ const AppRoutes = () => {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/pricing" element={<Pricing />} />
 
+        {/* Subscription Pages */}
+        <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+        <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+
         {/* Legal Pages */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
@@ -188,6 +203,7 @@ const AppRoutes = () => {
           }
         />
         <Route path="/otp-verification" element={<OTPVerificationPage />} />
+        <Route path="/verify-2fa" element={<TwoFAVerificationPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
           path="/profile-completion"
@@ -262,6 +278,7 @@ const AppRoutes = () => {
           <Route path="payout-management" element={<PayoutManagement />} />
           <Route path="general-settings" element={<GeneralSettings />} />
           <Route path="platform-settings" element={<PlatformSettings />} />
+          <Route path="subscription-settings" element={<SubscriptionSettings />} />
           <Route path="dropdown-management" element={<DropdownManagement />} />
         </Route>
 
@@ -290,10 +307,12 @@ const App = () => {
           <BrowserRouter>
             <SiteSettingsProvider>
               <AuthProvider>
-                <SocketProvider>
-                  <AppRoutes />
-                  <CookieConsent />
-                </SocketProvider>
+                <SubscriptionProvider>
+                  <SocketProvider>
+                    <AppRoutes />
+                    <CookieConsent />
+                  </SocketProvider>
+                </SubscriptionProvider>
               </AuthProvider>
             </SiteSettingsProvider>
           </BrowserRouter>
