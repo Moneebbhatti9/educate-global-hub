@@ -68,6 +68,7 @@ import {
   EmptySavedJobs,
   EmptyRecommendations,
 } from "@/components/ui/empty-state";
+import { UsageCard } from "@/components/subscription/UsageCard";
 
 // Interface for the actual API response structure
 interface TeacherApplicationResponse {
@@ -444,6 +445,9 @@ const TeacherDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Subscription Status */}
+        <UsageCard />
 
         {/* Tab Navigation */}
         <div className="flex space-x-1 bg-muted p-1 rounded-lg">
