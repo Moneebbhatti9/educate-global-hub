@@ -63,7 +63,7 @@ import {
   SectionErrorFallback,
 } from "@/components/ui/error-fallback";
 import { EmptyJobPostings, EmptyCandidates } from "@/components/ui/empty-state";
-import { UsageCard } from "@/components/subscription/UsageCard";
+//import { UsageCard } from "@/components/subscription/UsageCard";
 
 // Interface for the recent candidates API response
 interface RecentCandidate {
@@ -439,7 +439,7 @@ const SchoolDashboard = () => {
         </div>
 
         {/* Subscription Status */}
-        <UsageCard />
+        {/* <UsageCard /> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Job Postings */}
