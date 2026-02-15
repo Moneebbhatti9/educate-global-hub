@@ -48,7 +48,9 @@ import {
   PanelLeftOpen,
   ShieldCheck,
   GraduationCap,
+  Megaphone,
 } from "lucide-react";
+//import AdBannerCarousel from "@/components/AdBannerCarousel";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
@@ -191,6 +193,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: Users,
         },
         {
+          name: "My Advertisements",
+          href: `/dashboard/school/my-advertisements`,
+          icon: Megaphone,
+        },
+        {
           name: "Profile",
           href: `/dashboard/school/profile`,
           icon: User,
@@ -211,6 +218,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         { name: "Dashboard", href: `/dashboard/admin`, icon: Home },
         { name: "Users", href: `/dashboard/admin/users`, icon: Users },
         { name: "Jobs", href: `/dashboard/admin/jobs`, icon: Briefcase },
+        {
+          name: "Ad Management",
+          href: `/dashboard/admin/ad-management`,
+          icon: Megaphone,
+        },
         {
           name: "Forum",
           href: `/dashboard/admin/forum`,

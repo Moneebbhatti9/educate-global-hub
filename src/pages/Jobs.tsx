@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useJobs, useFeaturedJobs, useUrgentJobs } from "@/hooks/useJobs";
 import type { JobSearchParams, JobType } from "@/types/job";
+import AdBannerCarousel from "@/components/AdBannerCarousel";
 
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,6 +106,9 @@ const Jobs = () => {
             expertise and passion for education.
           </p>
         </div>
+
+        {/* Ad Banner Carousel */}
+        <AdBannerCarousel />
 
         {/* Search and Filters */}
         <div className="bg-card rounded-xl border p-6 mb-8 shadow-card">

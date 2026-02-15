@@ -30,6 +30,7 @@ import {
   AlertCircle,
   DollarSign,
   Archive,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSchoolJobs } from "@/hooks/useJobs";
@@ -919,6 +920,15 @@ const SchoolDashboard = () => {
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Browse Teachers
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => navigate("/dashboard/school/my-advertisements")}
+                >
+                  <Megaphone className="w-4 h-4 mr-2" />
+                  My Advertisements
                 </Button>
               </CardContent>
             </Card>

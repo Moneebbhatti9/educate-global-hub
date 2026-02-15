@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import DashboardLayout from "@/layout/DashboardLayout";
 import {
   Card,
@@ -9,6 +10,17 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   CheckCircle,
   Users,
@@ -24,13 +36,26 @@ import {
   GraduationCap,
   Clock,
   Plus,
+  Megaphone,
+  Upload,
+  X,
+  ImageIcon,
+  Sparkles,
+  Star,
+  Loader2,
 } from "lucide-react";
+import { adApi } from "@/apis/ads";
+import type { AdTier } from "@/apis/ads";
+import { customToast } from "@/components/ui/sonner";
 
 const JobPostSuccess = () => {
+  const location = useLocation();
+  const { jobId, jobTitle, jobOrganization } = location.state || {};
+
   // This would normally come from the submitted job data
   const jobData = {
-    title: "Mathematics Teacher - Secondary",
-    organization: "Dubai International School",
+    title: jobTitle || "Mathematics Teacher - Secondary",
+    organization: jobOrganization || "Dubai International School",
     location: "Dubai, UAE",
     educationLevel: "Secondary (Grades 9-12)",
     subjects: ["Mathematics", "Statistics"],
@@ -38,6 +63,135 @@ const JobPostSuccess = () => {
     expiryDate: new Date(
       Date.now() + 30 * 24 * 60 * 60 * 1000
     ).toLocaleDateString(),
+  };
+
+  // Ad tier state
+  const [adTiers, setAdTiers] = useState<AdTier[]>([]);
+  const [tiersLoading, setTiersLoading] = useState(true);
+
+  // Ad request modal state
+  const [selectedTier, setSelectedTier] = useState<AdTier | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [headline, setHeadline] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch ad tiers on mount
+  useEffect(() => {
+    const fetchTiers = async () => {
+      try {
+        const tiers = await adApi.getAdTiers();
+        setAdTiers(tiers);
+      } catch (error) {
+        console.error("Failed to fetch ad tiers:", error);
+      } finally {
+        setTiersLoading(false);
+      }
+    };
+    fetchTiers();
+  }, []);
+
+  const handleTierSelect = (tier: AdTier) => {
+    if (!jobId) {
+      customToast.warning(
+        "Job data unavailable",
+        "Please post a job first to promote it"
+      );
+      return;
+    }
+    setSelectedTier(tier);
+    setModalOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      customToast.error("File too large", "Maximum file size is 2MB");
+      return;
+    }
+
+    // Validate file type
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      customToast.error(
+        "Invalid file type",
+        "Please upload a JPEG, PNG, or WebP image"
+      );
+      return;
+    }
+
+    setBannerFile(file);
+
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBannerPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveBanner = () => {
+    setBannerFile(null);
+    setBannerPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSubmitAdRequest = async () => {
+    if (!selectedTier || !bannerFile || !jobId) return;
+
+    setSubmitting(true);
+    try {
+      await adApi.createAdRequest({
+        jobId,
+        tierId: selectedTier._id,
+        banner: bannerFile,
+        headline: headline || undefined,
+        description: description || undefined,
+      });
+
+      customToast.success(
+        "Ad request submitted!",
+        "Our team will review your ad and notify you when it's approved."
+      );
+
+      // Reset modal state
+      setModalOpen(false);
+      setSelectedTier(null);
+      setBannerFile(null);
+      setBannerPreview(null);
+      setHeadline("");
+      setDescription("");
+    } catch (error) {
+      console.error("Failed to submit ad request:", error);
+      customToast.error(
+        "Submission failed",
+        "Please try again or contact support"
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleModalClose = (open: boolean) => {
+    if (!open) {
+      setModalOpen(false);
+      setSelectedTier(null);
+      setBannerFile(null);
+      setBannerPreview(null);
+      setHeadline("");
+      setDescription("");
+    }
+  };
+
+  const formatPrice = (pence: number) => {
+    return `£${(pence / 100).toFixed(0)}`;
   };
 
   const nextSteps = [
@@ -110,7 +264,7 @@ const JobPostSuccess = () => {
           </div>
           <div>
             <h1 className="font-heading font-bold text-3xl text-foreground mb-2">
-              Job Posted Successfully! 🎉
+              Job Posted Successfully!
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Your job posting is now live and visible to qualified educators
@@ -194,6 +348,106 @@ const JobPostSuccess = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Promote Your Job - Ad Upsell Section */}
+        {!tiersLoading && adTiers.length > 0 && (
+          <div>
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <Megaphone className="w-6 h-6 text-brand-primary" />
+                <h2 className="font-heading font-bold text-2xl text-foreground">
+                  Promote Your Job
+                </h2>
+              </div>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Boost your job's visibility with premium advertising. Reach more
+                qualified candidates and fill your position faster.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {adTiers.map((tier) => {
+                const isPopular = tier.highlight !== null;
+                return (
+                  <Card
+                    key={tier._id}
+                    className={`relative group hover:shadow-card-hover transition-all duration-300 ${
+                      isPopular
+                        ? "border-brand-primary ring-2 ring-brand-primary/20"
+                        : ""
+                    }`}
+                  >
+                    {isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-brand-primary text-white px-3 py-1">
+                          <Star className="w-3 h-3 mr-1" />
+                          {tier.highlight}
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className={isPopular ? "pt-6" : ""}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="font-heading text-lg">
+                            {tier.name}
+                          </CardTitle>
+                          <CardDescription className="mt-1">
+                            {tier.description}
+                          </CardDescription>
+                        </div>
+                        <div className="text-right">
+                          {tier.hasActiveLaunchPricing && (
+                            <div className="text-xs text-muted-foreground line-through">
+                              {formatPrice(tier.normalPrice)}
+                            </div>
+                          )}
+                          <div className="text-2xl font-bold text-brand-primary">
+                            {formatPrice(tier.effectivePrice)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {tier.durationLabel}
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {tier.hasActiveLaunchPricing && (
+                        <Badge
+                          variant="secondary"
+                          className="bg-brand-accent-green/10 text-brand-accent-green"
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Launch Offer - 60% Off
+                        </Badge>
+                      )}
+
+                      <ul className="space-y-2">
+                        {tier.features.map((feature, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start space-x-2 text-sm"
+                          >
+                            <CheckCircle className="w-4 h-4 text-brand-accent-green flex-shrink-0 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Button
+                        variant={isPopular ? "hero" : "outline"}
+                        className="w-full"
+                        onClick={() => handleTierSelect(tier)}
+                      >
+                        <Megaphone className="w-4 h-4 mr-2" />
+                        Select {tier.name}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Next Steps */}
         <div>
@@ -283,6 +537,184 @@ const JobPostSuccess = () => {
           </Link>
         </div>
       </div>
+
+      {/* Ad Request Modal */}
+      <Dialog open={modalOpen} onOpenChange={handleModalClose}>
+        <DialogContent className="sm:max-w-[650px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl flex items-center space-x-2">
+              <Megaphone className="w-5 h-5 text-brand-primary" />
+              <span>Create Ad Request</span>
+            </DialogTitle>
+            <DialogDescription>
+              {selectedTier && (
+                <>
+                  Submit your banner ad for{" "}
+                  <span className="font-semibold">{selectedTier.name}</span> (
+                  {formatPrice(selectedTier.effectivePrice)}/
+                  {selectedTier.durationLabel}). Our team will review it and
+                  notify you when approved.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Banner Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="banner" className="text-sm font-medium">
+                Banner Image <span className="text-destructive">*</span>
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Recommended: 1200x400px. Max 2MB. JPEG, PNG, or WebP.
+              </p>
+
+              {bannerPreview ? (
+                <div className="relative">
+                  <img
+                    src={bannerPreview}
+                    alt="Banner preview"
+                    className="w-full h-auto rounded-lg border object-cover"
+                    style={{ aspectRatio: "3/1" }}
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemoveBanner}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-brand-primary/50 hover:bg-muted/20 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ aspectRatio: "3/1" }}
+                >
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <ImageIcon className="w-10 h-10 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Click to upload banner image
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      1200x400px recommended
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                id="banner"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            {/* Headline */}
+            <div className="space-y-2">
+              <Label htmlFor="headline" className="text-sm font-medium">
+                Headline{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional, max 80 characters)
+                </span>
+              </Label>
+              <Input
+                id="headline"
+                placeholder="e.g., Join Our Award-Winning Team!"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value.slice(0, 80))}
+                maxLength={80}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {headline.length}/80
+              </p>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium">
+                Description{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional, max 150 characters)
+                </span>
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="e.g., Competitive salary, modern facilities, and professional development opportunities."
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, 150))}
+                maxLength={150}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {description.length}/150
+              </p>
+            </div>
+
+            {/* Tier Summary */}
+            {selectedTier && (
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">
+                        {selectedTier.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedTier.durationLabel}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-lg text-brand-primary">
+                        {formatPrice(selectedTier.effectivePrice)}
+                      </p>
+                      {selectedTier.hasActiveLaunchPricing && (
+                        <p className="text-xs text-muted-foreground line-through">
+                          {formatPrice(selectedTier.normalPrice)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Payment is required only after admin approval.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleModalClose(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="hero"
+              onClick={handleSubmitAdRequest}
+              disabled={!bannerFile || submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Submit Ad Request
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
