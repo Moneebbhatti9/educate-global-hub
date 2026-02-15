@@ -23,7 +23,7 @@ const NOTIFICATION_ENDPOINTS = {
   MARK_AS_READ: "/notifications/mark-read",
 
   // Delete Notifications
-  DELETE_NOTIFICATIONS: "/notifications/delete",
+  DELETE_NOTIFICATIONS: "/notifications",
 
   // Get Unread Notifications
   GET_UNREAD_NOTIFICATIONS: "/notifications/unread",
@@ -46,7 +46,7 @@ export const notificationsAPI = {
   // Get Notifications
   getNotifications: async (
     params: NotificationSearchParams
-  ): Promise<ApiResponse<PaginatedResponse<JobNotification>>> => {
+  ): Promise<{ success: boolean; data: { notifications: JobNotification[]; pagination: any } }> => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -57,7 +57,16 @@ export const notificationsAPI = {
     const url = `${NOTIFICATION_ENDPOINTS.GET_NOTIFICATIONS}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
-    return apiHelpers.get<ApiResponse<PaginatedResponse<JobNotification>>>(url);
+    const response: any = await apiHelpers.get(url);
+    // Backend wraps in { success, message, data: { notifications, pagination } }
+    const data = response.data || response;
+    return {
+      success: response.success ?? true,
+      data: {
+        notifications: data.notifications || data.data || [],
+        pagination: data.pagination || {},
+      },
+    };
   },
 
   // Get Notification by ID

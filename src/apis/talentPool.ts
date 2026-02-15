@@ -78,7 +78,14 @@ export const talentPoolAPI = {
 
   // Search talent pool (school-facing)
   search: async (params: SearchParams): Promise<SearchResponse> => {
-    return apiHelpers.get(`${TALENT_POOL_BASE}/search`, { params });
+    const response: any = await apiHelpers.get(`${TALENT_POOL_BASE}/search`, { params });
+    // Backend wraps in { success, message, data: { teachers, pagination } }
+    const data = response.data || response;
+    return {
+      success: response.success ?? true,
+      teachers: data.teachers || [],
+      pagination: data.pagination || { page: 1, limit: 12, total: 0, totalPages: 0 },
+    };
   },
 
   // Invite a teacher to apply (school-facing)
@@ -117,6 +124,20 @@ export const talentPoolAPI = {
     success: boolean;
     savedTeachers: SavedTeacher[];
   }> => {
-    return apiHelpers.get(`${TALENT_POOL_BASE}/shortlist`);
+    const response: any = await apiHelpers.get(`${TALENT_POOL_BASE}/shortlist`);
+    // Backend wraps in { success, message, data: { savedTeachers } }
+    // Each entry has { id, teacher: { id, name, ... }, notes, savedAt }
+    const data = response.data || response;
+    const raw: any[] = data.savedTeachers || [];
+    return {
+      success: response.success ?? true,
+      savedTeachers: raw.map((entry) => ({
+        ...(entry.teacher || {}),
+        id: entry.teacher?.id || entry.id,
+        savedId: entry.id || entry._id,
+        notes: entry.notes || "",
+        savedAt: entry.savedAt || "",
+      })),
+    };
   },
 };

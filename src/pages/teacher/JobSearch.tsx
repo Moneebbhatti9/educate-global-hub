@@ -611,7 +611,7 @@ const JobSearch = () => {
                         <div className="flex items-center space-x-2">
                           <GraduationCap className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm">
-                            {educationLevels.find(
+                            {(educationLevelOptions || []).find(
                               (level) => level.value === job.educationLevel
                             )?.label || job.educationLevel}
                           </span>
@@ -625,7 +625,7 @@ const JobSearch = () => {
                         <div className="flex items-center space-x-2">
                           <Clock className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm">
-                            {jobTypes.find((type) => type.value === job.jobType)
+                            {(jobTypeOptions || []).find((type) => type.value === job.jobType)
                               ?.label || job.jobType}
                           </span>
                         </div>
