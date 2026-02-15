@@ -49,6 +49,7 @@ import {
   ShieldCheck,
   GraduationCap,
   Megaphone,
+  Activity,
 } from "lucide-react";
 //import AdBannerCarousel from "@/components/AdBannerCarousel";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
@@ -193,6 +194,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: Users,
         },
         {
+          name: "Talent Pool",
+          href: `/dashboard/school/talent-pool`,
+          icon: UserCheck,
+        },
+        {
           name: "My Advertisements",
           href: `/dashboard/school/my-advertisements`,
           icon: Megaphone,
@@ -239,9 +245,19 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: ShoppingCart,
         },
         {
+          name: "Financial Dashboard",
+          href: `/dashboard/admin/financial`,
+          icon: BarChart3,
+        },
+        {
           name: "Payout Management",
           href: `/dashboard/admin/payout-management`,
           icon: Wallet,
+        },
+        {
+          name: "System Status",
+          href: `/dashboard/admin/system-status`,
+          icon: Activity,
         },
         {
           name: "Platform Settings",
