@@ -105,6 +105,10 @@ import { AddDevelopmentModal } from "@/components/Modals/add-development-modal";
 import { AddMembershipModal } from "@/components/Modals/add-membership-modal";
 import { AddActivityModal } from "@/components/Modals/add-activity-modal";
 import { AddTravelPlanModal } from "@/components/Modals/add-travel-plan-modal";
+import ConsentModal from "@/components/Modals/consent-modal";
+import { talentPoolAPI, ConsentStatus } from "@/apis/talentPool";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 interface Education {
   id?: string;
@@ -366,6 +370,91 @@ const TeacherProfile = () => {
     fetchProfile();
   }, [user?.id]);
 
+  // Fetch talent pool consent status
+  useEffect(() => {
+    const fetchConsentStatus = async () => {
+      try {
+        const response = await talentPoolAPI.getConsentStatus();
+        if (response.success && response.data) {
+          setTalentPoolOptedIn(response.data.optedIn);
+          setAvailabilityStatus(response.data.availabilityStatus || "not_looking");
+          setConsentExpiresAt(response.data.consentExpiresAt);
+        }
+      } catch {
+        // Silently fail - teacher may not have interacted with talent pool yet
+      }
+    };
+
+    if (user?.id) {
+      fetchConsentStatus();
+    }
+  }, [user?.id]);
+
+  // Talent Pool handlers
+  const handleTalentPoolToggle = (checked: boolean) => {
+    if (checked) {
+      setShowConsentModal(true);
+    } else {
+      handleOptOut();
+    }
+  };
+
+  const handleOptIn = async (consentText: string) => {
+    setTalentPoolLoading(true);
+    try {
+      const response = await talentPoolAPI.optIn(consentText);
+      if (response.success) {
+        setTalentPoolOptedIn(true);
+        setShowConsentModal(false);
+        // Re-fetch to get updated expiry date
+        const statusResponse = await talentPoolAPI.getConsentStatus();
+        if (statusResponse.success && statusResponse.data) {
+          setConsentExpiresAt(statusResponse.data.consentExpiresAt);
+          setAvailabilityStatus(statusResponse.data.availabilityStatus || "not_looking");
+        }
+        toast.success("You are now visible in the talent pool");
+      }
+    } catch {
+      toast.error("Failed to opt in to talent pool");
+    } finally {
+      setTalentPoolLoading(false);
+    }
+  };
+
+  const handleOptOut = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to opt out of the talent pool? Schools will no longer be able to find your profile."
+    );
+    if (!confirmed) return;
+
+    setTalentPoolLoading(true);
+    try {
+      const response = await talentPoolAPI.optOut();
+      if (response.success) {
+        setTalentPoolOptedIn(false);
+        setAvailabilityStatus("not_looking");
+        setConsentExpiresAt(null);
+        toast.success("You have been removed from the talent pool");
+      }
+    } catch {
+      toast.error("Failed to opt out of talent pool");
+    } finally {
+      setTalentPoolLoading(false);
+    }
+  };
+
+  const handleAvailabilityChange = async (newStatus: string) => {
+    try {
+      const response = await talentPoolAPI.updateAvailability(newStatus);
+      if (response.success) {
+        setAvailabilityStatus(newStatus);
+        toast.success("Availability status updated");
+      }
+    } catch {
+      toast.error("Failed to update availability status");
+    }
+  };
+
   // Modal states
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showExperienceModal, setShowExperienceModal] = useState(false);
@@ -378,6 +467,13 @@ const TeacherProfile = () => {
   const [showTravelPlanModal, setShowTravelPlanModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+
+  // Talent Pool state
+  const [talentPoolOptedIn, setTalentPoolOptedIn] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState("not_looking");
+  const [consentExpiresAt, setConsentExpiresAt] = useState<string | null>(null);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [talentPoolLoading, setTalentPoolLoading] = useState(false);
 
   // State for development data
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -1213,6 +1309,76 @@ const TeacherProfile = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Talent Pool Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Talent Pool
+              </CardTitle>
+              <CardDescription>
+                Make your profile visible to schools looking for teachers
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="talent-pool-toggle" className="text-sm font-medium">
+                  Visible to schools
+                </Label>
+                <Switch
+                  id="talent-pool-toggle"
+                  checked={talentPoolOptedIn}
+                  onCheckedChange={handleTalentPoolToggle}
+                  disabled={talentPoolLoading}
+                />
+              </div>
+
+              {talentPoolOptedIn && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Availability Status</Label>
+                    <Select
+                      value={availabilityStatus}
+                      onValueChange={handleAvailabilityChange}
+                    >
+                      <SelectTrigger className="w-[220px]">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="available">Available - Actively Seeking</SelectItem>
+                        <SelectItem value="open_to_offers">Open to Offers</SelectItem>
+                        <SelectItem value="not_looking">Not Looking</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {consentExpiresAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Consent expires: {new Date(consentExpiresAt).toLocaleDateString()}
+                    </p>
+                  )}
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleOptOut}
+                    disabled={talentPoolLoading}
+                  >
+                    Opt Out of Talent Pool
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Consent Modal */}
+          <ConsentModal
+            isOpen={showConsentModal}
+            onClose={() => setShowConsentModal(false)}
+            onConfirm={handleOptIn}
+            isLoading={talentPoolLoading}
+          />
 
           {/* Profile Tabs */}
           <Tabs

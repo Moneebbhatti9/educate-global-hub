@@ -54,7 +54,9 @@ const JobPostings = lazy(() => import("./pages/school/JobPostings"));
 const PostJob = lazy(() => import("./pages/school/PostJob"));
 const EditJob = lazy(() => import("./pages/school/EditJob"));
 const JobPostSuccess = lazy(() => import("./pages/school/JobPostSuccess"));
+const MyAdvertisements = lazy(() => import("./pages/school/MyAdvertisements"));
 const Candidates = lazy(() => import("./pages/school/Candidates"));
+const TalentPoolSearch = lazy(() => import("./pages/school/TalentPoolSearch"));
 const JobSearch = lazy(() => import("./pages/teacher/JobSearch"));
 const JobApplication = lazy(() => import("./pages/teacher/JobApplication"));
 const Applications = lazy(() => import("./pages/teacher/Applications"));
@@ -76,6 +78,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
 const JobManagement = lazy(() => import("./pages/admin/JobManagement"));
 const ForumManagement = lazy(() => import("./pages/admin/ForumManagement"));
+const AdManagement = lazy(() => import("./pages/admin/AdManagement"));
 const AdminResourceManagement = lazy(
   () => import("./pages/admin/ResourceManagement")
 );
@@ -95,6 +98,8 @@ const SubscriptionSettings = lazy(
   () => import("./pages/admin/SubscriptionSettings")
 );
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const SystemStatus = lazy(() => import("./pages/admin/SystemStatus"));
+const FinancialDashboard = lazy(() => import("./pages/admin/FinancialDashboard"));
 
 // New Public Pages
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -250,6 +255,8 @@ const AppRoutes = () => {
           <Route path="edit-job/:jobId" element={<EditJob />} />
           <Route path="candidates" element={<Candidates />} />
           <Route path="job-post-success" element={<JobPostSuccess />} />
+          <Route path="talent-pool" element={<TalentPoolSearch />} />
+          <Route path="my-advertisements" element={<MyAdvertisements />} />
           <Route path="profile" element={<SchoolProfile />} />
           <Route path="settings" element={<SchoolSettings />} />
           <Route
@@ -281,7 +288,10 @@ const AppRoutes = () => {
           <Route path="platform-settings" element={<PlatformSettings />} />
           <Route path="subscription-settings" element={<SubscriptionSettings />} />
           <Route path="dropdown-management" element={<DropdownManagement />} />
+          <Route path="ad-management" element={<AdManagement />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="system-status" element={<SystemStatus />} />
+          <Route path="financial" element={<FinancialDashboard />} />
         </Route>
 
         {/* ======================================== */}

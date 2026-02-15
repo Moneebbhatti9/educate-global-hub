@@ -268,7 +268,7 @@ const PostJob = () => {
       };
 
       // Always use the same API call - backend will handle draft vs publish
-      await createJobMutation.mutateAsync(jobData);
+      const result = await createJobMutation.mutateAsync(jobData);
 
       if (action === "draft") {
         customToast.success("Job saved as draft successfully!");
@@ -276,7 +276,15 @@ const PostJob = () => {
         customToast.success("Job posted successfully!");
       }
 
-      navigate("/dashboard/school/job-post-success");
+      // Pass job data to success page for ad upsell
+      const createdJob = result?.data?.job;
+      navigate("/dashboard/school/job-post-success", {
+        state: {
+          jobId: createdJob?._id,
+          jobTitle: createdJob?.title || formData.title,
+          jobOrganization: createdJob?.organization || formData.organizationName,
+        },
+      });
     } catch (error: unknown) {
       console.error("Error submitting job:", error);
 

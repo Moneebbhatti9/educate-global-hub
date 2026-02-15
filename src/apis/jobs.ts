@@ -324,7 +324,7 @@ export const jobsAPI = {
     status: string,
     reason?: string
   ): Promise<ApiResponse<Job>> => {
-    return apiHelpers.put<ApiResponse<Job>>(
+    return apiHelpers.patch<ApiResponse<Job>>(
       `${JOB_ENDPOINTS.ADMIN_UPDATE_JOB_STATUS}/${jobId}/status`,
       { status, reason }
     );
@@ -407,7 +407,7 @@ export const jobsAPI = {
       updatedJobs: string[];
     }>
   > => {
-    return apiHelpers.put<
+    return apiHelpers.patch<
       ApiResponse<{
         updatedCount: number;
         updatedJobs: string[];

@@ -48,7 +48,10 @@ import {
   PanelLeftOpen,
   ShieldCheck,
   GraduationCap,
+  Megaphone,
+  Activity,
 } from "lucide-react";
+//import AdBannerCarousel from "@/components/AdBannerCarousel";
 import EducateLink2 from "@/assets/Educate-Link-2.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
@@ -191,6 +194,16 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: Users,
         },
         {
+          name: "Talent Pool",
+          href: `/dashboard/school/talent-pool`,
+          icon: UserCheck,
+        },
+        {
+          name: "My Advertisements",
+          href: `/dashboard/school/my-advertisements`,
+          icon: Megaphone,
+        },
+        {
           name: "Profile",
           href: `/dashboard/school/profile`,
           icon: User,
@@ -212,6 +225,11 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
         { name: "Users", href: `/dashboard/admin/users`, icon: Users },
         { name: "Jobs", href: `/dashboard/admin/jobs`, icon: Briefcase },
         {
+          name: "Ad Management",
+          href: `/dashboard/admin/ad-management`,
+          icon: Megaphone,
+        },
+        {
           name: "Forum",
           href: `/dashboard/admin/forum`,
           icon: MessagesSquare,
@@ -227,9 +245,19 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           icon: ShoppingCart,
         },
         {
+          name: "Financial Dashboard",
+          href: `/dashboard/admin/financial`,
+          icon: BarChart3,
+        },
+        {
           name: "Payout Management",
           href: `/dashboard/admin/payout-management`,
           icon: Wallet,
+        },
+        {
+          name: "System Status",
+          href: `/dashboard/admin/system-status`,
+          icon: Activity,
         },
         {
           name: "Platform Settings",

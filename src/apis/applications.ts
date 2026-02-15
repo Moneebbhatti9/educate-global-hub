@@ -37,7 +37,7 @@ const APPLICATION_ENDPOINTS = {
   GET_ALL_SCHOOL_APPLICATIONS: "/jobs/applications/school/all",
 
   // Get Applications by Teacher
-  GET_APPLICATIONS_BY_TEACHER: "/jobs/applications/teacher/me",
+  GET_APPLICATIONS_BY_TEACHER: "/jobs/applications/teacher",
 
   // Get School Card
   GET_SCHOOLDASHBOARD_CARDS: "/schoolDashboard/dashboardCards",
@@ -196,7 +196,7 @@ export const applicationsAPI = {
       }
     });
 
-    const url = `${APPLICATION_ENDPOINTS.GET_APPLICATIONS_BY_TEACHER}${
+    const url = `${APPLICATION_ENDPOINTS.GET_MY_APPLICATIONS}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
     return apiHelpers.get<ApiResponse<PaginatedResponse<JobApplication>>>(url);
