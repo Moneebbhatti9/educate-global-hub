@@ -1185,7 +1185,7 @@ const PostJob = () => {
                       placeholder="e.g., careers@school.edu"
                       {...register("applicantEmail")}
                       className={
-                        isFieldInvalid("applicantEmail") ? "border-red-500" : ""
+                        isFieldInvalid("applicantEmail") ? "border-red-500" : "h-10 !mt-4"
                       }
                     />
                     {isFieldInvalid("applicantEmail") && (

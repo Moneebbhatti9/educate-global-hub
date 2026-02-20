@@ -1,76 +1,106 @@
-import * as React from "react";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+"use client";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 
-interface DatePickerProps {
-  value?: Date;
-  onValueChange?: (date: Date | undefined) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  id?: string;
-  name?: string;
-  required?: boolean;
-  min?: Date;
-  max?: Date;
+function formatDate(date: Date | undefined) {
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-export function DatePicker({
-  value,
-  onValueChange,
-  placeholder = "Pick a date",
-  disabled = false,
-  className,
-  id,
-  name,
-  required = false,
-  min,
-  max,
-}: DatePickerProps) {
-  // Ensure min and max are valid dates
-  const minDate = min instanceof Date ? min : undefined;
-  const maxDate = max instanceof Date ? max : undefined;
+function isValidDate(date: Date | undefined) {
+  if (!date) return false;
+  return !isNaN(date.getTime());
+}
+
+export function DatePicker() {
+  const [open, setOpen] = React.useState(false);
+  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [month, setMonth] = React.useState<Date | undefined>(date);
+  const [value, setValue] = React.useState(formatDate(date));
+
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !value && "text-muted-foreground",
-            className
-          )}
-          disabled={disabled}
-          id={id}
-          name={name}
-          type="button"
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP") : placeholder}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value}
-          onSelect={onValueChange}
-          disabled={(date) => {
-            if (minDate && date < minDate) return true;
-            if (maxDate && date > maxDate) return true;
-            return false;
-          }}
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
+    <InputGroup
+    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50 md:text-sm transition-colors duration-150 ease-in-out hover:border-brand-primary/50 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:outline-none focus:ring-offset-0"
+    >
+      <InputGroupInput
+        id="date-merged"
+        value={value}
+        placeholder="Select date"
+        onChange={(e) => {
+          const newDate = new Date(e.target.value);
+          setValue(e.target.value);
+          if (isValidDate(newDate)) {
+            setDate(newDate);
+            setMonth(newDate);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+      />
+
+      {/* Calendar Icon Button */}
+      <InputGroupAddon align="inline-end">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger>
+            <div>
+              <InputGroupButton
+                id="date-picker-merged"
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Select date"
+              >
+                <CalendarIcon />
+                <span className="sr-only">Select date</span>
+              </InputGroupButton>
+            </div>
+          </PopoverTrigger>
+
+          {/* Calendar Dropdown */}
+          <PopoverContent
+            className="min-w-[160px] rounded-xl border bg-white p-0 shadow-md z-[9999]"
+            align="end"
+            alignOffset={-8}
+            sideOffset={10}
+            onMouseDown={(e) => e.stopPropagation()}
+  onClick={(e) => e.stopPropagation()} 
+          >
+            <Calendar
+              mode="single"
+              selected={date}
+              month={month}
+              className="rounded-lg border w-full bg-white p-2 [--cell-size:2.25rem] [--cell-radius:0.375rem]"
+              captionLayout="dropdown" // ✅ enables month/year dropdown
+              onMonthChange={setMonth}
+              onSelect={(selectedDate) => {
+                setDate(selectedDate);
+                setValue(formatDate(selectedDate));
+                setOpen(false);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+      </InputGroupAddon>
+    </InputGroup>
   );
 }
